@@ -1,76 +1,83 @@
 import type {
   AggregationResult,
   ClassifiedReview,
-  InsightResult,
+  ResearchFindings,
 } from "./types";
 
 export function buildReportJson(
   classified: ClassifiedReview[],
-  aggregation: AggregationResult,
-  insights: InsightResult,
+  evidence: AggregationResult,
+  findings: ResearchFindings,
 ) {
   return {
     generatedAt: new Date().toISOString(),
-    totalReviews: aggregation.totalReviews,
-    aggregation,
-    insights,
+    totalReviews: evidence.totalReviews,
+    discoveryRelevantCount: evidence.discoveryRelevantCount,
+    excludedCount: evidence.excludedCount,
+    evidence,
+    findings,
     classified,
   };
 }
 
 export function buildReportMarkdown(
-  aggregation: AggregationResult,
-  insights: InsightResult,
+  evidence: AggregationResult,
+  findings: ResearchFindings,
 ): string {
-  const themes = Object.entries(aggregation.themeFrequency)
-    .sort((a, b) => b[1].count - a[1].count)
-    .map(([name, { pct }]) => `- ${name}: ${pct}%`)
-    .join("\n");
+  const formatFreq = (data: Record<string, { count: number; pct: number }>) =>
+    Object.entries(data)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([name, { pct, count }]) => `- ${name}: ${pct}% (${count})`)
+      .join("\n");
 
-  const segments = Object.entries(aggregation.segmentBreakdown)
-    .sort((a, b) => b[1].count - a[1].count)
-    .map(([name, { pct }]) => `- ${name}: ${pct}%`)
-    .join("\n");
-
-  const barriers = Object.entries(aggregation.barrierAnalysis)
-    .sort((a, b) => b[1].count - a[1].count)
-    .map(([name, { pct }]) => `- ${name}: ${pct}%`)
-    .join("\n");
-
-  const rootCauses = insights.rootCauses
-    .map((cause, i) => `${i + 1}. ${cause}`)
-    .join("\n");
-
-  const problems = insights.discoveryProblems
-    .map((problem) => `- ${problem}`)
-    .join("\n");
-
-  const opportunities = insights.opportunities
-    .map((opp) => `- **${opp.title}**: ${opp.description}`)
+  const segmentChallenges = Object.entries(findings.segment_challenges)
+    .map(([seg, items]) => `- **${seg}**: ${items.join(", ")}`)
     .join("\n");
 
   return `# Review Discovery Report
 
-## Executive Summary
-${insights.summary}
+## Research Findings
 
-## Theme Distribution
-${themes}
+### Why do users struggle to discover new music?
+${findings.why_discovery_fails}
 
-## User Segments
-${segments}
+### Top frustrations
+${findings.top_frustrations.map((f) => `- ${f}`).join("\n")}
 
-## Discovery Barriers
-${barriers}
+### Listening behaviors
+${findings.listening_behaviors.map((b) => `- ${b}`).join("\n")}
 
-## Root Causes
-${rootCauses}
+### Repetition causes
+${findings.repetition_causes.map((r) => `- ${r}`).join("\n")}
 
-## Discovery Problems
-${problems}
+### Segment challenges
+${segmentChallenges}
 
-## Product Opportunities
-${opportunities}
+### Unmet needs
+${findings.unmet_needs.map((n) => `- ${n}`).join("\n")}
+
+## Evidence (${evidence.discoveryRelevantCount} discovery-related)
+
+### Themes
+${formatFreq(evidence.themeFrequency)}
+
+### Behaviors
+${formatFreq(evidence.behaviorFrequency)}
+
+### Emotions
+${formatFreq(evidence.emotionFrequency)}
+
+### Segments
+${formatFreq(evidence.segmentBreakdown)}
+
+### Barriers
+${formatFreq(evidence.barrierAnalysis)}
+
+### Root causes
+${formatFreq(evidence.rootCauseFrequency)}
+
+### Unmet needs
+${formatFreq(evidence.unmetNeedFrequency)}
 `;
 }
 

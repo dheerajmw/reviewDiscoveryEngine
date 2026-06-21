@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Review Discovery Engine",
+  title: "Spotify Review Discovery Engine",
   description:
-    "Convert raw Spotify, App Store, and Reddit reviews into structured behavioral insights.",
+    "Fetch and analyze Spotify app reviews from Play Store, App Store, Reddit, and Spotify Community.",
 };
 
 export default function RootLayout({

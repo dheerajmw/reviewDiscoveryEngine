@@ -1,8 +1,13 @@
-import type { InsightResult } from "@/lib/types";
+import type { OpportunityWithEvidence, QuoteEvidence } from "@/lib/types";
 import Icon from "@/components/ui/Icon";
+import type { DrawerSelection } from "./evidence/FindingDetailDrawer";
+import EvidenceMeta from "./evidence/EvidenceMeta";
+import FindingQuoteList from "./evidence/FindingQuoteList";
 
 interface OpportunitiesProps {
-  insights: InsightResult;
+  opportunities: OpportunityWithEvidence[];
+  onOpenDetail: (selection: DrawerSelection) => void;
+  onQuoteClick: (quote: QuoteEvidence) => void;
 }
 
 const IMPACT_CONFIG = [
@@ -32,19 +37,28 @@ function impactConfig(index: number) {
   return IMPACT_CONFIG[Math.min(index, IMPACT_CONFIG.length - 1)];
 }
 
-export default function Opportunities({ insights }: OpportunitiesProps) {
+export default function Opportunities({
+  opportunities,
+  onOpenDetail,
+  onQuoteClick,
+}: OpportunitiesProps) {
   return (
     <section className="space-y-4">
-      <h3 className="px-1 text-base font-semibold text-on-surface">
-        Product opportunities
-      </h3>
+      <div className="px-1">
+        <h3 className="text-base font-semibold text-on-surface">
+          Product opportunities
+        </h3>
+        <p className="mt-1 text-xs text-on-surface-variant">
+          Derived from top unmet needs — each links to supporting review quotes.
+        </p>
+      </div>
       <div className="grid grid-cols-1 gap-gutter md:grid-cols-3">
-        {insights.opportunities.map((opportunity, index) => {
+        {opportunities.map((opportunity, index) => {
           const config = impactConfig(index);
           return (
             <article
               key={opportunity.title}
-              className="group flex cursor-default flex-col rounded-xl border border-outline-variant bg-surface-container-lowest p-6 transition-colors hover:border-primary"
+              className="group stitch-dash-card flex flex-col p-6 transition-colors hover:border-primary"
             >
               <div className="mb-4 flex items-start justify-between">
                 <div
@@ -58,16 +72,46 @@ export default function Opportunities({ insights }: OpportunitiesProps) {
                   {config.tag}
                 </span>
               </div>
-              <h4 className="mb-2 text-lg font-semibold text-on-surface">
-                {opportunity.title}
-              </h4>
+              <button
+                type="button"
+                onClick={() =>
+                  onOpenDetail({ type: "opportunity", finding: opportunity })
+                }
+                className="mb-2 text-left"
+              >
+                <h4 className="text-lg font-semibold text-on-surface group-hover:text-primary">
+                  {opportunity.title}
+                </h4>
+              </button>
               <p className="flex-1 text-sm leading-relaxed text-on-surface-variant">
                 {opportunity.description}
               </p>
-              <div className="mt-6 flex items-center justify-end border-t border-outline-variant pt-4">
-                <Icon
-                  name="chevron_right"
-                  className="text-primary opacity-0 transition-opacity group-hover:opacity-100"
+
+              <div className="mt-4 space-y-3 border-t border-outline-variant pt-4">
+                <div>
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-on-surface-variant">
+                    Driven by
+                  </p>
+                  <ul className="flex flex-wrap gap-1">
+                    {opportunity.supporting_unmet_needs.map((need) => (
+                      <li
+                        key={need}
+                        className="rounded-full bg-secondary-container px-2 py-0.5 text-[10px] text-on-secondary-container"
+                      >
+                        {need}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <EvidenceMeta
+                  evidenceCount={opportunity.evidence_count}
+                  confidence={opportunity.confidence}
+                  sourceDistribution={opportunity.source_distribution}
+                />
+                <FindingQuoteList
+                  quotes={opportunity.quotes}
+                  limit={2}
+                  onQuoteClick={onQuoteClick}
                 />
               </div>
             </article>

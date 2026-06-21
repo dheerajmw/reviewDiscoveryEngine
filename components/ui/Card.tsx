@@ -5,6 +5,7 @@ interface CardProps {
   subtitle?: string;
   children: ReactNode;
   className?: string;
+  variant?: "default" | "flat";
 }
 
 export default function Card({
@@ -12,14 +13,18 @@ export default function Card({
   subtitle,
   children,
   className = "",
+  variant = "default",
 }: CardProps) {
+  const shell =
+    variant === "flat"
+      ? "stitch-dash-card p-6"
+      : "stitch-dash-card p-6";
+
   return (
-    <section
-      className={`rounded-xl border border-outline-variant bg-surface-container-lowest p-6 ${className}`}
-    >
+    <section className={`${shell} ${className}`}>
       {title && (
-        <div className="mb-4">
-          <h3 className="text-base font-semibold text-on-surface">{title}</h3>
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold text-on-surface">{title}</h3>
           {subtitle && (
             <p className="mt-1 text-sm text-on-surface-variant">{subtitle}</p>
           )}

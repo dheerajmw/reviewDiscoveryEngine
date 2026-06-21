@@ -1,8 +1,9 @@
 # Review Discovery Engine — Implementation Plan
 
-> Maps [PROJECT_BLUEPRINT.md](./PROJECT_BLUEPRINT.md) to six build phases.  
+> Maps [PROJECT_BLUEPRINT.md](./PROJECT_BLUEPRINT.md) to seven build phases.  
 > Blueprint phases 4 (Root Cause) and 5 (Opportunity) are combined into **Phase 4: Insight Engine**.  
-> Blueprint phase 6 (Dashboard) maps to **Phase 5: Dashboard UI**.
+> Blueprint phase 6 (Dashboard) maps to **Phase 5: Dashboard UI**.  
+> Blueprint phase 7 (Review Chatbot) maps to **Phase 6: Review Chatbot**.
 
 ---
 
@@ -14,7 +15,7 @@
 | Language | TypeScript | Shared types across pipeline |
 | Styling | Tailwind CSS | Fast iteration on dashboard |
 | CSV parsing | `papaparse` | Browser + server compatible |
-| AI | OpenAI API (`gpt-4o-mini`) | Cost-effective classification at scale |
+| AI | OpenRouter API (`gpt-4o-mini` via OpenAI SDK) | Cost-effective classification + chat at scale |
 | Charts | `recharts` | Simple bar/pie charts for distributions |
 | State (MVP) | React context + in-memory | No DB needed for ~600 reviews |
 
@@ -31,7 +32,9 @@ reviewDiscoveryEngine/
 │   └── api/
 │       ├── classify/route.ts
 │       ├── aggregate/route.ts
-│       └── insights/route.ts
+│       ├── findings/route.ts       # Deterministic research findings (6 PM questions)
+│       ├── insights/route.ts
+│       └── chat/route.ts
 ├── components/
 │   ├── upload/
 │   │   ├── FileUpload.tsx
@@ -42,6 +45,10 @@ reviewDiscoveryEngine/
 │   │   ├── BarrierAnalysis.tsx
 │   │   ├── RootCauses.tsx
 │   │   └── Opportunities.tsx
+│   ├── chat/
+│   │   ├── ChatPanel.tsx
+│   │   ├── ChatMessage.tsx
+│   │   └── SuggestedQuestions.tsx
 │   └── ui/
 │       ├── Card.tsx
 │       ├── ProgressBar.tsx
@@ -51,10 +58,14 @@ reviewDiscoveryEngine/
 │   ├── csv-parser.ts
 │   ├── classify-prompt.ts
 │   ├── aggregation.ts
-│   └── insights-prompt.ts
+│   ├── insights-prompt.ts
+│   ├── chat-context.ts             # Build grounded context from pipeline output
+│   └── chat-prompt.ts
 ├── data/
 │   └── sample-reviews.csv          # Dev fixture (~10 rows)
-├── .env.local                      # OPENAI_API_KEY
+├── docs/
+│   └── review-corpus/              # Fetched review datasets (not app runtime)
+├── .env.local                      # OPENROUTER_API_KEY
 ├── package.json
 └── docs/
 ```
@@ -94,6 +105,33 @@ export interface InsightResult {
   rootCauses: string[];
   discoveryProblems: string[];
   opportunities: { title: string; description: string }[];
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface AnalysisContext {
+  totalReviews: number;
+  summary: string;
+  rootCauses: string[];
+  discoveryProblems: string[];
+  opportunities: { title: string; description: string }[];
+  themeFrequency: AggregationResult["themeFrequency"];
+  segmentBreakdown: AggregationResult["segmentBreakdown"];
+  barrierAnalysis: AggregationResult["barrierAnalysis"];
+  representativeReviews: ClassifiedReview[]; // sampled per top theme
+  sourceBreakdown: Record<string, number>;
+}
+
+export interface ChatResponse {
+  reply: string;
+  citations?: {
+    label: string;
+    count?: number;
+    sources?: string[];
+  }[];
 }
 ```
 
@@ -354,46 +392,227 @@ Write for a PM audience. Be specific to music discovery.
 
 ---
 
-## End-to-End Pipeline Flow
+## Phase 6: Review Chatbot
+
+**Goal:** After analysis completes, users can ask natural-language questions about the **same session's** classified reviews and get grounded answers — e.g. *"Why do users struggle to discover new music?"*
+
+> Maps to blueprint **Phase 7 — Review Chatbot**.  
+> This is a **read-only Q&A layer** on top of existing pipeline output. It does not re-classify or fetch new reviews.
+
+### Why this phase exists
+
+The dashboard shows *what* patterns exist. The chatbot answers *why* and *how* in conversational form, with evidence tied to themes, segments, barriers, and real review snippets — useful for PM interviews, stakeholder walkthroughs, and ad-hoc exploration.
+
+### Architecture
+
+```mermaid
+flowchart TB
+    subgraph pipeline [Completed pipeline session]
+        C[classified reviews]
+        A[aggregation]
+        I[insights]
+    end
+
+    pipeline --> CTX[buildAnalysisContext]
+    CTX --> CTXOUT[AnalysisContext JSON]
+
+    U[User question] --> UI[ChatPanel]
+    UI --> API["POST /api/chat"]
+    CTXOUT --> API
+    H[chat history] --> API
+    API --> LLM[OpenRouter / gpt-4o-mini]
+    LLM --> R[Grounded reply + citations]
+    R --> UI
+```
+
+### Context strategy (MVP)
+
+No vector DB for MVP. Build a compact, grounded context bundle in `lib/chat-context.ts`:
+
+| Context block | Source | Purpose |
+|---------------|--------|---------|
+| Executive summary | `InsightResult.summary` | High-level narrative |
+| Top themes + % | `AggregationResult.themeFrequency` | Quantitative backing |
+| Segments + barriers | aggregation | Who struggles and how |
+| Root causes & problems | `InsightResult` | Pre-synthesized WHY |
+| Opportunities | `InsightResult` | Product angle if asked |
+| Representative reviews | `ClassifiedReview[]` | 5–8 reviews per top 3 themes |
+| Source mix | classified `source` field | Play Store vs Reddit weighting |
+
+**Token budget:** cap representative reviews at ~40–60 items; truncate long review text to ~300 chars. Full corpus stays in client state but only a relevant subset is sent per question (stretch: keyword/theme filter before LLM call).
+
+### Tasks
+
+| # | Task | Details |
+|---|------|---------|
+| 6.1 | `lib/chat-context.ts` | `buildAnalysisContext(classified, aggregation, insights)` → `AnalysisContext` |
+| 6.2 | `lib/chat-prompt.ts` | System prompt: answer **only** from context; cite themes/segments; admit gaps |
+| 6.3 | `app/api/chat/route.ts` | `POST { messages, context }` → `{ reply, citations? }` |
+| 6.4 | Grounding rules | Forbid inventing stats; require referencing theme names or review evidence |
+| 6.5 | `ChatPanel.tsx` | Floating panel or right drawer on dashboard; visible when `pipelineStep === "done"` |
+| 6.6 | `SuggestedQuestions.tsx` | Chips for common PM questions (see below) |
+| 6.7 | `ChatMessage.tsx` | User/assistant bubbles; optional citation pills under assistant messages |
+| 6.8 | Session state | `useState<ChatMessage[]>` in dashboard; reset on re-upload |
+| 6.9 | Loading UX | Typing indicator while `/api/chat` runs |
+| 6.10 | Mock mode | Reuse `USE_MOCK_CLASSIFIER` pattern — rule-based replies from aggregation when no API key |
+
+### Suggested starter questions
+
+- Why do users struggle to discover new music?
+- What are the top discovery barriers?
+- Which user segment complains most about repetition?
+- How do Play Store reviews differ from Reddit?
+- What product opportunities address low novelty?
+- Show evidence for genre lock-in.
+
+### Chat API contract
+
+**Request**
+
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Why do users struggle to discover new music?" }
+  ],
+  "context": { "...AnalysisContext" }
+}
+```
+
+**Response**
+
+```json
+{
+  "reply": "Users struggle primarily because…",
+  "citations": [
+    { "label": "Repetition Fatigue", "count": 228, "sources": ["reddit", "playstore"] }
+  ]
+}
+```
+
+### System prompt (sketch)
+
+```
+You are a product research assistant for a music streaming app.
+Answer ONLY using the provided analysis context (aggregated stats, insights, and sample reviews).
+- Reference specific themes, barriers, segments, and percentages when making claims.
+- Quote or paraphrase representative reviews when giving evidence.
+- If the context does not support an answer, say so clearly.
+- Write for a PM audience: concise, specific, no generic advice.
+- Do not invent statistics or reviews not present in the context.
+```
+
+### UI wireframe (dashboard + chat)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Dashboard (existing sections)                    [Ask AI ◉] │
+├──────────────────────────────────────────────────────────────┤
+│  … Theme chart · Barriers · Root causes · Opportunities …    │
+└──────────────────────────────────────────────────────────────┘
+
+┌─ Chat panel (slide-over) ────────────────────────────────────┐
+│  Ask about your reviews                                      │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │ Why do users struggle to discover new music?            │ │
+│  └─────────────────────────────────────────────────────────┘ │
+│  [Why discovery fails?] [Top barriers?] [Segment pain?]      │
+│                                                              │
+│  Assistant: Based on 1,126 reviews, the dominant barrier…    │
+│  ▸ Repetition Fatigue (38%) · sources: reddit, playstore     │
+│                                                              │
+│  ┌ Type a question… ──────────────────────────────── [Send]┐ │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Acceptance criteria
+
+- [ ] Chat panel only appears after pipeline reaches `done`
+- [ ] Question *"Why do users struggle to discover new music?"* returns answer referencing real top themes/barriers from session
+- [ ] Assistant does not hallucinate review counts or theme names absent from context
+- [ ] Re-upload clears chat history
+- [ ] Works with full `docs/review-corpus/all-reviews.csv` session
+- [ ] API key missing → clear error or mock fallback (consistent with classify/insights)
+
+### Stretch (post-MVP)
+
+| Enhancement | Benefit |
+|-------------|---------|
+| Semantic retrieval (embeddings) | Pick most relevant reviews per question instead of fixed sample |
+| Streaming responses | Better UX for long answers |
+| Export chat transcript | Include in report download |
+| Filter-aware chat | Respect dashboard source/confidence filters in context |
+
+### Estimated effort: **5–7 hours**
+
+---
+
+## End-to-End Pipeline Flow (updated)
 
 ```mermaid
 flowchart LR
-    A[CSV Upload] --> B[Parse RawReview array]
-    B --> C["POST /api/classify"]
+    A[CSV Upload / Corpus] --> B[parseReviewsCsv]
+    B --> R[discovery-relevance pre-check]
+    R --> C["POST /api/classify"]
     C --> D["POST /api/aggregate"]
-    D --> E["POST /api/insights"]
-    E --> F[Dashboard UI]
+    D --> F["POST /api/findings"]
+    F --> E["POST /api/insights"]
+    E --> UI[Dashboard]
+    UI --> G["POST /api/chat"]
+    D --> H[buildAnalysisContext]
+    F --> H
+    E --> H
+    H --> G
 
-    C -.->|batched GPT calls| C
-    E -.->|single GPT call| E
+    C -.->|batched LLM| C
+    E -.->|single LLM interpretation| E
+    F -.->|deterministic| F
+    G -.->|per user message| G
 ```
 
-### Client orchestration (`app/page.tsx`)
+### Client orchestration (`components/upload/UploadSection.tsx`)
 
 ```ts
 async function runPipeline(reviews: RawReview[]) {
   setStep("classifying");
-  const { classified } = await fetch("/api/classify", { method: "POST", body: JSON.stringify({ reviews }) }).then(r => r.json());
+  const { classified } = await classifyAllReviews(reviews, onProgress);
 
   setStep("aggregating");
-  const aggregation = await fetch("/api/aggregate", { method: "POST", body: JSON.stringify({ classified }) }).then(r => r.json());
+  const aggregation = await fetchAggregation(classified);
 
-  setStep("generating insights");
-  const insights = await fetch("/api/insights", { method: "POST", body: JSON.stringify({ aggregation, sampleReviews: classified.slice(0, 30) }) }).then(r => r.json());
+  const findings = await fetchFindings(aggregation);
+
+  setStep("insights");
+  const { interpretation } = await fetchInsights(aggregation, findings);
 
   setStep("done");
-  return { classified, aggregation, insights };
+  return { classified, aggregation, findings, interpretation };
 }
+
+// Dashboard — chat uses full evidence context
+const context = buildAnalysisContext(evidence, findings, interpretation);
 ```
+
+### What each stage produces
+
+| Stage | API / module | Output |
+|-------|----------------|--------|
+| Parse | `lib/csv-parser.ts` | `RawReview[]` |
+| Relevance | `lib/discovery-relevance.ts` | Pre-check + `discovery_relevant` on classify |
+| Classify | `POST /api/classify` | `ClassifiedReview[]` (8 dimensions) |
+| Aggregate | `POST /api/aggregate` | `AggregationResult` — all frequencies, cross-tabs, quotes |
+| Findings | `POST /api/findings` | `ResearchFindings` — 6 PM questions answered |
+| Insights | `POST /api/insights` | `InterpretationResult` — AI narrative on evidence |
+| Dashboard | React state | Evidence sections + Interpretation sections |
+| Chat | `POST /api/chat` | Grounded reply + citations with quotes |
 
 ---
 
 ## Build Order & Dependencies
 
 ```
-Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 ──► Phase 5
-  │            │            │            │            │            │
-  skeleton     data         AI           stats        narrative    visuals
+Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 3b ──► Phase 4 ──► Phase 5 ──► Phase 6
+  │            │            │            │            │            │            │            │
+  skeleton     data         AI           evidence     findings     interpret    visuals      chatbot
 ```
 
 | Phase | Blocked by | Can test with |
@@ -402,8 +621,10 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 | 1 | 0 | `sample-reviews.csv` |
 | 2 | 1 | 10-review subset |
 | 3 | 2 | Mock classified JSON |
-| 4 | 3 | Mock aggregation JSON |
+| 3b (findings) | 3 | Mock aggregation JSON |
+| 4 | 3, 3b | Full evidence + findings |
 | 5 | 4 | Full pipeline |
+| 6 | 5 | Completed session + sample questions |
 
 ---
 
@@ -416,6 +637,8 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 | Slow pipeline UX | Progress bar with batch count; consider streaming partial results |
 | API key exposure | Server-side routes only; never call OpenAI from client |
 | Malformed GPT JSON | Retry once; Zod validation on response shape |
+| Chatbot hallucination | Strict system prompt; context-only answers; citation metadata |
+| Chat context too large | Sample reviews per theme; truncate text; optional retrieval filter |
 
 ---
 
@@ -429,15 +652,18 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 
 | 3 — Aggregation | 3–4 |
 | 4 — Insights | 4–5 |
 | 5 — Dashboard | 6–8 |
-| **Total** | **23–30 hours** |
+| 6 — Review chatbot | 5–7 |
+| **Total** | **28–37 hours** |
 
 ---
 
 ## Definition of Done (MVP)
 
-1. User uploads a CSV with 600 reviews
-2. App classifies all reviews via GPT
+1. User uploads a CSV with 600+ reviews (or `docs/review-corpus/all-reviews.csv`)
+2. App classifies all reviews via LLM
 3. Aggregated theme/segment/barrier stats are computed
 4. AI generates root causes and product opportunities
 5. Dashboard displays all five sections clearly
 6. Entire flow works in a single session without page reload
+7. **Chatbot answers grounded questions** about the analyzed session (e.g. discovery struggles, top barriers, segment differences)
+8. Chat resets on re-upload; answers cite themes/stats from the session, not generic product advice

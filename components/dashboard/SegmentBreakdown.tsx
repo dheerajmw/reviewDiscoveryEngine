@@ -23,14 +23,18 @@ export default function SegmentBreakdown({
 
   if (data.length === 0) {
     return (
-      <Card title="User segments">
+      <Card title="User segments" subtitle="Which segments face different discovery challenges?">
         <p className="text-sm text-on-surface-variant">No segment data available.</p>
       </Card>
     );
   }
 
   return (
-    <Card title="User segments" className="flex flex-col">
+    <Card
+      title="User segments"
+      subtitle="Which user segments experience different discovery challenges?"
+      className="flex flex-col"
+    >
       <div className="relative h-52 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

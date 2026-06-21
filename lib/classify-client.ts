@@ -1,14 +1,21 @@
+import {
+  DEFAULT_CLASSIFY_BATCH_SIZE,
+  estimateGroqClassification,
+  getClassifyBatchDelayMs,
+  getClassifyBatchSize,
+} from "./groq-limits";
 import type { ClassifiedReview, RawReview } from "./types";
 
-// Free tier is ~15 requests/min — keep batches small and spaced out
-export const CLASSIFY_BATCH_SIZE = 5;
-const BATCH_DELAY_MS = 5000;
-const BATCH_RETRY_DELAY_MS = 15000;
+export { DEFAULT_CLASSIFY_BATCH_SIZE as CLASSIFY_BATCH_SIZE };
+export { estimateGroqClassification };
+
+const BATCH_RETRY_DELAY_MS = 15_000;
 const MAX_BATCH_RETRIES = 3;
 
 export interface ClassifyAllResult {
   classified: ClassifiedReview[];
   mock: boolean;
+  warning?: string;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -17,7 +24,7 @@ function sleep(ms: number): Promise<void> {
 
 async function classifyBatch(
   batch: RawReview[],
-): Promise<{ classified: ClassifiedReview[]; mock: boolean }> {
+): Promise<{ classified: ClassifiedReview[]; mock: boolean; warning?: string }> {
   let lastError = "Classification request failed.";
 
   for (let attempt = 0; attempt < MAX_BATCH_RETRIES; attempt++) {
@@ -30,7 +37,12 @@ async function classifyBatch(
     const data = await response.json();
 
     if (response.ok) {
-      return { classified: data.classified, mock: Boolean(data.mock) };
+      return {
+        classified: data.classified,
+        mock: Boolean(data.mock),
+        warning:
+          typeof data.warning === "string" ? data.warning : undefined,
+      };
     }
 
     lastError = data.error ?? lastError;
@@ -50,21 +62,26 @@ export async function classifyAllReviews(
   reviews: RawReview[],
   onProgress?: (completed: number, total: number) => void,
 ): Promise<ClassifyAllResult> {
+  const batchSize = getClassifyBatchSize();
+  const batchDelayMs = getClassifyBatchDelayMs(batchSize);
+
   const classified: ClassifiedReview[] = [];
   let mock = false;
+  let warning: string | undefined;
 
-  for (let i = 0; i < reviews.length; i += CLASSIFY_BATCH_SIZE) {
+  for (let i = 0; i < reviews.length; i += batchSize) {
     if (i > 0) {
-      await sleep(BATCH_DELAY_MS);
+      await sleep(batchDelayMs);
     }
 
-    const batch = reviews.slice(i, i + CLASSIFY_BATCH_SIZE);
+    const batch = reviews.slice(i, i + batchSize);
     const result = await classifyBatch(batch);
 
     classified.push(...result.classified);
     mock = mock || result.mock;
+    warning = warning ?? result.warning;
     onProgress?.(classified.length, reviews.length);
   }
 
-  return { classified, mock };
+  return { classified, mock, warning };
 }

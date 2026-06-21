@@ -52,21 +52,17 @@ export default function AggregationPreview({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm font-medium text-zinc-900">
-        Pattern summary across {aggregation.totalReviews} reviews
+        {aggregation.discoveryRelevantCount} discovery-related of{" "}
+        {aggregation.totalReviews} reviews ({aggregation.excludedCount} excluded)
       </p>
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-        <FrequencyList
-          title="Theme distribution"
-          data={aggregation.themeFrequency}
-        />
-        <FrequencyList
-          title="User segments"
-          data={aggregation.segmentBreakdown}
-        />
-        <FrequencyList
-          title="Discovery barriers"
-          data={aggregation.barrierAnalysis}
-        />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <FrequencyList title="Themes" data={aggregation.themeFrequency} />
+        <FrequencyList title="Behaviors" data={aggregation.behaviorFrequency} />
+        <FrequencyList title="Emotions" data={aggregation.emotionFrequency} />
+        <FrequencyList title="Segments" data={aggregation.segmentBreakdown} />
+        <FrequencyList title="Barriers" data={aggregation.barrierAnalysis} />
+        <FrequencyList title="Root causes" data={aggregation.rootCauseFrequency} />
+        <FrequencyList title="Unmet needs" data={aggregation.unmetNeedFrequency} />
       </div>
     </div>
   );

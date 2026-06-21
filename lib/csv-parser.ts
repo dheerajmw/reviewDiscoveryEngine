@@ -58,6 +58,69 @@ function stripBom(text: string): string {
   return text.replace(/^\uFEFF/, "");
 }
 
+function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
+
+const IMAGE_URL_HEADER_HINTS = [
+  "image",
+  "img",
+  "avatar",
+  "thumb",
+  "photo",
+  "icon",
+  "picture",
+  "profile",
+  "url",
+  "link",
+];
+
+function isLikelyImageOrUrlColumn(header: string, values: string[]): boolean {
+  const key = normalizeHeader(header);
+  if (IMAGE_URL_HEADER_HINTS.some((hint) => key.includes(hint))) {
+    return true;
+  }
+
+  const nonEmpty = values.filter(Boolean);
+  if (nonEmpty.length === 0) return false;
+
+  const urlLike = nonEmpty.filter((value) => isHttpUrl(value)).length;
+  return urlLike / nonEmpty.length >= 0.5;
+}
+
+function inferSourceFromUrl(url: string): string | null {
+  const lower = url.toLowerCase();
+  if (
+    lower.includes("play-lh.googleusercontent.com") ||
+    lower.includes("play.google.com")
+  ) {
+    return "playstore";
+  }
+  if (lower.includes("apps.apple.com") || lower.includes("itunes.apple.com")) {
+    return "appstore";
+  }
+  if (lower.includes("reddit.com")) return "reddit";
+  if (lower.includes("spotify.com")) return "spotify";
+  return null;
+}
+
+function looksLikeSourceValue(value: string): boolean {
+  const lower = value.toLowerCase().trim();
+  if (!lower || isHttpUrl(lower)) return false;
+
+  if (SOURCE_VALUE_HINTS.some((hint) => lower.includes(hint))) return true;
+
+  return (
+    lower === "reddit" ||
+    lower === "spotify" ||
+    lower === "playstore" ||
+    lower === "appstore" ||
+    lower.includes("play store") ||
+    lower.includes("app store") ||
+    lower.includes("google play")
+  );
+}
+
 function normalizeHeader(header: string): string {
   return header
     .trim()
@@ -74,11 +137,19 @@ export function normalizeSource(source: string): string {
   const trimmed = source.trim();
   if (!trimmed) return "unknown";
 
+  if (isHttpUrl(trimmed)) {
+    return inferSourceFromUrl(trimmed) ?? "unknown";
+  }
+
   const key = trimmed.toLowerCase().replace(/\s+/g, " ");
   if (SOURCE_ALIASES[key]) return SOURCE_ALIASES[key];
 
   const compact = key.replace(/\s+/g, "");
   if (SOURCE_ALIASES[compact]) return SOURCE_ALIASES[compact];
+
+  if (compact.length > 40 || compact.includes("/") || compact.includes(".")) {
+    return "unknown";
+  }
 
   return compact || "unknown";
 }
@@ -108,6 +179,11 @@ function headerMatchesPattern(key: string, pattern: string): boolean {
   return false;
 }
 
+function isLikelySourceHeader(header: string): boolean {
+  const key = normalizeHeader(header);
+  return !IMAGE_URL_HEADER_HINTS.some((hint) => key.includes(hint));
+}
+
 function findColumnByPatterns(
   headers: string[],
   patterns: string[],
@@ -118,12 +194,18 @@ function findColumnByPatterns(
   }));
 
   for (const pattern of patterns) {
-    const exact = normalized.find((h) => h.key === pattern);
+    const exact = normalized.find(
+      (h) => h.key === pattern && isLikelySourceHeader(h.original),
+    );
     if (exact) return exact.original;
   }
 
   for (const pattern of patterns) {
-    const fuzzy = normalized.find((h) => headerMatchesPattern(h.key, pattern));
+    const fuzzy = normalized.find(
+      (h) =>
+        isLikelySourceHeader(h.original) &&
+        headerMatchesPattern(h.key, pattern),
+    );
     if (fuzzy) return fuzzy.original;
   }
 
@@ -203,16 +285,12 @@ function findSourceColumnByValues(
   for (const header of headers) {
     const values = rows
       .slice(0, 25)
-      .map((row) => getField(row, header).toLowerCase())
+      .map((row) => getField(row, header))
       .filter(Boolean);
     if (values.length === 0) continue;
+    if (isLikelyImageOrUrlColumn(header, values)) continue;
 
-    const matches = values.filter(
-      (value) =>
-        SOURCE_VALUE_HINTS.some((hint) => value.includes(hint)) ||
-        value.includes("play") ||
-        value.includes("store"),
-    );
+    const matches = values.filter((value) => looksLikeSourceValue(value));
 
     if (matches.length >= Math.max(2, values.length * 0.4)) {
       return header;
@@ -330,8 +408,17 @@ export function parseReviewsCsv(
     if (!text) continue;
 
     const rawSource = sourceColumn ? getField(row, sourceColumn) : "";
+    let source = defaultSource;
+    if (rawSource) {
+      if (isHttpUrl(rawSource)) {
+        source = inferSourceFromUrl(rawSource) ?? defaultSource;
+      } else {
+        const normalized = normalizeSource(rawSource);
+        source = normalized === "unknown" ? defaultSource : normalized;
+      }
+    }
     reviews.push({
-      source: rawSource ? normalizeSource(rawSource) : defaultSource,
+      source,
       text,
     });
   }

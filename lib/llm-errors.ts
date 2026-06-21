@@ -30,13 +30,63 @@ function isRateLimited(error: unknown): boolean {
   );
 }
 
+/** Groq / Cloudflare blocked the request (VPN, region, datacenter IP, firewall). */
+export function isGroqNetworkBlockedError(error: unknown): boolean {
+  const message = getErrorMessage(error).toLowerCase();
+  return (
+    message.includes("network settings") ||
+    message.includes("blocked your network") ||
+    message.includes("groq blocked access from this network")
+  );
+}
+
+export function isGroqAuthError(error: unknown): boolean {
+  if (isGroqNetworkBlockedError(error)) return false;
+
+  const message = getErrorMessage(error).toLowerCase();
+  const status = getErrorStatus(error);
+
+  return (
+    status === 401 ||
+    message.includes("incorrect api key") ||
+    message.includes("invalid api key provided") ||
+    (message.includes("invalid groq_api_key") &&
+      !message.includes("network")) ||
+    (message.includes("unauthorized") && status === 401)
+  );
+}
+
+/** Use rule-based mock when live Groq cannot be reached. */
+export function shouldFallbackToMockOnGroqError(error: unknown): boolean {
+  return isGroqNetworkBlockedError(error) || isGroqAuthError(error);
+}
+
+export function groqFallbackWarning(error: unknown): string {
+  if (isGroqNetworkBlockedError(error)) {
+    return (
+      "Groq blocked access from this network (VPN, region, or firewall). " +
+      "Using demo classification for this run. Try another network or set USE_MOCK_CLASSIFIER=true."
+    );
+  }
+  if (isGroqAuthError(error)) {
+    return (
+      "Groq rejected the API key. Using demo classification for this run. " +
+      "Update GROQ_API_KEY in .env.local or set USE_MOCK_CLASSIFIER=true."
+    );
+  }
+  return "Groq unavailable. Using demo classification for this run.";
+}
+
 export function formatLlmError(error: unknown): string {
   const message = getErrorMessage(error);
   const lower = message.toLowerCase();
   const status = getErrorStatus(error);
 
   if (isRateLimited(error)) {
-    return "OpenRouter rate limit hit. Wait a moment and retry, or test with a smaller CSV. Set USE_MOCK_CLASSIFIER=true to skip the API.";
+    return (
+      "Groq rate limit hit (llama-3.3-70b-versatile: 30 req/min, 12K tok/min). " +
+      "Wait and retry, use sample100.csv (~100 reviews), or set USE_MOCK_CLASSIFIER=true."
+    );
   }
 
   if (
@@ -45,17 +95,28 @@ export function formatLlmError(error: unknown): string {
     lower.includes("credits") ||
     (lower.includes("quota") && lower.includes("exceeded"))
   ) {
-    return "OpenRouter credits exhausted. Add credits at openrouter.ai/settings/credits, or set USE_MOCK_CLASSIFIER=true for demo mode.";
+    return (
+      "Groq daily quota exhausted (free tier: 1K req/day, 100K tok/day). " +
+      "Resume tomorrow, use sample100.csv, or set USE_MOCK_CLASSIFIER=true."
+    );
   }
 
-  if (
-    status === 401 ||
-    status === 403 ||
-    lower.includes("api key") ||
-    lower.includes("unauthorized") ||
-    lower.includes("permission denied")
-  ) {
-    return "Invalid OPENROUTER_API_KEY. Create one at openrouter.ai/keys.";
+  if (isGroqNetworkBlockedError(error)) {
+    return (
+      "Groq blocked access from this network (VPN, region, or firewall). " +
+      "Try a different network, disable VPN, or set USE_MOCK_CLASSIFIER=true for demo mode."
+    );
+  }
+
+  if (isGroqAuthError(error)) {
+    return "Invalid GROQ_API_KEY. Create one at console.groq.com/keys.";
+  }
+
+  if (status === 403) {
+    return (
+      "Groq denied this request (403). Check credits at console.groq.com, " +
+      "or set USE_MOCK_CLASSIFIER=true for demo mode."
+    );
   }
 
   return message;

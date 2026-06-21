@@ -6,6 +6,11 @@ interface LoadingStateProps {
   step: PipelineStep;
   completed?: number;
   total?: number;
+  curationNote?: string;
+  /** Cleanup already finished before this run (e.g. after fetch). */
+  curationComplete?: boolean;
+  /** Show only the cleanup step (post-fetch curation). */
+  curationOnly?: boolean;
 }
 
 const PIPELINE_STEPS: {
@@ -13,24 +18,33 @@ const PIPELINE_STEPS: {
   label: string;
   icon: string;
 }[] = [
-  { id: "parsing", label: "Parsing CSV", icon: "table_view" },
+  { id: "curating", label: "Filtering discovery-relevant reviews", icon: "filter_alt" },
   { id: "classifying", label: "Classifying reviews", icon: "psychology" },
   { id: "aggregating", label: "Aggregating patterns", icon: "hub" },
-  { id: "insights", label: "Generating insights", icon: "auto_awesome" },
+  { id: "saving", label: "Saving to repository", icon: "cloud_upload" },
 ];
 
 function stepStatus(
   current: PipelineStep,
   stepId: PipelineStep,
+  curationComplete?: boolean,
 ): "done" | "active" | "pending" {
   const order: PipelineStep[] = [
-    "parsing",
+    "curating",
     "classifying",
     "aggregating",
-    "insights",
+    "saving",
   ];
+  if (
+    stepId === "curating" &&
+    curationComplete &&
+    current !== "curating"
+  ) {
+    return "done";
+  }
   const currentIdx = order.indexOf(current);
   const stepIdx = order.indexOf(stepId);
+  if (currentIdx === -1) return "pending";
   if (stepIdx < currentIdx) return "done";
   if (stepIdx === currentIdx) return "active";
   return "pending";
@@ -40,25 +54,34 @@ export default function LoadingState({
   step,
   completed = 0,
   total = 0,
+  curationNote,
+  curationComplete = false,
+  curationOnly = false,
 }: LoadingStateProps) {
-  if (!["parsing", "classifying", "aggregating", "insights"].includes(step)) {
+  if (!["curating", "classifying", "aggregating", "saving"].includes(step)) {
     return null;
   }
+
+  const visibleSteps = curationOnly
+    ? PIPELINE_STEPS.filter((pipelineStep) => pipelineStep.id === "curating")
+    : PIPELINE_STEPS;
 
   return (
     <div className="animate-fade-in-up flex flex-col gap-8 py-4">
       <div className="text-center">
         <h2 className="text-xl font-semibold text-on-surface">
-          Processing reviews
+          {curationOnly ? "Cleaning up reviews" : "Processing reviews"}
         </h2>
         <p className="mt-1 text-sm text-on-surface-variant">
-          Running AI classification and insight generation
+          {curationOnly
+            ? "Removing duplicates and off-topic Spotify reviews before analysis"
+            : "Filtering, classifying, and building research findings"}
         </p>
       </div>
 
       <div className="mx-auto w-full max-w-md space-y-4">
-        {PIPELINE_STEPS.map((pipelineStep, index) => {
-          const status = stepStatus(step, pipelineStep.id);
+        {visibleSteps.map((pipelineStep, index) => {
+          const status = stepStatus(step, pipelineStep.id, curationComplete);
           return (
             <div
               key={pipelineStep.id}
@@ -102,11 +125,30 @@ export default function LoadingState({
                     />
                   </div>
                 )}
-                {status === "active" && step !== "classifying" && (
-                  <p className="mt-0.5 text-xs text-on-surface-variant">
-                    In progress…
-                  </p>
+                {status === "active" && step === "curating" && (
+                  <div className="mt-2">
+                    <ProgressBar completed={0} total={1} shimmer />
+                    {curationNote && (
+                      <p className="mt-1.5 text-xs text-on-surface-variant">
+                        {curationNote}
+                      </p>
+                    )}
+                  </div>
                 )}
+                {status === "active" &&
+                  step !== "classifying" &&
+                  step !== "curating" && (
+                    <p className="mt-0.5 text-xs text-on-surface-variant">
+                      In progress…
+                    </p>
+                  )}
+                {(status === "done" || curationComplete) &&
+                  pipelineStep.id === "curating" &&
+                  curationNote && (
+                    <p className="mt-0.5 text-xs text-on-surface-variant">
+                      {curationNote}
+                    </p>
+                  )}
               </div>
             </div>
           );

@@ -2,30 +2,25 @@ import {
   buildClassifyUserPrompt,
   CLASSIFY_SYSTEM_PROMPT,
 } from "./classify-prompt";
+import { mergeClassifications } from "./classify-normalize";
 import { formatLlmError, isRetryableRateLimit } from "./llm-errors";
 import {
-  createOpenRouterClient,
+  createGroqClient,
   generateJsonCompletion,
-} from "./openrouter-client";
-import type { ClassifiedReview, RawReview } from "./types";
+} from "./groq-client";
+import { buildTaxonomyReport } from "./taxonomy";
+import type { ClassifiedReview, RawReview, TaxonomyReport } from "./types";
 
-const DEFAULT_CONFIDENCE = 0.7;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 5000;
 
-interface ClassificationItem {
-  theme?: string;
-  behavior?: string;
-  emotion?: string;
-  segment?: string;
-  barrier?: string;
-  root_cause?: string;
-  unmet_need?: string;
-  confidence?: number;
+interface ClassificationResponse {
+  classifications?: Record<string, unknown>[];
 }
 
-interface ClassificationResponse {
-  classifications?: ClassificationItem[];
+export interface ClassifyResult {
+  classified: ClassifiedReview[];
+  taxonomyReport: TaxonomyReport;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -57,51 +52,11 @@ function extractJson(content: string): ClassificationResponse {
   return JSON.parse(jsonText) as ClassificationResponse;
 }
 
-function normalizeConfidence(value: unknown): number {
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    return DEFAULT_CONFIDENCE;
-  }
-  return Math.min(1, Math.max(0, value));
-}
-
-function normalizeItem(
-  item: ClassificationItem,
-  review: RawReview,
-): ClassifiedReview {
-  return {
-    source: review.source,
-    text: review.text,
-    theme: item.theme?.trim() || "Other",
-    behavior: item.behavior?.trim() || "Unknown",
-    emotion: item.emotion?.trim() || "Unknown",
-    segment: item.segment?.trim() || "Casual",
-    barrier: item.barrier?.trim() || "Other",
-    root_cause: item.root_cause?.trim() || "Unknown",
-    unmet_need: item.unmet_need?.trim() || "Unknown",
-    confidence: normalizeConfidence(item.confidence),
-  };
-}
-
-function mergeClassifications(
-  items: ClassificationItem[],
-  reviews: RawReview[],
-): ClassifiedReview[] {
-  if (items.length !== reviews.length) {
-    throw new Error(
-      `Expected ${reviews.length} classifications, got ${items.length}.`,
-    );
-  }
-
-  return reviews.map((review, index) =>
-    normalizeItem(items[index] ?? {}, review),
-  );
-}
-
 async function requestClassifications(
   apiKey: string,
   reviews: RawReview[],
-): Promise<ClassifiedReview[]> {
-  const client = createOpenRouterClient(apiKey);
+): Promise<ClassifyResult> {
+  const client = createGroqClient(apiKey);
   const content = await generateJsonCompletion(
     client,
     CLASSIFY_SYSTEM_PROMPT,
@@ -114,13 +69,21 @@ async function requestClassifications(
     throw new Error("Model response missing classifications array.");
   }
 
-  return mergeClassifications(parsed.classifications, reviews);
+  const { classified, violations } = mergeClassifications(
+    parsed.classifications,
+    reviews,
+  );
+
+  return {
+    classified,
+    taxonomyReport: buildTaxonomyReport(classified, violations),
+  };
 }
 
 export async function classifyReviews(
   reviews: RawReview[],
   apiKey: string,
-): Promise<ClassifiedReview[]> {
+): Promise<ClassifyResult> {
   try {
     try {
       return await withRetry(() => requestClassifications(apiKey, reviews));
@@ -138,3 +101,5 @@ export async function classifyReviews(
     throw new Error(formatLlmError(error));
   }
 }
+
+export { CLASSIFY_SYSTEM_PROMPT, buildClassifyUserPrompt };

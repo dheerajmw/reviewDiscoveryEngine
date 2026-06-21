@@ -1,0 +1,351 @@
+{
+  "sampleSize": 20,
+  "discoveryRelevantInSample": 5,
+  "precisionScope": "discovery_relevant reviews only",
+  "before": {
+    "classifier": "baseline (keyword theme + inheritance chains + keyword discovery filter)",
+    "label": "before",
+    "buckets": [
+      {
+        "bucket": "Repetition Fatigue",
+        "field": "theme",
+        "assignedCount": 1,
+        "truePositive": 1,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "meetsTarget70": true
+      },
+      {
+        "bucket": "Genre Lock-In",
+        "field": "theme",
+        "assignedCount": 0,
+        "truePositive": 0,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": null,
+        "precisionLenient": null,
+        "meetsTarget70": false
+      },
+      {
+        "bucket": "Discovery Control",
+        "field": "unmet_need",
+        "assignedCount": 0,
+        "truePositive": 0,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": null,
+        "precisionLenient": null,
+        "meetsTarget70": false
+      },
+      {
+        "bucket": "Similarity-Based Reinforcement",
+        "field": "root_cause",
+        "assignedCount": 1,
+        "truePositive": 1,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "meetsTarget70": true
+      },
+      {
+        "bucket": "Adjustable Novelty",
+        "field": "unmet_need",
+        "assignedCount": 1,
+        "truePositive": 1,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": 1,
+        "precisionLenient": 1,
+        "meetsTarget70": true
+      }
+    ],
+    "averageStrictPrecision": 1,
+    "bucketsMeeting70Target": 3
+  },
+  "after": {
+    "classifier": "LLM (gpt-4o-mini via OpenRouter)",
+    "label": "after",
+    "buckets": [
+      {
+        "bucket": "Repetition Fatigue",
+        "field": "theme",
+        "assignedCount": 1,
+        "truePositive": 0,
+        "weakMatch": 0,
+        "falsePositive": 1,
+        "precisionStrict": 0,
+        "precisionLenient": 0,
+        "meetsTarget70": false
+      },
+      {
+        "bucket": "Genre Lock-In",
+        "field": "theme",
+        "assignedCount": 0,
+        "truePositive": 0,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": null,
+        "precisionLenient": null,
+        "meetsTarget70": false
+      },
+      {
+        "bucket": "Discovery Control",
+        "field": "unmet_need",
+        "assignedCount": 1,
+        "truePositive": 0,
+        "weakMatch": 0,
+        "falsePositive": 1,
+        "precisionStrict": 0,
+        "precisionLenient": 0,
+        "meetsTarget70": false
+      },
+      {
+        "bucket": "Similarity-Based Reinforcement",
+        "field": "root_cause",
+        "assignedCount": 0,
+        "truePositive": 0,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": null,
+        "precisionLenient": null,
+        "meetsTarget70": false
+      },
+      {
+        "bucket": "Adjustable Novelty",
+        "field": "unmet_need",
+        "assignedCount": 0,
+        "truePositive": 0,
+        "weakMatch": 0,
+        "falsePositive": 0,
+        "precisionStrict": null,
+        "precisionLenient": null,
+        "meetsTarget70": false
+      }
+    ],
+    "averageStrictPrecision": 0,
+    "bucketsMeeting70Target": 0,
+    "confidenceHistogram": {
+      "high": 0,
+      "medium": 16,
+      "low": 4,
+      "total": 20,
+      "buckets": [
+        {
+          "range": "0.85-0.95 (high)",
+          "count": 0,
+          "pct": 0
+        },
+        {
+          "range": "0.60-0.84 (medium)",
+          "count": 16,
+          "pct": 80
+        },
+        {
+          "range": "<0.60 (low)",
+          "count": 4,
+          "pct": 20
+        }
+      ]
+    },
+    "fieldConfidenceHistogram": {
+      "theme": {
+        "high": 8,
+        "medium": 9,
+        "low": 3,
+        "total": 20,
+        "buckets": [
+          {
+            "range": "0.85-0.95 (high)",
+            "count": 8,
+            "pct": 40
+          },
+          {
+            "range": "0.60-0.84 (medium)",
+            "count": 9,
+            "pct": 45
+          },
+          {
+            "range": "<0.60 (low)",
+            "count": 3,
+            "pct": 15
+          }
+        ]
+      },
+      "behavior": {
+        "high": 0,
+        "medium": 15,
+        "low": 5,
+        "total": 20,
+        "buckets": [
+          {
+            "range": "0.85-0.95 (high)",
+            "count": 0,
+            "pct": 0
+          },
+          {
+            "range": "0.60-0.84 (medium)",
+            "count": 15,
+            "pct": 75
+          },
+          {
+            "range": "<0.60 (low)",
+            "count": 5,
+            "pct": 25
+          }
+        ]
+      },
+      "emotion": {
+        "high": 10,
+        "medium": 8,
+        "low": 2,
+        "total": 20,
+        "buckets": [
+          {
+            "range": "0.85-0.95 (high)",
+            "count": 10,
+            "pct": 50
+          },
+          {
+            "range": "0.60-0.84 (medium)",
+            "count": 8,
+            "pct": 40
+          },
+          {
+            "range": "<0.60 (low)",
+            "count": 2,
+            "pct": 10
+          }
+        ]
+      },
+      "segment": {
+        "high": 1,
+        "medium": 11,
+        "low": 8,
+        "total": 20,
+        "buckets": [
+          {
+            "range": "0.85-0.95 (high)",
+            "count": 1,
+            "pct": 5
+          },
+          {
+            "range": "0.60-0.84 (medium)",
+            "count": 11,
+            "pct": 55
+          },
+          {
+            "range": "<0.60 (low)",
+            "count": 8,
+            "pct": 40
+          }
+        ]
+      },
+      "barrier": {
+        "high": 0,
+        "medium": 12,
+        "low": 8,
+        "total": 20,
+        "buckets": [
+          {
+            "range": "0.85-0.95 (high)",
+            "count": 0,
+            "pct": 0
+          },
+          {
+            "range": "0.60-0.84 (medium)",
+            "count": 12,
+            "pct": 60
+          },
+          {
+            "range": "<0.60 (low)",
+            "count": 8,
+            "pct": 40
+          }
+        ]
+      },
+      "root_cause": {
+        "high": 2,
+        "medium": 10,
+        "low": 8,
+        "total": 20,
+        "buckets": [
+          {
+            "range": "0.85-0.95 (high)",
+            "count": 2,
+            "pct": 10
+          },
+          {
+            "range": "0.60-0.84 (medium)",
+            "count": 10,
+            "pct": 50
+          },
+          {
+            "range": "<0.60 (low)",
+            "count": 8,
+            "pct": 40
+          }
+        ]
+      },
+      "unmet_need": {
+        "high": 1,
+        "medium": 11,
+        "low": 8,
+        "total": 20,
+        "buckets": [
+          {
+            "range": "0.85-0.95 (high)",
+            "count": 1,
+            "pct": 5
+          },
+          {
+            "range": "0.60-0.84 (medium)",
+            "count": 11,
+            "pct": 55
+          },
+          {
+            "range": "<0.60 (low)",
+            "count": 8,
+            "pct": 40
+          }
+        ]
+      }
+    },
+    "flatConfidenceWarning": null
+  },
+  "delta": [
+    {
+      "bucket": "Repetition Fatigue",
+      "beforeStrict": 1,
+      "afterStrict": 0,
+      "improvement": -1
+    },
+    {
+      "bucket": "Genre Lock-In",
+      "beforeStrict": null,
+      "afterStrict": null,
+      "improvement": null
+    },
+    {
+      "bucket": "Discovery Control",
+      "beforeStrict": null,
+      "afterStrict": 0,
+      "improvement": null
+    },
+    {
+      "bucket": "Similarity-Based Reinforcement",
+      "beforeStrict": 1,
+      "afterStrict": null,
+      "improvement": null
+    },
+    {
+      "bucket": "Adjustable Novelty",
+      "beforeStrict": 1,
+      "afterStrict": null,
+      "improvement": null
+    }
+  ],
+  "targetMet": false
+}

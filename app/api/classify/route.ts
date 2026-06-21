@@ -1,20 +1,37 @@
 import { NextResponse } from "next/server";
-import { classifyReviewsMock, isMockClassifierEnabled } from "@/lib/classify-mock";
+import {
+  classifyReviewsMockWithReport,
+  isClassificationAuditEnabled,
+  isMockClassifierEnabled,
+} from "@/lib/classify-mock";
 import { classifyReviews } from "@/lib/classify";
-import { getOpenRouterApiKey } from "@/lib/openrouter-config";
+import {
+  buildClassificationAuditRecords,
+  buildConfidenceHistogram,
+} from "@/lib/classification-audit";
+import { getGroqApiKey, GROQ_MODEL } from "@/lib/groq-config";
+import {
+  groqFallbackWarning,
+  shouldFallbackToMockOnGroqError,
+} from "@/lib/llm-errors";
+import { MAX_CLASSIFY_BATCH_SIZE } from "@/lib/groq-limits";
 import type { RawReview } from "@/lib/types";
-
-const MAX_BATCH_SIZE = 20;
+import {
+  lookupClassificationCache,
+  mergeCachedClassifications,
+  saveClassificationCache,
+} from "@/services/classification-cache-service";
 
 export async function POST(request: Request) {
-  let body: { reviews?: RawReview[] };
+  let body: { reviews?: RawReview[]; audit?: boolean };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { reviews } = body;
+  const { reviews, audit: auditRequested } = body;
+  const auditEnabled = auditRequested === true || isClassificationAuditEnabled();
   if (!Array.isArray(reviews) || reviews.length === 0) {
     return NextResponse.json(
       { error: "Request must include a non-empty reviews array." },
@@ -22,9 +39,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (reviews.length > MAX_BATCH_SIZE) {
+  if (reviews.length > MAX_CLASSIFY_BATCH_SIZE) {
     return NextResponse.json(
-      { error: `Maximum ${MAX_BATCH_SIZE} reviews per request.` },
+      { error: `Maximum ${MAX_CLASSIFY_BATCH_SIZE} reviews per request.` },
       { status: 400 },
     );
   }
@@ -39,24 +56,77 @@ export async function POST(request: Request) {
   }
 
   if (isMockClassifierEnabled()) {
-    const classified = classifyReviewsMock(reviews);
-    return NextResponse.json({ classified, mock: true });
+    const { classified, taxonomyReport } = classifyReviewsMockWithReport(reviews);
+    const response: Record<string, unknown> = { classified, taxonomyReport, mock: true };
+    if (auditEnabled) {
+      response.audit = buildClassificationAuditRecords(classified);
+      response.confidenceHistogram = buildConfidenceHistogram(classified);
+    }
+    return NextResponse.json(response);
   }
 
-  const apiKey = getOpenRouterApiKey();
+  const apiKey = getGroqApiKey();
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
-          "OPENROUTER_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
+          "GROQ_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
       },
       { status: 500 },
     );
   }
 
   try {
-    const classified = await classifyReviews(reviews, apiKey);
-    return NextResponse.json({ classified, mock: false });
+    const cacheLookup = await lookupClassificationCache(reviews, GROQ_MODEL);
+    let taxonomyReport;
+    let freshlyClassified: Awaited<ReturnType<typeof classifyReviews>>["classified"] = [];
+    let groqFallback = false;
+    let warning: string | undefined;
+
+    if (cacheLookup.missReviews.length > 0) {
+      try {
+        const result = await classifyReviews(cacheLookup.missReviews, apiKey);
+        freshlyClassified = result.classified;
+        taxonomyReport = result.taxonomyReport;
+        await saveClassificationCache(freshlyClassified, GROQ_MODEL);
+      } catch (error) {
+        if (!shouldFallbackToMockOnGroqError(error)) {
+          throw error;
+        }
+        const mockResult = classifyReviewsMockWithReport(cacheLookup.missReviews);
+        freshlyClassified = mockResult.classified;
+        taxonomyReport = mockResult.taxonomyReport;
+        groqFallback = true;
+        warning = groqFallbackWarning(error);
+      }
+    }
+
+    const classified = mergeCachedClassifications(
+      reviews,
+      cacheLookup.hits,
+      cacheLookup.missIndices,
+      freshlyClassified,
+    );
+
+    const response: Record<string, unknown> = {
+      classified,
+      taxonomyReport: taxonomyReport ?? null,
+      mock: groqFallback,
+      cache: {
+        hits: cacheLookup.hits.size,
+        misses: cacheLookup.missReviews.length,
+        total: reviews.length,
+      },
+    };
+    if (groqFallback) {
+      response.groqFallback = true;
+      response.warning = warning;
+    }
+    if (auditEnabled) {
+      response.audit = buildClassificationAuditRecords(classified);
+      response.confidenceHistogram = buildConfidenceHistogram(classified);
+    }
+    return NextResponse.json(response);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Classification failed.";
