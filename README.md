@@ -1,6 +1,6 @@
-# Spotify Discovery Review Intelligence Engine
+# ReviewLens
 
-A Next.js web app that converts **Spotify-related reviews** from public sources into **evidence-backed PM research** — structured classification, deterministic findings, quote-linked dashboards, exports, and a grounded chat assistant.
+Spotify review intelligence for product managers — fetch public reviews, curate discovery-related evidence, classify with Gemini, and explore findings in an interactive dashboard.
 
 **Scope:** Music discovery, recommendations, playlists, repetition, and exploration. Not billing, login, crashes, or generic app praise.
 
@@ -35,7 +35,7 @@ The pipeline is designed to answer these six PM assignment questions:
 - Discovery outcome (`successful` / `failed` / `neutral` / `unknown`) and user-goal hints
 - Keeps **all** unique reviews for audit; only `discovery_relevant` rows proceed to classification
 
-### Research-grade classification (Groq or mock)
+### Research-grade classification (Gemini or mock)
 
 Five-step analyst flow per review:
 
@@ -64,7 +64,7 @@ Classification is batched, rate-limited, and **cached in Turso** by content hash
 
 ### Demo mode
 
-- `USE_MOCK_CLASSIFIER=true` or automatic fallback when Groq is unavailable
+- `USE_MOCK_CLASSIFIER=true` or automatic fallback when Gemini is unavailable
 - Sidebar indicator when demo/mock classification is active
 
 ---
@@ -138,7 +138,7 @@ If cleanup finds zero discovery-relevant reviews: `curation_empty` → guided re
 | Layer | Mechanism | Auditable? |
 |-------|-----------|------------|
 | **Aggregation & findings** | Deterministic counts and quote linking | Yes |
-| **Classification** | Groq LLM (or rule-based mock) with extracted evidence | Per-review quotes + confidence |
+| **Classification** | Gemini LLM (or rule-based mock) with extracted evidence | Per-review quotes + confidence |
 | **Chat** | LLM grounded in saved evidence context | Citations from corpus |
 
 There is no separate LLM “insights” API — narrative summaries come from **findings + dashboard**, not a second generative pass.
@@ -148,7 +148,7 @@ There is no separate LLM “insights” API — narrative summaries come from **
 ## Tech stack
 
 - **Framework:** Next.js 16 (App Router), React 19, TypeScript
-- **LLM:** Groq (`llama-3.3-70b-versatile`) for classification and chat
+- **LLM:** Google Gemini (`gemini-2.0-flash` by default) for classification and chat
 - **Database:** Turso (libSQL) — runs, reviews, classifications, quote cache
 - **Styling:** Tailwind CSS v4
 
@@ -159,7 +159,7 @@ There is no separate LLM “insights” API — narrative summaries come from **
 ### Prerequisites
 
 - Node.js 20+
-- [Groq API key](https://console.groq.com) (optional if using mock mode)
+- [Gemini API key](https://aistudio.google.com/apikey) (optional if using mock mode)
 - Turso database (optional — defaults to local `file:data/research.db`)
 
 ### Setup
@@ -167,7 +167,7 @@ There is no separate LLM “insights” API — narrative summaries come from **
 ```bash
 npm install
 cp .env.local.example .env.local
-# Edit .env.local — at minimum set GROQ_API_KEY for live classification
+# Edit .env.local — at minimum set GEMINI_API_KEY for live classification
 npm run dev
 ```
 
@@ -198,8 +198,9 @@ See [`.env.local.example`](.env.local.example). Key variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `GROQ_API_KEY` | Live LLM classification and chat |
-| `GROQ_MODEL` | Model slug (default `llama-3.3-70b-versatile`) |
+| `GEMINI_API_KEY` | Live LLM classification and chat |
+| `GEMINI_MODEL` | Model slug (default `gemini-2.0-flash`) |
+| `GEMINI_DAILY_TOKEN_BUDGET` | Optional cap for quota-split UI (default `1000000`) |
 | `USE_MOCK_CLASSIFIER` | `true` = rule-based demo mode |
 | `TURSO_DATABASE_URL` | Research repository (local file or remote) |
 | `TURSO_AUTH_TOKEN` | Required for remote Turso |

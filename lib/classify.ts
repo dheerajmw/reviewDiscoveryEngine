@@ -5,9 +5,9 @@ import {
 import { mergeClassifications } from "./classify-normalize";
 import { formatLlmError, isRetryableRateLimit } from "./llm-errors";
 import {
-  createGroqClient,
+  createGeminiClient,
   generateJsonCompletion,
-} from "./groq-client";
+} from "./gemini-client";
 import { buildTaxonomyReport } from "./taxonomy";
 import type { ClassifiedReview, RawReview, TaxonomyReport } from "./types";
 
@@ -56,7 +56,7 @@ async function requestClassifications(
   apiKey: string,
   reviews: RawReview[],
 ): Promise<ClassifyResult> {
-  const client = createGroqClient(apiKey);
+  const client = createGeminiClient(apiKey);
   const content = await generateJsonCompletion(
     client,
     CLASSIFY_SYSTEM_PROMPT,

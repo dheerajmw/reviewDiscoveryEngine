@@ -1,3 +1,4 @@
+import { PLATFORM_NAME } from "@/lib/brand";
 import Icon from "@/components/ui/Icon";
 import ReviewVolumeGuidance from "./ReviewVolumeGuidance";
 
@@ -20,7 +21,7 @@ export default function FetchHeroIntro() {
             <Icon name="podcasts" className="text-2xl text-primary" />
           </div>
           <span className="text-sm font-semibold uppercase tracking-wider text-primary">
-            Spotify Discovery Engine
+            {PLATFORM_NAME}
           </span>
         </div>
 

@@ -1,3 +1,4 @@
+import { PLATFORM_NAME } from "@/lib/brand";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import SidebarDemoFooter from "./SidebarDemoFooter";
@@ -30,7 +31,7 @@ export default function AppSidebar({
         </div>
         <div>
           <p className="text-sm font-semibold leading-none text-primary">
-            Spotify Discovery
+            {PLATFORM_NAME}
           </p>
           <p className="mt-1 text-[10px] uppercase tracking-widest text-outline">
             Review intelligence

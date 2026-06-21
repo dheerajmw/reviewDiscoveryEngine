@@ -1,4 +1,4 @@
-# Google Stitch Prompt — Review Discovery Engine
+# Google Stitch Prompt — ReviewLens
 
 > Paste the entire **PROMPT** section below into [Google Stitch](https://stitch.withgoogle.com).
 > No character limit — this is the full spec.
@@ -7,7 +7,7 @@
 
 ## PROMPT (copy from here)
 
-Design the complete frontend UI for **Review Discovery Engine** — a single-page web app that helps product managers analyze music-streaming app reviews and turn them into actionable discovery insights.
+Design the complete frontend UI for **ReviewLens** — a single-page web app that helps product managers analyze music-streaming app reviews and turn them into actionable discovery insights.
 
 The UI must feel **simple, clear, and calm**. No clutter. No gradients. No glassmorphism. No decorative illustrations. White space is the primary design tool. Every screen should be understandable in 3 seconds.
 
@@ -255,7 +255,7 @@ idle → uploaded → parsing → classifying → aggregating → insights → d
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Review Discovery Engine                                    │
+│  ReviewLens                                    │
 │  Upload a CSV of Spotify, App Store, or Reddit reviews…    │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐   │
@@ -327,7 +327,7 @@ Optional minimal step indicator above:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Review Discovery Engine                                    │
+│  ReviewLens                                    │
 │  Upload a CSV of Spotify, App Store, or Reddit reviews…    │
 │                                                             │
 │  Dashboard                          [Download] [JSON] [↑]  │

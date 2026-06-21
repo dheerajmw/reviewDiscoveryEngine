@@ -6,7 +6,7 @@ import { fetchAggregation } from "@/lib/aggregate-client";
 import { curateAllReviews } from "@/lib/curate-client";
 import {
   classifyAllReviews,
-  estimateGroqClassification,
+  estimateLlmClassification,
 } from "@/lib/classify-client";
 import { fetchFindings } from "@/lib/findings-client";
 import { persistAnalysisRun } from "@/lib/runs-client";
@@ -77,9 +77,9 @@ export default function UploadSection() {
     !isCurationEmpty &&
     !isAnalyzing;
 
-  const groqEstimate =
+  const llmEstimate =
     curatedReviews && !mockClassifierEnabled
-      ? estimateGroqClassification(curatedReviews.length)
+      ? estimateLlmClassification(curatedReviews.length)
       : null;
 
   const resetAll = useCallback((options?: { message?: string }) => {
@@ -389,7 +389,7 @@ export default function UploadSection() {
                     <UploadPreview reviews={curatedReviews} />
                   </div>
 
-                  {groqEstimate?.exceedsDailyTokenQuota ? (
+                  {llmEstimate?.exceedsDailyTokenQuota ? (
                     <QuotaSplitPanel
                       reviews={curatedReviews}
                       curationStats={curationStats}
@@ -398,27 +398,27 @@ export default function UploadSection() {
                     />
                   ) : null}
 
-                  {groqEstimate && !groqEstimate.exceedsDailyTokenQuota && (
+                  {llmEstimate && !llmEstimate.exceedsDailyTokenQuota && (
                     <p className="text-xs text-on-surface-variant">
-                      Live LLM run: ~{groqEstimate.batches} Groq requests, ~
-                      {groqEstimate.estimatedMinutes} min (throttled for 12K
-                      tok/min).
+                      Live LLM run: ~{llmEstimate.batches} Gemini requests, ~
+                      {llmEstimate.estimatedMinutes} min (throttled for rate
+                      limits).
                     </p>
                   )}
 
                   <button
                     type="button"
                     onClick={handleAnalyze}
-                    disabled={Boolean(groqEstimate?.exceedsDailyTokenQuota)}
+                    disabled={Boolean(llmEstimate?.exceedsDailyTokenQuota)}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary shadow-sm transition-all hover:shadow-lg hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Icon name="analytics" />
                     Analyze &amp; Save to Repository
                   </button>
 
-                  {groqEstimate?.exceedsDailyTokenQuota ? (
+                  {llmEstimate?.exceedsDailyTokenQuota ? (
                     <p className="text-center text-xs text-on-surface-variant">
-                      Full analysis is disabled while over the daily Groq limit.
+                      Full analysis is disabled while over the daily Gemini token budget.
                       Split and save parts above, then analyze one part per day
                       from the Research Repository.
                     </p>

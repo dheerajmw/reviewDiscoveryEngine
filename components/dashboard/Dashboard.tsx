@@ -1,6 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  EXPORT_REPORT_BASENAME,
+  PLATFORM_ASSISTANT_NAME,
+} from "@/lib/brand";
 import { filterDiscoveryReviews } from "@/lib/analysis-modes";
 import { aggregateReviewSubset } from "@/lib/aggregation";
 import { buildAnalysisContext } from "@/lib/chat-context";
@@ -162,7 +166,7 @@ export default function Dashboard({
     );
     downloadFile(
       JSON.stringify(report, null, 2),
-      "review-discovery-report.json",
+      `${EXPORT_REPORT_BASENAME}.json`,
       "application/json",
     );
   };
@@ -170,7 +174,7 @@ export default function Dashboard({
   const handleExportMarkdown = () => {
     downloadFile(
       buildReportMarkdown(filteredEvidence, filteredFindings),
-      "review-discovery-report.md",
+      `${EXPORT_REPORT_BASENAME}.md`,
       "text/markdown",
     );
   };
@@ -441,7 +445,7 @@ export default function Dashboard({
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-on-primary shadow-lg transition-all hover:scale-105 hover:opacity-90 active:scale-95"
       >
         <Icon name="forum" filled />
-        <span className="hidden sm:inline">Spotify Discovery Assistant</span>
+        <span className="hidden sm:inline">{PLATFORM_ASSISTANT_NAME}</span>
       </button>
 
       <ChatPanel

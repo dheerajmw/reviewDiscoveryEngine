@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { estimateGroqClassification } from "@/lib/classify-client";
-import { GROQ_RATE_LIMITS } from "@/lib/groq-limits";
+import { estimateLlmClassification } from "@/lib/classify-client";
+import { LLM_RATE_LIMITS } from "@/lib/llm-limits";
 import { persistQueuedBatches } from "@/lib/runs-client";
 import {
   buildSplitDatasetName,
@@ -28,7 +28,7 @@ export default function QuotaSplitPanel({
   onSaved,
   onError,
 }: QuotaSplitPanelProps) {
-  const estimate = estimateGroqClassification(reviews.length);
+  const estimate = estimateLlmClassification(reviews.length);
   const splitOptions = useMemo(() => getSplitOptions(reviews.length), [reviews.length]);
   const recommendedParts =
     splitOptions.find((option) => option.allWithinQuota)?.parts ??
@@ -86,7 +86,7 @@ export default function QuotaSplitPanel({
             </p>
             <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
               Each part is queued as a pending run. Analyze one part per day from
-              the repository to stay within the Groq free-tier limit.
+              the repository to stay within your Gemini token budget.
             </p>
             <Link
               href="/history"
@@ -110,11 +110,11 @@ export default function QuotaSplitPanel({
       <div className="flex items-start gap-2">
         <Icon name="warning" className="mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="font-medium">Exceeds Groq free-tier daily limit</p>
+          <p className="font-medium">Exceeds Gemini daily token budget</p>
           <p className="mt-1 text-xs leading-relaxed">
             {reviews.length.toLocaleString()} reviews needs ~
             {estimate.estimatedTokens.toLocaleString()} tokens/day (limit{" "}
-            {GROQ_RATE_LIMITS.tokensPerDay.toLocaleString()}). Split into smaller
+            {LLM_RATE_LIMITS.tokensPerDay.toLocaleString()}). Split into smaller
             batches and save each part to the repository — analyze one part per
             day.
           </p>
@@ -192,7 +192,7 @@ export default function QuotaSplitPanel({
           <p className="mt-2 text-[11px] leading-relaxed opacity-90">
             Alternatively: enable{" "}
             <code className="font-mono">USE_MOCK_CLASSIFIER=true</code> for demo
-            mode without Groq tokens.
+            mode without Gemini tokens.
           </p>
         </div>
       </div>

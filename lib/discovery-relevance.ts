@@ -4,9 +4,9 @@ import {
 } from "./discovery-relevance-prompt";
 import { formatLlmError } from "./llm-errors";
 import {
-  createGroqClient,
+  createGeminiClient,
   generateJsonCompletion,
-} from "./groq-client";
+} from "./gemini-client";
 import type { DiscoveryRelevanceAssessment, RawReview } from "./types";
 
 const EXCLUDE_PATTERNS = [
@@ -90,7 +90,7 @@ export async function assessDiscoveryRelevanceBatch(
   apiKey: string,
 ): Promise<DiscoveryRelevanceAssessment[]> {
   try {
-    const client = createGroqClient(apiKey);
+    const client = createGeminiClient(apiKey);
     const content = await generateJsonCompletion(
       client,
       DISCOVERY_RELEVANCE_SYSTEM_PROMPT,

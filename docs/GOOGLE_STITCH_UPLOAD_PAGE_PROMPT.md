@@ -7,7 +7,7 @@
 
 ## PROMPT (copy from here)
 
-Design the complete **Fetch & Analyze** page for **Review Discovery Engine** — a research tool that scrapes live reviews from app stores and forums, or imports CSV / saved corpus data, then classifies them with AI and saves analysis runs to a repository.
+Design the complete **Fetch & Analyze** page for **ReviewLens** — a research tool that scrapes live reviews from app stores and forums, or imports CSV / saved corpus data, then classifies them with AI and saves analysis runs to a repository.
 
 The UI must feel **professional, calm, and modern** — Material-inspired surfaces with a soft indigo primary (`#4648d4`). Not zinc-minimal like the old spec; use the token palette below. White space and clear hierarchy matter. Subtle motion only — no heavy gradients, glassmorphism, or decorative illustrations.
 
@@ -93,7 +93,7 @@ Two-column layout. **Left column is fixed** in the viewport while the right colu
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  [Logo] Review Discovery Engine     [New Analysis] [Repository] [Compare]  │  ← sticky top nav (56px)
+│  [Logo] ReviewLens     [New Analysis] [Repository] [Compare]  │  ← sticky top nav (56px)
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │   ┌─ FIXED HERO (left, ~42%) ─┐    ┌─ SCROLLABLE FORM (right, ~58%) ─┐ │
@@ -144,7 +144,7 @@ Two-column layout. **Left column is fixed** in the viewport while the right colu
 |---------|------|
 | Height | 56px |
 | Background | White surface, bottom border outline-variant |
-| Left | Logo square (indigo bg, insights icon) + "Review Discovery Engine" + subtitle "New analysis" |
+| Left | Logo square (indigo bg, insights icon) + "ReviewLens" + subtitle "New analysis" |
 | Right | `AppNav` — 3 links with icons |
 
 **Nav items:**

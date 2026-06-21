@@ -1,13 +1,13 @@
 import {
   DEFAULT_CLASSIFY_BATCH_SIZE,
-  estimateGroqClassification,
+  estimateLlmClassification,
   getClassifyBatchDelayMs,
   getClassifyBatchSize,
-} from "./groq-limits";
+} from "./llm-limits";
 import type { ClassifiedReview, RawReview } from "./types";
 
 export { DEFAULT_CLASSIFY_BATCH_SIZE as CLASSIFY_BATCH_SIZE };
-export { estimateGroqClassification };
+export { estimateLlmClassification };
 
 const BATCH_RETRY_DELAY_MS = 15_000;
 const MAX_BATCH_RETRIES = 3;

@@ -81,7 +81,23 @@ export async function updateRunStatus(
   });
 }
 
-async function insertFinding(
+async function deleteFindingsForRun(runId: string): Promise<void> {
+  const db = await getDb();
+  await db.execute({
+    sql: `DELETE FROM findings WHERE run_id = ?`,
+    args: [runId],
+  });
+}
+
+async function deleteQuotesForRun(runId: string): Promise<void> {
+  const db = await getDb();
+  await db.execute({
+    sql: `DELETE FROM representative_quotes WHERE run_id = ?`,
+    args: [runId],
+  });
+}
+
+async function upsertFinding(
   runId: string,
   bundle: AnalysisBundle,
 ): Promise<void> {
@@ -91,7 +107,17 @@ async function insertFinding(
             id, run_id, mode, executive_summary, top_frustrations, listening_behaviors,
             repetition_causes, segment_challenges, unmet_needs, aggregation_data,
             interpretation_data, research_findings
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(run_id, mode) DO UPDATE SET
+            executive_summary = excluded.executive_summary,
+            top_frustrations = excluded.top_frustrations,
+            listening_behaviors = excluded.listening_behaviors,
+            repetition_causes = excluded.repetition_causes,
+            segment_challenges = excluded.segment_challenges,
+            unmet_needs = excluded.unmet_needs,
+            aggregation_data = excluded.aggregation_data,
+            interpretation_data = excluded.interpretation_data,
+            research_findings = excluded.research_findings`,
     args: [
       newId(),
       runId,
@@ -154,7 +180,7 @@ export async function persistAnalysisRun(input: {
     await saveReviewsWithClassifications(runId, classified);
     await updateRunStatus(runId, "aggregating");
 
-    await insertFinding(runId, analysis);
+    await upsertFinding(runId, analysis);
 
     await saveRepresentativeQuotes(runId, classified, analysis.aggregation);
 
@@ -187,9 +213,12 @@ export async function completeQueuedRun(input: {
 
   try {
     await deleteReviewsForRun(runId);
+    await deleteFindingsForRun(runId);
+    await deleteQuotesForRun(runId);
     await saveReviewsWithClassifications(runId, classified);
     await updateRunStatus(runId, "aggregating");
-    await insertFinding(runId, analysis);
+
+    await upsertFinding(runId, analysis);
     await saveRepresentativeQuotes(runId, classified, analysis.aggregation);
 
     const db = await getDb();

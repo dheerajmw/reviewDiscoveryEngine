@@ -1,3 +1,4 @@
+import { PLATFORM_NAME } from "./brand";
 import type {
   AggregationResult,
   ClassifiedReview,
@@ -34,7 +35,7 @@ export function buildReportMarkdown(
     .map(([seg, items]) => `- **${seg}**: ${items.join(", ")}`)
     .join("\n");
 
-  return `# Review Discovery Report
+  return `# ${PLATFORM_NAME} Report
 
 ## Research Findings
 

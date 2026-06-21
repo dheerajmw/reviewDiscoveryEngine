@@ -1,6 +1,6 @@
 # Spotify Review Corpus
 
-Fetched for Review Discovery Engine research (not wired into app runtime).
+Fetched for ReviewLens research (not wired into app runtime).
 
 | File | Target | Fetched |
 |------|--------|---------|

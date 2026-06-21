@@ -19,7 +19,7 @@ import {
   buildFieldConfidenceHistogram,
 } from "../lib/classification-audit";
 import { loadEnvLocal } from "../lib/env-loader";
-import { getGroqApiKey, GROQ_MODEL } from "../lib/groq-config";
+import { getGeminiApiKey, GEMINI_MODEL } from "../lib/gemini-config";
 import { measureAllBucketPrecision } from "../lib/evaluation-ground-truth";
 import type { RawReview } from "../lib/types";
 
@@ -31,9 +31,9 @@ const SAMPLE_SIZE = Number(process.argv.find((a) => a.startsWith("--sample-size=
 const USE_MOCK_AFTER = process.argv.includes("--mock-after");
 import {
   DEFAULT_CLASSIFY_BATCH_SIZE,
-  estimateGroqClassification,
+  estimateLlmClassification,
   getClassifyBatchDelayMs,
-} from "../lib/groq-limits";
+} from "../lib/llm-limits";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -54,9 +54,9 @@ function loadSampleReviews(size: number): RawReview[] {
 }
 
 async function classifyWithLlm(reviews: RawReview[]): Promise<Awaited<ReturnType<typeof classifyReviews>>> {
-  const apiKey = getGroqApiKey();
+  const apiKey = getGeminiApiKey();
   if (!apiKey) {
-    throw new Error("GROQ_API_KEY required. Set in .env.local or use --mock-after.");
+    throw new Error("GEMINI_API_KEY required. Set in .env.local or use --mock-after.");
   }
 
   const allClassified: Awaited<ReturnType<typeof classifyReviews>>["classified"] = [];
@@ -110,7 +110,7 @@ async function main() {
     afterClassified = classifyReviewsMockWithReport(reviews).classified;
     afterMode = "new mock (independent fields, no inheritance)";
   } else {
-    afterMode = `LLM (${GROQ_MODEL} via Groq)`;
+    afterMode = `LLM (${GEMINI_MODEL} via Gemini)`;
     const llmResult = await classifyWithLlm(reviews);
     afterClassified = llmResult.classified;
   }

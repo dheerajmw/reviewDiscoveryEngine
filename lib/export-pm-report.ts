@@ -1,3 +1,4 @@
+import { PLATFORM_NAME } from "./brand";
 import type {
   AggregationResult,
   ClassifiedReview,
@@ -42,7 +43,7 @@ export function buildPmReportMarkdown(input: {
   datasetName?: string;
   classified?: ClassifiedReview[];
 }): string {
-  const { findings, evidence, datasetName = "Review Discovery Engine" } = input;
+  const { findings, evidence, datasetName = PLATFORM_NAME } = input;
 
   const report: ResearchFindingsReport = ensureFindingsReport(
     findings,
@@ -154,7 +155,7 @@ export function buildPmReportJson(input: {
 
   return {
     generatedAt: new Date().toISOString(),
-    datasetName: input.datasetName ?? "Review Discovery Engine",
+    datasetName: input.datasetName ?? PLATFORM_NAME,
     evidence: input.evidence,
     findings: ensureFindingsReport(
       input.findings,

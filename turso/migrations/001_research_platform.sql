@@ -1,4 +1,4 @@
--- Turso / SQLite schema for Review Discovery Engine
+-- Turso / SQLite schema for ReviewLens
 
 PRAGMA foreign_keys = ON;
 

@@ -18,8 +18,8 @@ export default function DemoModeAlert({ compact = false }: DemoModeAlertProps) {
       />
       <p>
         Demo mode — some results use rule-based generation. Set{" "}
-        <code className="font-mono">USE_MOCK_CLASSIFIER=false</code> and add a
-        Groq API key for full AI classification.
+        <code className="font-mono">USE_MOCK_CLASSIFIER=false</code> and add an
+        Gemini API key for full AI classification.
       </p>
     </div>
   );

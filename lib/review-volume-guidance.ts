@@ -1,4 +1,4 @@
-import { estimateGroqClassification } from "./groq-limits";
+import { estimateLlmClassification } from "./llm-limits";
 
 /**
  * Minimum total reviews to fetch or upload so cleanup usually leaves enough
@@ -8,14 +8,14 @@ export const RECOMMENDED_MIN_REVIEWS_FETCHED = 150;
 
 /**
  * Maximum total reviews to fetch or upload before cleanup — larger sets often
- * yield 150–200+ kept rows and can exceed Groq free-tier token limits.
+ * yield 150–200+ kept rows and can exceed daily Gemini token budgets.
  */
 export const RECOMMENDED_MAX_REVIEWS_FETCHED = 500;
 
 /** Useful minimum after cleanup for a meaningful analysis run. */
 export const RECOMMENDED_MIN_AFTER_CLEANUP = 25;
 
-/** Comfortable maximum after cleanup on Groq free tier (~100k tokens/day). */
+/** Comfortable maximum after cleanup on typical Gemini daily budget. */
 export const RECOMMENDED_MAX_AFTER_CLEANUP = 200;
 
 /** Typical share of fetched reviews that survive discovery cleanup. */
@@ -29,7 +29,7 @@ export function estimateReviewsAfterCleanup(
 }
 
 export function estimateClassificationTokens(keptCount: number): number {
-  return estimateGroqClassification(keptCount).estimatedTokens;
+  return estimateLlmClassification(keptCount).estimatedTokens;
 }
 
 export type ReviewVolumeStatus = "low" | "ok" | "high";

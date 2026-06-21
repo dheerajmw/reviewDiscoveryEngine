@@ -48,7 +48,7 @@ export default function ReviewVolumeGuidance({
                 {formatAfterCleanupRange()} discovery-related
               </span>{" "}
               reviews — too few may leave nothing to analyze; too many can use a
-              large Groq token budget after cleanup (~400 tokens per kept review).
+              large Gemini token budget after cleanup (~400 tokens per kept review).
             </p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function ReviewVolumeGuidance({
           </span>
           {" → "}
           ~{estimatedKept.toLocaleString()} after cleanup · ~
-          {estimatedTokens.toLocaleString()} Groq tokens to classify
+          {estimatedTokens.toLocaleString()} Gemini tokens to classify
           {status === "low" && (
             <>
               {" "}

@@ -7,7 +7,7 @@ import type {
 } from "./types";
 
 export const USER_AGENT =
-  "Mozilla/5.0 (compatible; ReviewDiscoveryEngine/1.0; research)";
+  "Mozilla/5.0 (compatible; ReviewLens/1.0; research)";
 
 export const SPOTIFY_PLAY_ID = "com.spotify.music";
 export const SPOTIFY_APP_STORE_ID = 324684580;

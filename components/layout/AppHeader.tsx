@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PLATFORM_NAME } from "@/lib/brand";
 import Icon from "@/components/ui/Icon";
 import AppNav from "./AppNav";
 
@@ -22,7 +23,7 @@ export default function AppHeader({ subtitle, activeNav }: AppHeaderProps) {
             />
             <div className="min-w-0">
               <span className="truncate text-sm font-bold text-on-surface md:text-base">
-                Spotify Review Discovery
+                {PLATFORM_NAME}
               </span>
               {(subtitle || isHome) && (
                 <p className="text-xs text-on-surface-variant">

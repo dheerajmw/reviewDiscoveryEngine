@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PLATFORM_ASSISTANT_NAME } from "@/lib/brand";
 import Icon from "@/components/ui/Icon";
 
 interface DashboardHeaderProps {
@@ -206,7 +207,7 @@ export default function DashboardHeader({
               onClick={onOpenChat}
               icon="forum"
               label="Assistant"
-              title="Ask Spotify Discovery Assistant"
+              title={`Ask ${PLATFORM_ASSISTANT_NAME}`}
               className="border border-primary/25 bg-primary/5 text-primary hover:bg-primary/10"
             />
           )}

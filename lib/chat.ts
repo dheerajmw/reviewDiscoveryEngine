@@ -9,9 +9,9 @@ import {
 } from "./chat-guard";
 import { formatLlmError, isRetryableRateLimit } from "./llm-errors";
 import {
-  createGroqClient,
+  createGeminiClient,
   generateChatJsonCompletion,
-} from "./groq-client";
+} from "./gemini-client";
 import type {
   AnalysisContext,
   ChatCitation,
@@ -106,7 +106,7 @@ export async function generateChatReply(
 
   try {
     const content = await withRetry(async () => {
-      const client = createGroqClient(apiKey);
+      const client = createGeminiClient(apiKey);
       return generateChatJsonCompletion(
         client,
         CHAT_SYSTEM_PROMPT,
@@ -119,7 +119,7 @@ export async function generateChatReply(
     return normalizeChatResponse(extractJson(content));
   } catch (error) {
     if (error instanceof SyntaxError) {
-      const client = createGroqClient(apiKey);
+      const client = createGeminiClient(apiKey);
       const content = await generateChatJsonCompletion(
         client,
         CHAT_SYSTEM_PROMPT,

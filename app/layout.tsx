@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PLATFORM_DESCRIPTION, PLATFORM_NAME } from "@/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Spotify Review Discovery Engine",
-  description:
-    "Fetch and analyze Spotify app reviews from Play Store, App Store, Reddit, and Spotify Community.",
+  title: PLATFORM_NAME,
+  description: PLATFORM_DESCRIPTION,
 };
 
 export default function RootLayout({

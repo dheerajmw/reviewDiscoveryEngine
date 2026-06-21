@@ -9,12 +9,12 @@ import {
   buildClassificationAuditRecords,
   buildConfidenceHistogram,
 } from "@/lib/classification-audit";
-import { getGroqApiKey, GROQ_MODEL } from "@/lib/groq-config";
+import { getGeminiApiKey, GEMINI_MODEL } from "@/lib/gemini-config";
 import {
-  groqFallbackWarning,
-  shouldFallbackToMockOnGroqError,
+  llmFallbackWarning,
+  shouldFallbackToMockOnLlmError,
 } from "@/lib/llm-errors";
-import { MAX_CLASSIFY_BATCH_SIZE } from "@/lib/groq-limits";
+import { MAX_CLASSIFY_BATCH_SIZE } from "@/lib/llm-limits";
 import type { RawReview } from "@/lib/types";
 import {
   lookupClassificationCache,
@@ -65,22 +65,22 @@ export async function POST(request: Request) {
     return NextResponse.json(response);
   }
 
-  const apiKey = getGroqApiKey();
+  const apiKey = getGeminiApiKey();
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
-          "GROQ_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
+          "GEMINI_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
       },
       { status: 500 },
     );
   }
 
   try {
-    const cacheLookup = await lookupClassificationCache(reviews, GROQ_MODEL);
+    const cacheLookup = await lookupClassificationCache(reviews, GEMINI_MODEL);
     let taxonomyReport;
     let freshlyClassified: Awaited<ReturnType<typeof classifyReviews>>["classified"] = [];
-    let groqFallback = false;
+    let llmFallback = false;
     let warning: string | undefined;
 
     if (cacheLookup.missReviews.length > 0) {
@@ -88,16 +88,16 @@ export async function POST(request: Request) {
         const result = await classifyReviews(cacheLookup.missReviews, apiKey);
         freshlyClassified = result.classified;
         taxonomyReport = result.taxonomyReport;
-        await saveClassificationCache(freshlyClassified, GROQ_MODEL);
+        await saveClassificationCache(freshlyClassified, GEMINI_MODEL);
       } catch (error) {
-        if (!shouldFallbackToMockOnGroqError(error)) {
+        if (!shouldFallbackToMockOnLlmError(error)) {
           throw error;
         }
         const mockResult = classifyReviewsMockWithReport(cacheLookup.missReviews);
         freshlyClassified = mockResult.classified;
         taxonomyReport = mockResult.taxonomyReport;
-        groqFallback = true;
-        warning = groqFallbackWarning(error);
+        llmFallback = true;
+        warning = llmFallbackWarning(error);
       }
     }
 
@@ -111,15 +111,15 @@ export async function POST(request: Request) {
     const response: Record<string, unknown> = {
       classified,
       taxonomyReport: taxonomyReport ?? null,
-      mock: groqFallback,
+      mock: llmFallback,
       cache: {
         hits: cacheLookup.hits.size,
         misses: cacheLookup.missReviews.length,
         total: reviews.length,
       },
     };
-    if (groqFallback) {
-      response.groqFallback = true;
+    if (llmFallback) {
+      response.llmFallback = true;
       response.warning = warning;
     }
     if (auditEnabled) {

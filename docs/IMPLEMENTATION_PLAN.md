@@ -1,4 +1,4 @@
-# Review Discovery Engine — Implementation Plan
+# ReviewLens — Implementation Plan
 
 > Maps [PROJECT_BLUEPRINT.md](./PROJECT_BLUEPRINT.md) to seven build phases.  
 > Blueprint phases 4 (Root Cause) and 5 (Opportunity) are combined into **Phase 4: Insight Engine**.  
@@ -157,7 +157,7 @@ export interface ChatResponse {
 ### Acceptance Criteria
 
 - [ ] `npm run dev` starts without errors
-- [ ] Home page shows "Review Discovery Engine" + upload area
+- [ ] Home page shows "ReviewLens" + upload area
 - [ ] File picker accepts `.csv` only
 
 ### Estimated effort: **2–3 hours**
@@ -356,7 +356,7 @@ Write for a PM audience. Be specific to music discovery.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  Review Discovery Engine          [Re-upload]   │
+│  ReviewLens          [Re-upload]   │
 ├─────────────────────────────────────────────────┤
 │  Executive Summary (AI-generated, 2 sentences)  │
 ├──────────────────┬──────────────────────────────┤

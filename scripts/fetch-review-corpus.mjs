@@ -21,7 +21,7 @@ const TARGETS = {
 const SPOTIFY_PLAY_ID = "com.spotify.music";
 const SPOTIFY_APP_STORE_ID = 324684580;
 const USER_AGENT =
-  "Mozilla/5.0 (compatible; ReviewDiscoveryEngine/1.0; research)";
+  "Mozilla/5.0 (compatible; ReviewLens/1.0; research)";
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -544,7 +544,7 @@ async function main() {
 
   const readme = `# Spotify Review Corpus
 
-Fetched for Review Discovery Engine research (not wired into app runtime).
+Fetched for ReviewLens research (not wired into app runtime).
 
 | File | Target | Fetched |
 |------|--------|---------|

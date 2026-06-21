@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { isMockClassifierEnabled } from "@/lib/classify-mock";
 import {
-  estimateGroqClassification,
+  estimateLlmClassification,
   getClassifyBatchDelayMs,
   getClassifyBatchSize,
-  GROQ_RATE_LIMITS,
-} from "@/lib/groq-limits";
+  LLM_RATE_LIMITS,
+} from "@/lib/llm-limits";
 
 export async function GET() {
   const mockEnabled = isMockClassifierEnabled();
@@ -13,10 +13,10 @@ export async function GET() {
 
   return NextResponse.json({
     mockEnabled,
-    model: GROQ_RATE_LIMITS.model,
-    limits: GROQ_RATE_LIMITS,
+    model: LLM_RATE_LIMITS.model,
+    limits: LLM_RATE_LIMITS,
     batchSize,
     batchDelayMs: getClassifyBatchDelayMs(batchSize),
-    sampleEstimate: estimateGroqClassification(100, batchSize),
+    sampleEstimate: estimateLlmClassification(100, batchSize),
   });
 }

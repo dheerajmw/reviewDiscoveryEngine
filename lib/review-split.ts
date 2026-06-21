@@ -1,5 +1,5 @@
-import { estimateGroqClassification } from "./groq-limits";
-import type { GroqClassificationEstimate } from "./groq-limits";
+import { estimateLlmClassification } from "./llm-limits";
+import type { LlmClassificationEstimate } from "./llm-limits";
 import type { RawReview } from "./types";
 
 export const MIN_SPLIT_PARTS = 2;
@@ -26,7 +26,7 @@ export function splitReviews(reviews: RawReview[], parts: number): RawReview[][]
 export interface SplitOption {
   parts: number;
   chunkSizes: number[];
-  estimates: GroqClassificationEstimate[];
+  estimates: LlmClassificationEstimate[];
   allWithinQuota: boolean;
 }
 
@@ -47,7 +47,7 @@ export function getSplitOptions(reviewCount: number): SplitOption[] {
   const options: SplitOption[] = [];
   for (let parts = MIN_SPLIT_PARTS; parts <= MAX_SPLIT_PARTS; parts++) {
     const chunkSizes = getSplitChunkSizes(reviewCount, parts);
-    const estimates = chunkSizes.map((size) => estimateGroqClassification(size));
+    const estimates = chunkSizes.map((size) => estimateLlmClassification(size));
     options.push({
       parts,
       chunkSizes,

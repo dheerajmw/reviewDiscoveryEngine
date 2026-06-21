@@ -6,10 +6,10 @@ import {
   isQuestionAnswerableFromContext,
   noRelevantDataResponse,
 } from "@/lib/chat-guard";
-import { getGroqApiKey } from "@/lib/groq-config";
+import { getGeminiApiKey } from "@/lib/gemini-config";
 import {
-  groqFallbackWarning,
-  shouldFallbackToMockOnGroqError,
+  llmFallbackWarning,
+  shouldFallbackToMockOnLlmError,
 } from "@/lib/llm-errors";
 import type { AnalysisContext, ChatMessage } from "@/lib/types";
 
@@ -82,12 +82,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ...response, mock: true });
   }
 
-  const apiKey = getGroqApiKey();
+  const apiKey = getGeminiApiKey();
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
-          "GROQ_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
+          "GEMINI_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
       },
       { status: 500 },
     );
@@ -97,13 +97,13 @@ export async function POST(request: Request) {
     const response = await generateChatReply(messages, context, apiKey);
     return NextResponse.json({ ...response, mock: false });
   } catch (error) {
-    if (shouldFallbackToMockOnGroqError(error)) {
+    if (shouldFallbackToMockOnLlmError(error)) {
       const response = generateChatMock(lastMessage.content, context);
       return NextResponse.json({
         ...response,
         mock: true,
-        groqFallback: true,
-        warning: groqFallbackWarning(error),
+        llmFallback: true,
+        warning: llmFallbackWarning(error),
       });
     }
 
