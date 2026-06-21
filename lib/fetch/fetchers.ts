@@ -345,7 +345,12 @@ export async function fetchRedditReviews(options: {
 }
 
 async function fetchJinaMarkdown(targetUrl: string): Promise<string> {
-  const response = await fetch(`https://r.jina.ai/${targetUrl}`, {
+  if (!/^https?:\/\//i.test(targetUrl)) {
+    throw new Error("Invalid community board URL.");
+  }
+
+  const readerUrl = `https://r.jina.ai/${targetUrl}`;
+  const response = await fetch(readerUrl, {
     headers: { "User-Agent": USER_AGENT },
   });
   if (!response.ok) {

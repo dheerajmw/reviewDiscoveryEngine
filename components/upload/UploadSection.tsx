@@ -39,6 +39,7 @@ export default function UploadSection() {
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [pipelineStep, setPipelineStep] = useState<PipelineStep>("idle");
   const [classifyProgress, setClassifyProgress] = useState({
     completed: 0,
@@ -84,6 +85,7 @@ export default function UploadSection() {
     setReviews(null);
     setCuratedReviews(null);
     setError(options?.message ?? null);
+    setNotice(null);
     setPipelineStep("idle");
     setClassifyProgress({ completed: 0, total: 0 });
     setLoadedFileName(null);
@@ -101,11 +103,13 @@ export default function UploadSection() {
   const runPostLoadCuration = async (
     parsed: RawReview[],
     fileName?: string,
+    fetchNotice?: string,
   ) => {
     setReviews(parsed);
     setCuratedReviews(null);
     setLoadedFileName(fileName ?? null);
     setError(null);
+    setNotice(fetchNotice ?? null);
     setCurationStats(null);
     setPipelineStep("curating");
     setCurationNote("Removing duplicates and off-topic reviews…");
@@ -143,14 +147,19 @@ export default function UploadSection() {
     }
   };
 
-  const handleParsed = (parsed: RawReview[], fileName?: string) => {
-    void runPostLoadCuration(parsed, fileName);
+  const handleParsed = (
+    parsed: RawReview[],
+    fileName?: string,
+    notice?: string,
+  ) => {
+    void runPostLoadCuration(parsed, fileName, notice);
   };
 
   const handleError = (message: string) => {
     setReviews(null);
     setCuratedReviews(null);
     setError(message);
+    setNotice(null);
     setPipelineStep("idle");
     setLoadedFileName(null);
     setCurationStats(null);
@@ -222,9 +231,10 @@ export default function UploadSection() {
                       onFetchStart={() => {
                         setPipelineStep("fetching");
                         setError(null);
+                        setNotice(null);
                       }}
-                      onLoaded={(parsed, fileName) =>
-                        handleParsed(parsed, fileName)
+                      onLoaded={(parsed, fileName, fetchNotice) =>
+                        handleParsed(parsed, fileName, fetchNotice)
                       }
                       onError={handleError}
                       disabled={isInputBusy}
@@ -256,6 +266,15 @@ export default function UploadSection() {
                     onError={handleError}
                     disabled={isInputBusy}
                   />
+
+                  {notice && (
+                    <div
+                      role="status"
+                      className="rounded-lg border border-outline-variant bg-surface-container-high px-4 py-3 text-sm text-on-surface"
+                    >
+                      {notice}
+                    </div>
+                  )}
 
                   {error && (
                     <div

@@ -35,6 +35,7 @@ export interface FetchReviewsResult {
   bySource: Partial<Record<FetchSourceId, number>>;
   fetchedAt: string;
   label: string;
+  warning?: string;
 }
 
 export interface FetchSourceConfig {

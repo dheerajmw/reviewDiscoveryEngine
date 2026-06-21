@@ -47,24 +47,34 @@ export async function fetchLiveReviews(
   const combined: ReturnType<typeof dedupeByText> = [];
 
   for (const source of sources) {
-    const rows = await fetchSourceReviews(source, {
-      limitPerSource,
-      region,
-      minRating,
-      playStoreSort: request.playStoreSort ?? "newest",
-      appStoreSort: request.appStoreSort ?? "recent",
-      redditQuery: request.redditQuery,
-    });
-    bySource[source] = rows.length;
-    combined.push(...rows);
+    try {
+      const rows = await fetchSourceReviews(source, {
+        limitPerSource,
+        region,
+        minRating,
+        playStoreSort: request.playStoreSort ?? "newest",
+        appStoreSort: request.appStoreSort ?? "recent",
+        redditQuery: request.redditQuery,
+      });
+      bySource[source] = rows.length;
+      combined.push(...rows);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown fetch error";
+      console.error(`[fetch] ${source} failed:`, message);
+      bySource[source] = 0;
+    }
   }
 
   const reviews = toRawReviews(dedupeByText(combined));
 
   if (reviews.length === 0) {
-    throw new Error(
-      "No reviews returned. Try another source, lower the min rating filter, or increase the fetch count.",
-    );
+    const failedSources = sources.filter((source) => !bySource[source]);
+    const detail =
+      failedSources.length > 0
+        ? `All selected sources failed (${failedSources.join(", ")}). Try another source, lower the min rating filter, or use a saved corpus.`
+        : "No reviews returned. Try another source, lower the min rating filter, or increase the fetch count.";
+    throw new Error(detail);
   }
 
   return {

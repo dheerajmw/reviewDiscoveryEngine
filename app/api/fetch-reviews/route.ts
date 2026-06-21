@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch reviews.";
+    console.error("[fetch-reviews]", message, error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

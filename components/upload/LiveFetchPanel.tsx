@@ -28,7 +28,7 @@ import {
 
 interface LiveFetchPanelProps {
   onFetchStart?: () => void;
-  onLoaded: (reviews: RawReview[], fileName: string) => void;
+  onLoaded: (reviews: RawReview[], fileName: string, warning?: string) => void;
   onError: (message: string) => void;
   disabled?: boolean;
   priority?: boolean;
@@ -52,6 +52,7 @@ export default function LiveFetchPanel({
   const [config, setConfig] = useState<FetchConfigResponse | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetchProgress, setFetchProgress] = useState<string | null>(null);
 
   const [selectedSources, setSelectedSources] = useState<FetchSourceId[]>([
     "playstore",
@@ -118,23 +119,34 @@ export default function LiveFetchPanel({
     if (disabled || loading || selectedSources.length === 0) return;
 
     setLoading(true);
+    setFetchProgress(null);
     onFetchStart?.();
 
     try {
-      const result = await fetchLiveReviews({
-        sources: selectedSources,
-        limitPerSource,
-        playStoreSort,
-        appStoreSort,
-        region,
-        minRating: minRating > 0 ? minRating : undefined,
-        redditQuery: redditQuery.trim() || DEFAULT_REDDIT_QUERY_INPUT,
-      });
-      onLoaded(result.reviews, result.label);
+      const result = await fetchLiveReviews(
+        {
+          sources: selectedSources,
+          limitPerSource,
+          playStoreSort,
+          appStoreSort,
+          region,
+          minRating: minRating > 0 ? minRating : undefined,
+          redditQuery: redditQuery.trim() || DEFAULT_REDDIT_QUERY_INPUT,
+        },
+        {
+          onSourceProgress: (source, completed, total) => {
+            const label =
+              config?.sources.find((item) => item.id === source)?.label ?? source;
+            setFetchProgress(`Fetching ${label} (${completed}/${total})…`);
+          },
+        },
+      );
+      onLoaded(result.reviews, result.label, result.warning);
     } catch (err) {
       onError(err instanceof Error ? err.message : "Live fetch failed.");
     } finally {
       setLoading(false);
+      setFetchProgress(null);
     }
   };
 
@@ -328,7 +340,8 @@ export default function LiveFetchPanel({
 
         {loading && (
           <p className="text-center text-xs text-on-surface-variant">
-            Scraping public APIs — large counts (500+) can take several minutes
+            {fetchProgress ??
+              "Scraping public APIs — large counts (500+) can take several minutes"}
           </p>
         )}
       </div>

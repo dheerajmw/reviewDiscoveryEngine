@@ -1,4 +1,5 @@
 import type { CurationResult } from "./review-curation";
+import { parseApiJson } from "./parse-api-response";
 import type { RawReview } from "./types";
 
 export async function curateAllReviews(
@@ -11,7 +12,7 @@ export async function curateAllReviews(
     body: JSON.stringify({ reviews }),
   });
 
-  const data = await response.json();
+  const data = await parseApiJson<CurationResult & { error?: string }>(response);
   if (!response.ok) {
     throw new Error(data.error ?? "Review curation failed.");
   }
