@@ -25,6 +25,7 @@ import LiveFetchPanel from "./LiveFetchPanel";
 import UploadPreview from "./UploadPreview";
 import CurationEmptyState from "./CurationEmptyState";
 import CurationSummary from "./CurationSummary";
+import QuotaSplitPanel from "./QuotaSplitPanel";
 
 const MIN_CURATION_UI_MS = 700;
 
@@ -388,23 +389,14 @@ export default function UploadSection() {
                     <UploadPreview reviews={curatedReviews} />
                   </div>
 
-                  {groqEstimate?.exceedsDailyTokenQuota && (
-                    <div
-                      role="status"
-                      className="rounded-lg border border-warning-container bg-warning-container px-4 py-3 text-sm text-on-warning-container"
-                    >
-                      <p className="font-medium">Groq free-tier limit</p>
-                      <p className="mt-1 text-xs leading-relaxed">
-                        {curatedReviews.length} reviews needs ~
-                        {groqEstimate.estimatedTokens.toLocaleString()}{" "}
-                        tokens/day (limit 100K). Use{" "}
-                        <code className="font-mono">sample100.csv</code>, enable{" "}
-                        <code className="font-mono">USE_MOCK_CLASSIFIER=true</code>
-                        , or split the file (~
-                        {groqEstimate.maxReviewsPerDay} reviews max/day).
-                      </p>
-                    </div>
-                  )}
+                  {groqEstimate?.exceedsDailyTokenQuota ? (
+                    <QuotaSplitPanel
+                      reviews={curatedReviews}
+                      curationStats={curationStats}
+                      loadedFileName={loadedFileName}
+                      onError={setError}
+                    />
+                  ) : null}
 
                   {groqEstimate && !groqEstimate.exceedsDailyTokenQuota && (
                     <p className="text-xs text-on-surface-variant">
@@ -417,11 +409,20 @@ export default function UploadSection() {
                   <button
                     type="button"
                     onClick={handleAnalyze}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary shadow-sm transition-all hover:shadow-lg hover:opacity-90 active:scale-[0.98]"
+                    disabled={Boolean(groqEstimate?.exceedsDailyTokenQuota)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary shadow-sm transition-all hover:shadow-lg hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Icon name="analytics" />
                     Analyze &amp; Save to Repository
                   </button>
+
+                  {groqEstimate?.exceedsDailyTokenQuota ? (
+                    <p className="text-center text-xs text-on-surface-variant">
+                      Full analysis is disabled while over the daily Groq limit.
+                      Split and save parts above, then analyze one part per day
+                      from the Research Repository.
+                    </p>
+                  ) : null}
                 </div>
               )}
             </section>

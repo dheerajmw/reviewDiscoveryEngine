@@ -76,9 +76,8 @@ export default function CurationEmptyState({
             discovery/recommendation language)
           </li>
           <li>
-            Try the bundled samples such as{" "}
-            <code className="font-mono">sample100.csv</code> or{" "}
-            <code className="font-mono">all-reviews.csv</code>
+            Try the bundled <code className="font-mono">all-reviews.csv</code>{" "}
+            corpus or a source-specific file
           </li>
           <li>
             When live-fetching, include Reddit or broaden search terms toward

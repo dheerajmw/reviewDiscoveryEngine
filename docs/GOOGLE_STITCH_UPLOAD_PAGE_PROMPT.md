@@ -291,7 +291,7 @@ Bordered card, min-height 88px:
 | Row | Content |
 |-----|---------|
 | Header | **Saved corpus** + primary pill button **All (1,996)** with dataset icon |
-| Chip row | Sample 100 · Play Store · App Store · Reddit · Spotify Community · Social media |
+| Chip row | Play Store · App Store · Reddit · Spotify Community · Social media |
 
 Each chip shows review count. Loading state: inline spinner on active chip.
 
@@ -300,7 +300,6 @@ Each chip shows review count. Loading state: inline spinner on active chip.
 | Label | Reviews |
 |-------|---------|
 | Full corpus (All) | 1,996 |
-| Sample 100 | 99 |
 | Play Store | 600 |
 | App Store | 441 |
 | Reddit | 499 |
@@ -347,7 +346,7 @@ Replaces hero split with centered narrow layout (`max-w-3xl`). Form card shows:
 
 **Warning variant** (exceeds free tier):
 - Title: Groq free-tier limit
-- Body: N reviews needs ~X tokens/day (limit 100K). Use sample100.csv, USE_MOCK_CLASSIFIER=true, or split file.
+- Body: N reviews needs ~X tokens/day (limit 100K). Split into repository batches, USE_MOCK_CLASSIFIER=true, or reduce review count.
 
 **Info variant** (within limit):
 - Live LLM run: ~N Groq requests, ~M min (throttled for 12K tok/min).

@@ -85,7 +85,7 @@ export function formatLlmError(error: unknown): string {
   if (isRateLimited(error)) {
     return (
       "Groq rate limit hit (llama-3.3-70b-versatile: 30 req/min, 12K tok/min). " +
-      "Wait and retry, use sample100.csv (~100 reviews), or set USE_MOCK_CLASSIFIER=true."
+      "Wait and retry, reduce the review count (~100/day on free tier), or set USE_MOCK_CLASSIFIER=true."
     );
   }
 
@@ -97,7 +97,7 @@ export function formatLlmError(error: unknown): string {
   ) {
     return (
       "Groq daily quota exhausted (free tier: 1K req/day, 100K tok/day). " +
-      "Resume tomorrow, use sample100.csv, or set USE_MOCK_CLASSIFIER=true."
+      "Resume tomorrow, reduce the review count, split into repository batches, or set USE_MOCK_CLASSIFIER=true."
     );
   }
 

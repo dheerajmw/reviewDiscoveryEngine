@@ -8,7 +8,7 @@
     "start": "next start",
     "evaluate": "tsx scripts/classification-evaluation.ts",
     "evaluate:mock": "tsx scripts/classification-evaluation.ts --mock-after",
-    "test": "npx tsx --test lib/review-preprocessing/preprocess.test.ts lib/classify.test.ts"
+    "test": "npx tsx --test lib/review-preprocessing/preprocess.test.ts lib/classify.test.ts lib/review-split.test.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",

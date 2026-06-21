@@ -7,7 +7,9 @@ import type {
   QuoteSearchFilters,
   RunComparisonResult,
   StoredAnalysisRun,
+  RawReview,
 } from "./types";
+import { parseApiJson } from "./parse-api-response";
 
 export async function fetchAnalysisRuns(): Promise<AnalysisRunSummary[]> {
   const response = await fetch("/api/runs");
@@ -35,6 +37,43 @@ export async function persistAnalysisRun(input: {
     throw new Error(data.error ?? "Failed to persist analysis run.");
   }
   return data.runId as string;
+}
+
+export async function persistQueuedBatches(input: {
+  batches: Array<{ datasetName: string; reviews: RawReview[] }>;
+  curation?: CurationStats;
+}): Promise<string[]> {
+  const response = await fetch("/api/runs/queue", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = await parseApiJson<{ runIds?: string[]; error?: string }>(
+    response,
+  );
+  if (!response.ok) {
+    throw new Error(data.error ?? "Failed to save review batches.");
+  }
+  return data.runIds ?? [];
+}
+
+export async function completeQueuedAnalysisRun(input: {
+  runId: string;
+  classified: ClassifiedReview[];
+  analysis: AnalysisBundle;
+  usedMockClassifier: boolean;
+  curation?: CurationStats;
+}): Promise<string> {
+  const response = await fetch(`/api/runs/${input.runId}/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = await parseApiJson<{ runId?: string; error?: string }>(response);
+  if (!response.ok) {
+    throw new Error(data.error ?? "Failed to complete queued analysis.");
+  }
+  return data.runId ?? input.runId;
 }
 
 export async function fetchAnalysisRun(runId: string): Promise<StoredAnalysisRun> {

@@ -11,6 +11,7 @@ import type {
   ClassifiedReview,
   QuoteRecord,
   QuoteSearchFilters,
+  RawReview,
 } from "@/lib/types";
 import type { AggregationResult } from "@/lib/types";
 
@@ -18,6 +19,55 @@ const BATCH_SIZE = 100;
 
 async function getDb(): Promise<TursoClient> {
   return ensureTursoSchema();
+}
+
+export async function saveRawReviewsForRun(
+  runId: string,
+  reviews: RawReview[],
+): Promise<void> {
+  const db = await getDb();
+
+  for (let i = 0; i < reviews.length; i += BATCH_SIZE) {
+    const batch = reviews.slice(i, i + BATCH_SIZE);
+    await db.batch(
+      batch.map((review) => ({
+        sql: `INSERT INTO reviews (id, run_id, source, review_text, discovery_relevant, discovery_reason, confidence)
+              VALUES (?, ?, ?, ?, 1, ?, NULL)`,
+        args: [
+          newId(),
+          runId,
+          review.source,
+          review.text,
+          "queued_for_classification",
+        ],
+      })),
+      "write",
+    );
+  }
+}
+
+export async function getRawReviewsForRun(runId: string): Promise<RawReview[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT source, review_text
+          FROM reviews
+          WHERE run_id = ?
+          ORDER BY created_at ASC`,
+    args: [runId],
+  });
+
+  return result.rows.map((row) => ({
+    source: String(row.source),
+    text: String(row.review_text),
+  }));
+}
+
+export async function deleteReviewsForRun(runId: string): Promise<void> {
+  const db = await getDb();
+  await db.execute({
+    sql: `DELETE FROM reviews WHERE run_id = ?`,
+    args: [runId],
+  });
 }
 
 export async function saveReviewsWithClassifications(

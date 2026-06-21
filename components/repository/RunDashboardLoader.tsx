@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchAnalysisRun } from "@/lib/runs-client";
 import type { StoredAnalysisRun } from "@/lib/types";
 import Dashboard from "@/components/dashboard/Dashboard";
+import PendingRunView from "@/components/repository/PendingRunView";
 import RepositoryLayout from "@/components/layout/RepositoryLayout";
 import Icon from "@/components/ui/Icon";
 
@@ -58,6 +59,16 @@ export default function RunDashboardLoader({ runId }: RunDashboardLoaderProps) {
       >
         <p className="text-sm text-on-surface-variant">Loading from repository…</p>
       </RepositoryLayout>
+    );
+  }
+
+  if (stored.run.status === "pending" && stored.pendingReviews?.length) {
+    return (
+      <PendingRunView
+        runId={runId}
+        runMeta={stored.run}
+        reviews={stored.pendingReviews}
+      />
     );
   }
 

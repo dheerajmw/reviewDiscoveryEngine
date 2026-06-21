@@ -340,6 +340,8 @@ export interface StoredAnalysisRun {
   run: AnalysisRunSummary;
   classified: ClassifiedReview[];
   analysis: AnalysisBundle;
+  /** Present when status is `pending` — curated reviews awaiting LLM analysis. */
+  pendingReviews?: RawReview[];
 }
 
 export interface QuoteRecord {

@@ -13,12 +13,6 @@ export const CORPUS_FILES: CorpusFile[] = [
     reviewCount: 1996,
   },
   {
-    id: "sample100.csv",
-    label: "Sample 100",
-    description: "100-review evaluation subset",
-    reviewCount: 99,
-  },
-  {
     id: "playstore.csv",
     label: "Play Store",
     description: "Google Play reviews",

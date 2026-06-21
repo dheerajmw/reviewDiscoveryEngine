@@ -15,6 +15,17 @@ function formatRunDate(iso: string): string {
   });
 }
 
+function statusLabel(status: AnalysisRunSummary["status"]): string {
+  if (status === "pending") return "queued";
+  return status;
+}
+
+function statusTone(status: AnalysisRunSummary["status"]): string {
+  if (status === "pending") return "text-warning";
+  if (status === "completed") return "text-primary";
+  return "text-on-surface-variant";
+}
+
 export default function AnalysisHistory() {
   const [runs, setRuns] = useState<AnalysisRunSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,8 +109,8 @@ export default function AnalysisHistory() {
                   <p className="text-sm font-semibold text-primary">
                     {run.total_reviews} reviews
                   </p>
-                  <p className="text-xs text-on-surface-variant">
-                    {run.discovery_reviews} discovery · {run.status}
+                  <p className={`text-xs capitalize ${statusTone(run.status)}`}>
+                    {run.discovery_reviews} discovery · {statusLabel(run.status)}
                   </p>
                 </div>
               </Link>

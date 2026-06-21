@@ -25,7 +25,7 @@ The pipeline is designed to answer these six PM assignment questions:
 
 - **Live fetch** from Google Play, App Store, Reddit, Spotify Community, and social sources (Hacker News, etc.)
 - **CSV upload** (`source`, `text` columns)
-- **Bundled corpora** under `docs/review-corpus/` (`sample100.csv`, `all-reviews.csv`, `playstore.csv`, …)
+- **Bundled corpora** under `docs/review-corpus/` (`all-reviews.csv`, `playstore.csv`, `reddit.csv`, …)
 
 ### PM preprocessing & curation
 
@@ -175,7 +175,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Recommended first run
 
-1. Load **`docs/review-corpus/sample100.csv`** from the home page, or
+1. Load a bundled corpus such as **`all-reviews.csv`** from the home page, or
 2. Live-fetch with **Reddit + Spotify Community** included (better discovery language than store-only pulls)
 3. Confirm **`USE_MOCK_CLASSIFIER=false`** for real LLM tags
 4. Aim for **150–500 reviews fetched** → typically **25–200** kept after cleanup
