@@ -139,7 +139,7 @@ export default function LoadingState({
                   step !== "classifying" &&
                   step !== "curating" && (
                     <p className="mt-0.5 text-xs text-on-surface-variant">
-                      In progress…
+                      {curationNote ?? "In progress…"}
                     </p>
                   )}
                 {(status === "done" || curationComplete) &&

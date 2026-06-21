@@ -6,6 +6,7 @@ import { fetchAggregation } from "@/lib/aggregate-client";
 import { classifyAllReviews } from "@/lib/classify-client";
 import { fetchFindings } from "@/lib/findings-client";
 import { completeQueuedAnalysisRun } from "@/lib/runs-client";
+import type { PipelineStep } from "@/lib/pipeline";
 import type { AnalysisRunSummary, RawReview } from "@/lib/types";
 import RepositoryLayout from "@/components/layout/RepositoryLayout";
 import LoadingState from "@/components/ui/LoadingState";
@@ -24,12 +25,16 @@ export default function PendingRunView({
 }: PendingRunViewProps) {
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState(false);
+  const [pipelineStep, setPipelineStep] = useState<PipelineStep>("classifying");
   const [progress, setProgress] = useState({ completed: 0, total: 0 });
+  const [phaseNote, setPhaseNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
     setError(null);
+    setPipelineStep("classifying");
+    setPhaseNote(null);
     setProgress({ completed: 0, total: reviews.length });
 
     try {
@@ -37,9 +42,16 @@ export default function PendingRunView({
         reviews,
         (completed, total) => setProgress({ completed, total }),
       );
+
+      setPipelineStep("aggregating");
+      setPhaseNote("Building frequency tables and evidence clusters…");
       const aggregation = await fetchAggregation(classified);
+
+      setPhaseNote("Generating research findings from evidence…");
       const findings = await fetchFindings(aggregation);
 
+      setPipelineStep("saving");
+      setPhaseNote("Writing results to the research repository…");
       await completeQueuedAnalysisRun({
         runId,
         classified,
@@ -72,10 +84,10 @@ export default function PendingRunView({
     >
       {analyzing ? (
         <LoadingState
-          step="classifying"
+          step={pipelineStep}
           completed={progress.completed}
           total={progress.total}
-          curationNote={`Analyzing ${runMeta.dataset_name}`}
+          curationNote={phaseNote ?? `Analyzing ${runMeta.dataset_name}`}
           curationComplete
         />
       ) : (
