@@ -53,6 +53,31 @@ describe("review preprocessing pipeline", () => {
     assert.equal(result.discovery_outcome, "unknown");
   });
 
+  it("excludes playlist promotion threads", () => {
+    const result = preprocessReview(
+      "reddit",
+      "Drop a playlist, I'll share one of mine! Follow my account and I'll follow back!",
+      "review-promo",
+    );
+
+    assert.equal(result.discovery_relevant, false);
+    assert.match(result.discovery_reason, /playlist promotion/i);
+  });
+
+  it("keeps positive discovery praise with substance", () => {
+    const result = preprocessReview(
+      "appstore",
+      "Discover Weekly introduced me to dozens of artists I now listen to every day. Recommendations work great.",
+      "review-positive",
+    );
+
+    assert.equal(result.discovery_relevant, true);
+    assert.ok(
+      result.discovery_outcome === "successful" ||
+        result.discovery_outcome === "neutral",
+    );
+  });
+
   it("keeps explicit discovery reviews with failed outcome", () => {
     const result = preprocessReview(
       "reddit",

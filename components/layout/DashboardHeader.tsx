@@ -12,6 +12,7 @@ interface DashboardHeaderProps {
   onExportMarkdown: () => void;
   onExportJson: () => void;
   onExportCsv?: () => void;
+  onExportDashboardPdf?: () => void | Promise<void>;
   onExportPmReport?: (format: "md" | "json" | "pdf") => void;
   onOpenChat?: () => void;
   onOpenEvidenceList?: () => void;
@@ -51,11 +52,13 @@ export default function DashboardHeader({
   onExportMarkdown,
   onExportJson,
   onExportCsv,
+  onExportDashboardPdf,
   onExportPmReport,
   onOpenChat,
   onOpenEvidenceList,
 }: DashboardHeaderProps) {
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportingDashboardPdf, setExportingDashboardPdf] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,6 +78,23 @@ export default function DashboardHeader({
   const runExport = (action: () => void) => {
     action();
     setExportOpen(false);
+  };
+
+  const runDashboardPdfExport = async () => {
+    if (!onExportDashboardPdf || exportingDashboardPdf) return;
+    setExportingDashboardPdf(true);
+    try {
+      await onExportDashboardPdf();
+      setExportOpen(false);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Dashboard PDF export failed.";
+      window.alert(message);
+    } finally {
+      setExportingDashboardPdf(false);
+    }
   };
 
   return (
@@ -110,7 +130,10 @@ export default function DashboardHeader({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+        <div
+          className="flex shrink-0 items-center gap-1 sm:gap-1.5"
+          data-dashboard-no-print
+        >
           <div className="relative" ref={exportRef}>
             <HeaderButton
               onClick={() => setExportOpen((open) => !open)}
@@ -122,8 +145,26 @@ export default function DashboardHeader({
             {exportOpen && (
               <div
                 role="menu"
-                className="absolute right-0 z-50 mt-1.5 w-52 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
+                className="absolute right-0 z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
               >
+                {onExportDashboardPdf && (
+                  <>
+                    <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-outline">
+                      Dashboard
+                    </p>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      disabled={exportingDashboardPdf}
+                      onClick={() => void runDashboardPdfExport()}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-on-surface hover:bg-surface-container-low disabled:cursor-wait disabled:opacity-60"
+                    >
+                      <Icon name="picture_as_pdf" className="text-base text-primary" />
+                      {exportingDashboardPdf ? "Opening print…" : "Dashboard PDF"}
+                    </button>
+                    <div className="my-1 border-t border-outline-variant" />
+                  </>
+                )}
                 <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-outline">
                   Reports
                 </p>

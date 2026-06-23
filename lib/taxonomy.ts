@@ -22,16 +22,46 @@ export const RESEARCH_QUESTIONS = {
 
 // ─── Closed taxonomy enums ───────────────────────────────────────────────
 
-/** Q2 — recommendation / discovery frustrations */
-export const THEMES = [
+/** Q2 — positive discovery themes (never merge with negative fallbacks) */
+export const POSITIVE_THEMES = [
+  "Positive Discovery Experience",
+  "Strong Discovery Playlists",
+  "Recommendation Success",
+  "Successful Artist Discovery",
+  "Discovery Delight",
+] as const;
+
+/** Q2 — discovery frustrations and friction themes */
+export const NEGATIVE_THEMES = [
   "Repetition Fatigue",
   "Poor Recommendation Quality",
   "Lack of Discovery Control",
   "Genre Lock-In",
   "Algorithm Distrust",
   "Weak Discovery Surfaces",
-  "Other Discovery Frustration",
+  "Discovery Fatigue",
+  "Cross-Content Recommendation Noise",
 ] as const;
+
+/** Last-resort negative bucket — not for positive reviews */
+export const THEME_FALLBACK = "Other Discovery Frustration" as const;
+
+export const THEMES = [
+  ...POSITIVE_THEMES,
+  ...NEGATIVE_THEMES,
+  THEME_FALLBACK,
+] as const;
+
+export const POSITIVE_THEME_SET = new Set<string>(POSITIVE_THEMES);
+export const NEGATIVE_THEME_SET = new Set<string>(NEGATIVE_THEMES);
+
+export function isPositiveTheme(theme: string): boolean {
+  return POSITIVE_THEME_SET.has(theme);
+}
+
+export function isNegativeTheme(theme: string): boolean {
+  return NEGATIVE_THEME_SET.has(theme) || theme === THEME_FALLBACK;
+}
 
 /** Q1 — barriers to discovering new music */
 export const BARRIERS = [
@@ -79,23 +109,27 @@ export const SEGMENTS = [
 
 /** Q6 — recurring unmet discovery needs */
 export const UNMET_NEEDS = [
+  "Better Artist Discovery",
+  "Stronger Discovery Playlists",
   "Adjustable Novelty",
   "Discovery Control",
   "Explainable Recommendations",
-  "Better Artist Discovery",
+  "Genre Exploration",
+  "Freshness Guarantees",
   "Cross-Genre Exploration",
-  "Stronger Discovery Playlists",
   "General Discovery Improvement",
 ] as const;
 
 /** Q4 — mechanisms behind repeated / same content */
 export const ROOT_CAUSES = [
   "Similarity-Based Reinforcement",
-  "Engagement Optimization Bias",
-  "Lack of User Steering Signals",
-  "Limited Exploration Strategy",
   "Listening History Loop",
+  "Engagement Optimization Bias",
+  "Limited Exploration Strategy",
+  "Lack of User Steering Signals",
   "Playlist or Radio Loop",
+  "Discovery Surface Design Issues",
+  "Cross-Content Recommendation Bias",
   "Unclear Repetition Cause",
 ] as const;
 
@@ -126,8 +160,8 @@ const TAXONOMY_MAP: Record<TaxonomyField, readonly string[]> = {
   unmet_need: UNMET_NEEDS,
 };
 
-const FALLBACK_LABELS: Record<TaxonomyField, string> = {
-  theme: "Other Discovery Frustration",
+export const FALLBACK_LABELS: Record<TaxonomyField, string> = {
+  theme: THEME_FALLBACK,
   behavior: "Evaluate Recommendations",
   emotion: "Neutral",
   segment: "Unspecified Segment",
@@ -136,7 +170,7 @@ const FALLBACK_LABELS: Record<TaxonomyField, string> = {
   unmet_need: "General Discovery Improvement",
 };
 
-const OTHER_UNKNOWN_LABELS = new Set([
+export const OTHER_UNKNOWN_LABELS = new Set([
   "Other Discovery Frustration",
   "Unclear Discovery Struggle",
   "Unspecified Segment",
@@ -159,8 +193,19 @@ const ALIASES: Record<TaxonomyField, Record<string, string>> = {
     other: "Other Discovery Frustration",
     "other discovery issue": "Other Discovery Frustration",
     "other discovery frustration": "Other Discovery Frustration",
-    "positive discovery": "Other Discovery Frustration",
-    "positive discovery experience": "Other Discovery Frustration",
+    "positive discovery": "Positive Discovery Experience",
+    "positive discovery experience": "Positive Discovery Experience",
+    "strong discovery playlists": "Strong Discovery Playlists",
+    "recommendation success": "Recommendation Success",
+    "successful artist discovery": "Successful Artist Discovery",
+    "discovery delight": "Discovery Delight",
+    "great discover weekly": "Strong Discovery Playlists",
+    "discover weekly praise": "Strong Discovery Playlists",
+    "dj praise": "Positive Discovery Experience",
+    "discovery fatigue": "Discovery Fatigue",
+    "cross-content recommendation noise": "Cross-Content Recommendation Noise",
+    "playlist contamination": "Cross-Content Recommendation Noise",
+    "podcast pollution": "Cross-Content Recommendation Noise",
     "discovery outside platform": "Other Discovery Frustration",
     "poor recommendation quality": "Poor Recommendation Quality",
     "lack of discovery control": "Lack of Discovery Control",
@@ -193,6 +238,7 @@ const ALIASES: Record<TaxonomyField, Record<string, string>> = {
     neutral: "Evaluate Recommendations",
   },
   emotion: {
+    "disgust": "Distrust",
     frustration: "Frustration",
     disappointment: "Disappointment",
     boredom: "Boredom",
@@ -248,7 +294,14 @@ const ALIASES: Record<TaxonomyField, Record<string, string>> = {
     "limited exploration strategy": "Limited Exploration Strategy",
     "weak context understanding": "Limited Exploration Strategy",
     "insufficient novelty injection": "Limited Exploration Strategy",
-    "discovery surface design issues": "Playlist or Radio Loop",
+    "discovery surface design issues": "Discovery Surface Design Issues",
+    "discovery surface design": "Discovery Surface Design Issues",
+    "weak discovery surface": "Discovery Surface Design Issues",
+    "cross-content recommendation bias": "Cross-Content Recommendation Bias",
+    "cross content recommendation bias": "Cross-Content Recommendation Bias",
+    "podcast pollution": "Cross-Content Recommendation Bias",
+    "playlist contamination": "Playlist or Radio Loop",
+    "shuffle fatigue": "Playlist or Radio Loop",
     "listening history loop": "Listening History Loop",
     "playlist or radio loop": "Playlist or Radio Loop",
     unknown: "Unclear Repetition Cause",
@@ -265,6 +318,13 @@ const ALIASES: Record<TaxonomyField, Record<string, string>> = {
     "context-aware discovery": "Stronger Discovery Playlists",
     "better discovery surfaces": "Stronger Discovery Playlists",
     "stronger discovery playlists": "Stronger Discovery Playlists",
+    "genre exploration": "Genre Exploration",
+    "explore outside genre": "Genre Exploration",
+    "freshness guarantees": "Freshness Guarantees",
+    "avoid repetition": "Freshness Guarantees",
+    "no repetition": "Freshness Guarantees",
+    "cross-genre discovery": "Cross-Genre Exploration",
+    "discover hidden gems": "Better Artist Discovery",
     "general discovery improvement": "General Discovery Improvement",
     unknown: "General Discovery Improvement",
     "unknown need": "General Discovery Improvement",
@@ -503,16 +563,32 @@ export function buildTaxonomyReport(
   };
 }
 
+export function isTaxonomyFallbackLabel(
+  field: TaxonomyField,
+  value: string,
+): boolean {
+  return FALLBACK_LABELS[field] === value || OTHER_UNKNOWN_LABELS.has(value);
+}
+
 export function formatTaxonomyForPrompt(): string {
   return `
 Research scope: Spotify music discovery and recommendations ONLY.
 Do NOT label billing, ads, crashes, login, UI bugs, or generic app praise.
 
+Choose EXACTLY ONE value per field from the allowed lists below.
+If none fit perfectly, choose the CLOSEST valid value. Never invent labels.
+
 BARRIER — ${RESEARCH_QUESTIONS.barrier}
 ${BARRIERS.join(" | ")}
 
-THEME — ${RESEARCH_QUESTIONS.theme}
-${THEMES.join(" | ")}
+POSITIVE THEMES — satisfied discovery (use when user praises discovery):
+${POSITIVE_THEMES.join(" | ")}
+
+NEGATIVE THEMES — discovery friction (never use for praise):
+${NEGATIVE_THEMES.join(" | ")}
+
+THEME FALLBACK (negative unclear only — NEVER for positive reviews):
+${THEME_FALLBACK}
 
 EMOTION — ${RESEARCH_QUESTIONS.emotion}
 ${EMOTIONS.join(" | ")}
@@ -521,12 +597,14 @@ BEHAVIOR — ${RESEARCH_QUESTIONS.behavior}
 ${BEHAVIORS.join(" | ")}
 
 ROOT CAUSE — ${RESEARCH_QUESTIONS.root_cause}
+Prefer a specific mechanism. Use Unclear Repetition Cause only when no mechanism is inferable.
 ${ROOT_CAUSES.join(" | ")}
 
 SEGMENT — ${RESEARCH_QUESTIONS.segment}
 ${SEGMENTS.join(" | ")}
 
 UNMET NEED — ${RESEARCH_QUESTIONS.unmet_need}
+Prefer specific needs. Use General Discovery Improvement only as last resort.
 ${UNMET_NEEDS.join(" | ")}
 `.trim();
 }

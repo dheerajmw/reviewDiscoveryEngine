@@ -14,6 +14,8 @@ export type CurationExclusionReason =
   | "advertising"
   | "praise_only"
   | "off_topic"
+  | "playlist_promotion"
+  | "social_spam"
   | "not_discovery_related";
 
 export interface CurationRecord extends PreprocessedReview {
@@ -45,6 +47,12 @@ export interface CurationResult {
 function mapExclusionReason(
   record: PreprocessedReview,
 ): CurationExclusionReason {
+  if (record.discovery_reason.includes("playlist promotion")) {
+    return "playlist_promotion";
+  }
+  if (record.discovery_reason.includes("social spam")) {
+    return "social_spam";
+  }
   if (record.discovery_reason.includes("too short")) {
     return "too_short";
   }

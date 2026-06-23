@@ -1,0 +1,1021 @@
+{
+  "generatedAt": "2026-06-22T13:43:28.725Z",
+  "model": "mock-classifier",
+  "classifierMode": "mock",
+  "seed": 20260621,
+  "corpusStats": {
+    "totalLoaded": 1996,
+    "curationIncluded": 176,
+    "curationExcluded": 1800
+  },
+  "sampleCounts": {
+    "discovery": 100,
+    "nonDiscovery": 50,
+    "edgeCases": 50,
+    "total": 200
+  },
+  "discoveryFilter": {
+    "curation": {
+      "total": 200,
+      "truePositives": 120,
+      "trueNegatives": 63,
+      "falsePositives": 0,
+      "falseNegatives": 17,
+      "correctlyIncludedPct": 87.6,
+      "correctlyExcludedPct": 100,
+      "falsePositiveRatePct": 0,
+      "falseNegativeRatePct": 12.4,
+      "precisionPct": 100,
+      "recallPct": 87.6
+    },
+    "llm": {
+      "total": 200,
+      "truePositives": 132,
+      "trueNegatives": 49,
+      "falsePositives": 14,
+      "falseNegatives": 5,
+      "correctlyIncludedPct": 96.4,
+      "correctlyExcludedPct": 77.8,
+      "falsePositiveRatePct": 22.2,
+      "falseNegativeRatePct": 3.6,
+      "precisionPct": 90.4,
+      "recallPct": 96.4
+    },
+    "edgeCaseBreakdown": {
+      "positive_discovery": {
+        "total": 8,
+        "curationCorrect": 7,
+        "llmCorrect": 8
+      },
+      "playlist_complaint": {
+        "total": 7,
+        "curationCorrect": 3,
+        "llmCorrect": 7
+      },
+      "premium_complaint": {
+        "total": 7,
+        "curationCorrect": 7,
+        "llmCorrect": 5
+      },
+      "ads_complaint": {
+        "total": 7,
+        "curationCorrect": 5,
+        "llmCorrect": 7
+      },
+      "recommendation_complaint": {
+        "total": 7,
+        "curationCorrect": 3,
+        "llmCorrect": 5
+      },
+      "genre_lock_in": {
+        "total": 7,
+        "curationCorrect": 3,
+        "llmCorrect": 7
+      },
+      "repetition_complaint": {
+        "total": 7,
+        "curationCorrect": 5,
+        "llmCorrect": 6
+      }
+    }
+  },
+  "taxonomy": {
+    "theme": [
+      {
+        "label": "Other Discovery Frustration",
+        "count": 113,
+        "percent": "77.4%"
+      },
+      {
+        "label": "Repetition Fatigue",
+        "count": 25,
+        "percent": "17.1%"
+      },
+      {
+        "label": "Positive Discovery Experience",
+        "count": 4,
+        "percent": "2.7%"
+      },
+      {
+        "label": "Genre Lock-In",
+        "count": 4,
+        "percent": "2.7%"
+      }
+    ],
+    "barrier": [
+      {
+        "label": "Unclear Discovery Struggle",
+        "count": 139,
+        "percent": "95.2%"
+      },
+      {
+        "label": "Similar Artist Loop",
+        "count": 3,
+        "percent": "2.1%"
+      },
+      {
+        "label": "Genre Saturation",
+        "count": 2,
+        "percent": "1.4%"
+      },
+      {
+        "label": "Cold Start Discovery",
+        "count": 1,
+        "percent": "0.7%"
+      },
+      {
+        "label": "Low Novelty",
+        "count": 1,
+        "percent": "0.7%"
+      }
+    ],
+    "root_cause": [
+      {
+        "label": "Unclear Repetition Cause",
+        "count": 141,
+        "percent": "96.6%"
+      },
+      {
+        "label": "Similarity-Based Reinforcement",
+        "count": 5,
+        "percent": "3.4%"
+      }
+    ],
+    "unmet_need": [
+      {
+        "label": "General Discovery Improvement",
+        "count": 142,
+        "percent": "97.3%"
+      },
+      {
+        "label": "Cross-Genre Exploration",
+        "count": 2,
+        "percent": "1.4%"
+      },
+      {
+        "label": "Better Artist Discovery",
+        "count": 1,
+        "percent": "0.7%"
+      },
+      {
+        "label": "Genre Exploration",
+        "count": 1,
+        "percent": "0.7%"
+      }
+    ]
+  },
+  "fallback": {
+    "researchReviewCount": 146,
+    "otherDiscoveryFrustrationPct": 77.4,
+    "generalDiscoveryImprovementPct": 97.3,
+    "unclearDiscoveryStrugglePct": 95.2,
+    "unclearRepetitionCausePct": 96.6,
+    "anyFallbackLabelPct": 100
+  },
+  "positiveDiscovery": {
+    "positiveThemeCount": 4,
+    "positiveThemePct": 2.7,
+    "discoverWeeklyPraiseCount": 4,
+    "djPraiseCount": 1,
+    "successfulArtistDiscoveryCount": 3,
+    "recommendationSatisfactionCount": 2
+  },
+  "researchQuestions": [
+    {
+      "id": "why_discovery_fails",
+      "question": "Why do users struggle to discover new music?",
+      "topFindings": [
+        {
+          "title": "Why users struggle to discover new music",
+          "summary": "Across 146 discovery-related reviews (54 non-discovery excluded): Dominant themes: Other Discovery Frustration (77%), Repetition Fatigue (17%), Positive Discovery Experience (3%). Primary barriers: Unclear Discovery Struggle (95%), Similar Artist Loop (2%), Genre Saturation (1%). Leading root cause: Unclear Repetition Cause (97%).",
+          "supportingReviewCount": 146,
+          "confidence": 0.45,
+          "quotes": [
+            {
+              "text": "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will like based on previous ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "This is great to hear, though I'm curious why photos on your phone / pinterest would be relevant to a recommendation system? Surely the biggest signal would be what Spotify already uses: the features ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        }
+      ],
+      "reviewsSupportingQuestion": 52
+    },
+    {
+      "id": "top_frustrations",
+      "question": "What are the most common frustrations with recommendations?",
+      "topFindings": [
+        {
+          "title": "Other Discovery Frustration",
+          "summary": "Other Discovery Frustration cited in 77% of discovery-related reviews.",
+          "supportingReviewCount": 113,
+          "confidence": 0.43,
+          "quotes": [
+            {
+              "text": "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will like based on previous ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "This is great to hear, though I'm curious why photos on your phone / pinterest would be relevant to a recommendation system? Surely the biggest signal would be what Spotify already uses: the features ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        },
+        {
+          "title": "Repetition Fatigue",
+          "summary": "Repetition Fatigue cited in 17% of discovery-related reviews.",
+          "supportingReviewCount": 25,
+          "confidence": 0.51,
+          "quotes": [
+            {
+              "text": "I hear the same artists every Discover Weekly. Zero novelty.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "The real problem with Spotify's DJ is that, if you use it a lot, it gets into a feedback loop where it keeps playing the same songs that it serves you up because it thinks you like them. It's pretty b",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "i have the whole setup but i cannot tell the difference. Their dolby demo kind of seems like its something but i honestly don't listen that actively to notice. I miss 'discover weekly', collaborative ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        },
+        {
+          "title": "Positive Discovery Experience",
+          "summary": "Positive Discovery Experience cited in 3% of discovery-related reviews.",
+          "supportingReviewCount": 4,
+          "confidence": 0.57,
+          "quotes": [
+            {
+              "text": "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features.",
+              "source": "appstore",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "As someone who considers them very much a music aficionado I disagree with your conclusion. According to Spotify's 2021 review, I listened ~55k minutes of music across ~3300 artists. It is impossible ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Spotify's recommendations are spot on. I discover new music every week without trying.",
+              "source": "playstore",
+              "segment": "Unspecified Segment"
+            }
+          ]
+        }
+      ],
+      "reviewsSupportingQuestion": 27
+    },
+    {
+      "id": "listening_behaviors",
+      "question": "What listening behaviors are users trying to achieve?",
+      "topFindings": [
+        {
+          "title": "Use Algorithmic Playlists",
+          "summary": "Users report use algorithmic playlists in 45% of discovery-related reviews.",
+          "supportingReviewCount": 65,
+          "confidence": 0.53,
+          "quotes": [
+            {
+              "text": "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "I hear the same artists every Discover Weekly. Zero novelty.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features.",
+              "source": "appstore",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        },
+        {
+          "title": "Evaluate Recommendations",
+          "summary": "Users report evaluate recommendations in 41% of discovery-related reviews.",
+          "supportingReviewCount": 60,
+          "confidence": 0.39,
+          "quotes": [
+            {
+              "text": "Recommendations trapped in one genre despite years of varied listening history.",
+              "source": "appstore",
+              "segment": "Unspecified Segment"
+            },
+            {
+              "text": "my favorite music app for over a decade! a happy customer! I love being able to listen to entire albums, make playlists, and most recently I'm super enjoying the AI DJ X, which usually is spot on for ",
+              "source": "playstore",
+              "segment": "Long-Term Power Listener"
+            },
+            {
+              "text": "Help please, Spotify ghost harassing me... —   I need help...  3 months ago, my Spotify account has started playing songs, randomly, that I did not request or start listening to. The phone will be on ",
+              "source": "reddit",
+              "segment": "Playlist-Centric Listener"
+            }
+          ]
+        },
+        {
+          "title": "Social or External Discovery",
+          "summary": "Users report social or external discovery in 6% of discovery-related reviews.",
+          "supportingReviewCount": 9,
+          "confidence": 0.49,
+          "quotes": [
+            {
+              "text": "Absolute trash. New widget broke the already broken app more. Recommendations are always yhe exact same song (regardless of what you're listening to), the shuffle works the same way (only plays the sa",
+              "source": "playstore",
+              "segment": "Unspecified Segment"
+            },
+            {
+              "text": "*I am a bot. If you'd like to receive a weekly recap of /r/electrohouse with the top posts and their alternative links, send me a message [with the subject 'electrohouse'](https://www.reddit.com/messa",
+              "source": "reddit",
+              "segment": "Unspecified Segment"
+            },
+            {
+              "text": "why do people say youtube music have way better algorithm than spotify? — I subscribed to both of youtube premium and spotify. I used youtube music many times but I think spotify has introduced me mor",
+              "source": "reddit",
+              "segment": "Unspecified Segment"
+            }
+          ]
+        }
+      ],
+      "reviewsSupportingQuestion": 139
+    },
+    {
+      "id": "repetition_causes",
+      "question": "What causes users to repeatedly listen to the same content?",
+      "topFindings": [
+        {
+          "title": "Unclear Repetition Cause",
+          "summary": "Repetitive listening linked to Unclear Repetition Cause (97% of repetition-related reviews).",
+          "supportingReviewCount": 65,
+          "confidence": 0.45,
+          "quotes": [
+            {
+              "text": "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "I hear the same artists every Discover Weekly. Zero novelty.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features.",
+              "source": "appstore",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        },
+        {
+          "title": "Similarity-Based Reinforcement",
+          "summary": "Repetitive listening linked to Similarity-Based Reinforcement (3% of repetition-related reviews).",
+          "supportingReviewCount": 2,
+          "confidence": 0.55,
+          "quotes": [
+            {
+              "text": "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will like based on previous ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Same songs on repeat — algorithm regurgitates my listening history instead of finding new artists.",
+              "source": "social-media",
+              "segment": "Unspecified Segment"
+            }
+          ]
+        }
+      ],
+      "reviewsSupportingQuestion": 21
+    },
+    {
+      "id": "segment_challenges",
+      "question": "Which user segments experience different discovery challenges?",
+      "topFindings": [
+        {
+          "title": "Unspecified Segment: Other Discovery Frustration",
+          "summary": "Other Discovery Frustration affects Unspecified Segment listeners (72%).",
+          "supportingReviewCount": 63,
+          "confidence": 0.39,
+          "quotes": [
+            {
+              "text": "The best ”algorithm” for discovering new music was digging through profiles on last.fm back when the social functions of the site were still active. Sure, it was a lot of manual work, but the results ",
+              "source": "social-media",
+              "segment": "Unspecified Segment"
+            },
+            {
+              "text": "I love how Daily Mix introduces me to similar artists outside my usual genres. Found my new favorite band this way.",
+              "source": "appstore",
+              "segment": "Unspecified Segment"
+            },
+            {
+              "text": "Radio mode loops the same tracks. Nothing new in weeks.",
+              "source": "appstore",
+              "segment": "Unspecified Segment"
+            }
+          ]
+        },
+        {
+          "title": "Discovery-Focused Listener: Other Discovery Frustration",
+          "summary": "Other Discovery Frustration affects Discovery-Focused Listener listeners (88%).",
+          "supportingReviewCount": 43,
+          "confidence": 0.54,
+          "quotes": [
+            {
+              "text": "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will like based on previous ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "This is great to hear, though I'm curious why photos on your phone / pinterest would be relevant to a recommendation system? Surely the biggest signal would be what Spotify already uses: the features ",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        },
+        {
+          "title": "Playlist-Centric Listener: Other Discovery Frustration",
+          "summary": "Other Discovery Frustration affects Playlist-Centric Listener listeners (88%).",
+          "supportingReviewCount": 7,
+          "confidence": 0.51,
+          "quotes": [
+            {
+              "text": "Help please, Spotify ghost harassing me... —   I need help...  3 months ago, my Spotify account has started playing songs, randomly, that I did not request or start listening to. The phone will be on ",
+              "source": "reddit",
+              "segment": "Playlist-Centric Listener"
+            },
+            {
+              "text": "Autoplay on my playlist adds songs I don't want. I can't turn off recommendations inside my own playlist.",
+              "source": "spotify-community",
+              "segment": "Playlist-Centric Listener"
+            },
+            {
+              "text": "Is there a way to stop mid-playlist song recommendations? — I'm enjoying tunes I'm familiar with and all of a sudden a song I definitely know I didn't add is playing. Why? Does Spotify get their kicks",
+              "source": "reddit",
+              "segment": "Playlist-Centric Listener"
+            }
+          ]
+        }
+      ],
+      "reviewsSupportingQuestion": 39
+    },
+    {
+      "id": "unmet_needs",
+      "question": "What unmet needs emerge consistently across reviews?",
+      "topFindings": [
+        {
+          "title": "General Discovery Improvement",
+          "summary": "Users express need for general discovery improvement (97% of reviews).",
+          "supportingReviewCount": 142,
+          "confidence": 0.45,
+          "quotes": [
+            {
+              "text": "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+              "source": "social-media",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "I hear the same artists every Discover Weekly. Zero novelty.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            },
+            {
+              "text": "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features.",
+              "source": "appstore",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        },
+        {
+          "title": "Cross-Genre Exploration",
+          "summary": "Users express need for cross-genre exploration (1% of reviews).",
+          "supportingReviewCount": 2,
+          "confidence": 0.52,
+          "quotes": [
+            {
+              "text": "The best ”algorithm” for discovering new music was digging through profiles on last.fm back when the social functions of the site were still active. Sure, it was a lot of manual work, but the results ",
+              "source": "social-media",
+              "segment": "Unspecified Segment"
+            },
+            {
+              "text": "I keep hearing from people how good is Spotify \"Discovery\" playlist. I've been a paid customer for 5+ years and their recommendations have a hit rate of 2%. I listen to a lot of different genres, arti",
+              "source": "social-media",
+              "segment": "Unspecified Segment"
+            }
+          ]
+        },
+        {
+          "title": "Better Artist Discovery",
+          "summary": "Users express need for better artist discovery (1% of reviews).",
+          "supportingReviewCount": 1,
+          "confidence": 0.59,
+          "quotes": [
+            {
+              "text": "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost.",
+              "source": "reddit",
+              "segment": "Discovery-Focused Listener"
+            }
+          ]
+        }
+      ],
+      "reviewsSupportingQuestion": 30
+    }
+  ],
+  "evidenceQuality": [
+    {
+      "findingId": "why-discovery-fails",
+      "title": "Why users struggle to discover new music",
+      "supportingReviewCount": 146,
+      "confidence": 0.45,
+      "representativeQuotes": [
+        "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will lik",
+        "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost.",
+        "This is great to hear, though I'm curious why photos on your phone / pinterest would be relevant to a recommendation system? Surely the biggest signal would be what Spotify already"
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "social-media",
+        "reddit"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "other-discovery-frustration",
+      "title": "Other Discovery Frustration",
+      "supportingReviewCount": 113,
+      "confidence": 0.43,
+      "representativeQuotes": [
+        "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will lik",
+        "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost.",
+        "This is great to hear, though I'm curious why photos on your phone / pinterest would be relevant to a recommendation system? Surely the biggest signal would be what Spotify already"
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "social-media",
+        "reddit"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "repetition-fatigue",
+      "title": "Repetition Fatigue",
+      "supportingReviewCount": 25,
+      "confidence": 0.51,
+      "representativeQuotes": [
+        "I hear the same artists every Discover Weekly. Zero novelty.",
+        "The real problem with Spotify's DJ is that, if you use it a lot, it gets into a feedback loop where it keeps playing the same songs that it serves you up because it thinks you like",
+        "i have the whole setup but i cannot tell the difference. Their dolby demo kind of seems like its something but i honestly don't listen that actively to notice. I miss 'discover wee"
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "reddit",
+        "social-media"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "positive-discovery-experience",
+      "title": "Positive Discovery Experience",
+      "supportingReviewCount": 4,
+      "confidence": 0.57,
+      "representativeQuotes": [
+        "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features.",
+        "As someone who considers them very much a music aficionado I disagree with your conclusion. According to Spotify's 2021 review, I listened ~55k minutes of music across ~3300 artist",
+        "Spotify's recommendations are spot on. I discover new music every week without trying."
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment",
+        "Long-Term Power Listener"
+      ],
+      "sources": [
+        "appstore",
+        "social-media",
+        "playstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "genre-lock-in",
+      "title": "Genre Lock-In",
+      "supportingReviewCount": 4,
+      "confidence": 0.56,
+      "representativeQuotes": [
+        "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+        "Recommendations trapped in one genre despite years of varied listening history.",
+        "Algorithm won't let me break out of EDM. I want cross-genre exploration but never get it."
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "social-media",
+        "appstore",
+        "reddit"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "emotion-neutral",
+      "title": "Neutral",
+      "supportingReviewCount": 138,
+      "confidence": 0.45,
+      "representativeQuotes": [
+        "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+        "I hear the same artists every Discover Weekly. Zero novelty.",
+        "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features."
+      ],
+      "segments": [
+        "Discovery-Focused Listener"
+      ],
+      "sources": [
+        "social-media",
+        "reddit",
+        "appstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "emotion-frustration",
+      "title": "Frustration",
+      "supportingReviewCount": 6,
+      "confidence": 0.5,
+      "representativeQuotes": [
+        "2026 Update: There are so many duplicates of songs. So many. Not talking about 10th anniversary versions or single versions but those exist too. I have 4 different duplicates of Ma",
+        "Is there a way to stop mid-playlist song recommendations? — I'm enjoying tunes I'm familiar with and all of a sudden a song I definitely know I didn't add is playing. Why? Does Spo",
+        "Changing Careers (I really don’t know what to do) — Hey, I’m posting this because, like the title says, I’m seriously thinking about changing majors — and honestly, I don’t know wh"
+      ],
+      "segments": [
+        "Unspecified Segment",
+        "Playlist-Centric Listener"
+      ],
+      "sources": [
+        "appstore",
+        "reddit",
+        "playstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "barrier-unclear-discovery-struggle",
+      "title": "Unclear Discovery Struggle",
+      "supportingReviewCount": 139,
+      "confidence": 0.44,
+      "representativeQuotes": [
+        "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features.",
+        "As someone who considers them very much a music aficionado I disagree with your conclusion. According to Spotify's 2021 review, I listened ~55k minutes of music across ~3300 artist",
+        "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will lik"
+      ],
+      "segments": [
+        "Discovery-Focused Listener"
+      ],
+      "sources": [
+        "appstore",
+        "social-media",
+        "reddit"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "barrier-similar-artist-loop",
+      "title": "Similar Artist Loop",
+      "supportingReviewCount": 3,
+      "confidence": 0.56,
+      "representativeQuotes": [
+        "I hear the same artists every Discover Weekly. Zero novelty.",
+        "I love how Daily Mix introduces me to similar artists outside my usual genres. Found my new favorite band this way.",
+        "Spotify keeps recommending the same artists and songs I've already listened to hundreds of times."
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "reddit",
+        "appstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "use-algorithmic-playlists",
+      "title": "Use Algorithmic Playlists",
+      "supportingReviewCount": 65,
+      "confidence": 0.53,
+      "representativeQuotes": [
+        "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+        "I hear the same artists every Discover Weekly. Zero novelty.",
+        "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features."
+      ],
+      "segments": [
+        "Discovery-Focused Listener"
+      ],
+      "sources": [
+        "social-media",
+        "reddit",
+        "appstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "evaluate-recommendations",
+      "title": "Evaluate Recommendations",
+      "supportingReviewCount": 60,
+      "confidence": 0.39,
+      "representativeQuotes": [
+        "Recommendations trapped in one genre despite years of varied listening history.",
+        "my favorite music app for over a decade! a happy customer! I love being able to listen to entire albums, make playlists, and most recently I'm super enjoying the AI DJ X, which usu",
+        "Help please, Spotify ghost harassing me... —   I need help...  3 months ago, my Spotify account has started playing songs, randomly, that I did not request or start listening to. T"
+      ],
+      "segments": [
+        "Unspecified Segment",
+        "Long-Term Power Listener",
+        "Playlist-Centric Listener"
+      ],
+      "sources": [
+        "appstore",
+        "playstore",
+        "reddit"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "social-or-external-discovery",
+      "title": "Social or External Discovery",
+      "supportingReviewCount": 9,
+      "confidence": 0.49,
+      "representativeQuotes": [
+        "Absolute trash. New widget broke the already broken app more. Recommendations are always yhe exact same song (regardless of what you're listening to), the shuffle works the same wa",
+        "*I am a bot. If you'd like to receive a weekly recap of /r/electrohouse with the top posts and their alternative links, send me a message [with the subject 'electrohouse'](https://",
+        "why do people say youtube music have way better algorithm than spotify? — I subscribed to both of youtube premium and spotify. I used youtube music many times but I think spotify h"
+      ],
+      "segments": [
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "playstore",
+        "reddit"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "find-new-music-or-artists",
+      "title": "Find New Music or Artists",
+      "supportingReviewCount": 6,
+      "confidence": 0.53,
+      "representativeQuotes": [
+        "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost.",
+        "Spotify's recommendations are spot on. I discover new music every week without trying.",
+        "Hey guys! I’ve been working on this 3rd party Spotify app, and I’m finally launching Discover Together! It analyzes you and a buddy’s Spotify profiles and uses machine learning to "
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "reddit",
+        "playstore",
+        "social-media"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "explore-by-genre-or-mood",
+      "title": "Explore by Genre or Mood",
+      "supportingReviewCount": 3,
+      "confidence": 0.52,
+      "representativeQuotes": [
+        "The best ”algorithm” for discovering new music was digging through profiles on last.fm back when the social functions of the site were still active. Sure, it was a lot of manual wo",
+        "Algorithm won't let me break out of EDM. I want cross-genre exploration but never get it.",
+        "I keep hearing from people how good is Spotify \"Discovery\" playlist. I've been a paid customer for 5+ years and their recommendations have a hit rate of 2%. I listen to a lot of di"
+      ],
+      "segments": [
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "social-media",
+        "appstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "passive-background-listening",
+      "title": "Passive Background Listening",
+      "supportingReviewCount": 2,
+      "confidence": 0.53,
+      "representativeQuotes": [
+        "Radio mode loops the same tracks. Nothing new in weeks.",
+        "Autoplay on my playlist adds songs I don't want. I can't turn off recommendations inside my own playlist."
+      ],
+      "segments": [
+        "Unspecified Segment",
+        "Playlist-Centric Listener"
+      ],
+      "sources": [
+        "appstore",
+        "spotify-community"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "unclear-repetition-cause",
+      "title": "Unclear Repetition Cause",
+      "supportingReviewCount": 65,
+      "confidence": 0.45,
+      "representativeQuotes": [
+        "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+        "I hear the same artists every Discover Weekly. Zero novelty.",
+        "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features."
+      ],
+      "segments": [
+        "Discovery-Focused Listener"
+      ],
+      "sources": [
+        "social-media",
+        "reddit",
+        "appstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "similarity-based-reinforcement",
+      "title": "Similarity-Based Reinforcement",
+      "supportingReviewCount": 2,
+      "confidence": 0.55,
+      "representativeQuotes": [
+        "Not sure what you mean here. a) Discover Weekly according to Spotify is identical to New Music. Every week you get a new playlist that has new releases that they think you will lik",
+        "Same songs on repeat — algorithm regurgitates my listening history instead of finding new artists."
+      ],
+      "segments": [
+        "Discovery-Focused Listener",
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "social-media"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "general-discovery-improvement",
+      "title": "General Discovery Improvement",
+      "supportingReviewCount": 142,
+      "confidence": 0.45,
+      "representativeQuotes": [
+        "Stuck in a genre bubble — every Discover Weekly is indie folk even though I listen to hip hop too.",
+        "I hear the same artists every Discover Weekly. Zero novelty.",
+        "Discover Weekly has introduced me to dozens of artists I now listen to every day. It's one of Spotify's best features."
+      ],
+      "segments": [
+        "Discovery-Focused Listener"
+      ],
+      "sources": [
+        "social-media",
+        "reddit",
+        "appstore"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "cross-genre-exploration",
+      "title": "Cross-Genre Exploration",
+      "supportingReviewCount": 2,
+      "confidence": 0.52,
+      "representativeQuotes": [
+        "The best ”algorithm” for discovering new music was digging through profiles on last.fm back when the social functions of the site were still active. Sure, it was a lot of manual wo",
+        "I keep hearing from people how good is Spotify \"Discovery\" playlist. I've been a paid customer for 5+ years and their recommendations have a hit rate of 2%. I listen to a lot of di"
+      ],
+      "segments": [
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "social-media"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "better-artist-discovery",
+      "title": "Better Artist Discovery",
+      "supportingReviewCount": 1,
+      "confidence": 0.59,
+      "representativeQuotes": [
+        "Premium is too expensive but at least Discover Weekly still helps me find new artists worth the cost."
+      ],
+      "segments": [
+        "Discovery-Focused Listener"
+      ],
+      "sources": [
+        "reddit"
+      ],
+      "hasClassificationReasons": false
+    },
+    {
+      "findingId": "genre-exploration",
+      "title": "Genre Exploration",
+      "supportingReviewCount": 1,
+      "confidence": 0.54,
+      "representativeQuotes": [
+        "Algorithm won't let me break out of EDM. I want cross-genre exploration but never get it."
+      ],
+      "segments": [
+        "Unspecified Segment"
+      ],
+      "sources": [
+        "appstore"
+      ],
+      "hasClassificationReasons": false
+    }
+  ],
+  "beforeAfter": [
+    {
+      "metric": "Other Discovery Frustration",
+      "before": 45.6,
+      "after": 77.4,
+      "delta": -31.8,
+      "improved": false,
+      "target": "<25%"
+    },
+    {
+      "metric": "General Discovery Improvement",
+      "before": 36.8,
+      "after": 97.3,
+      "delta": -60.5,
+      "improved": false,
+      "target": "<15%"
+    },
+    {
+      "metric": "Unclear Discovery Struggle",
+      "before": 47.4,
+      "after": 95.2,
+      "delta": -47.8,
+      "improved": false,
+      "target": "<25%"
+    },
+    {
+      "metric": "Unclear Repetition Cause",
+      "before": 63.2,
+      "after": 96.6,
+      "delta": -33.4,
+      "improved": false,
+      "target": "<20%"
+    },
+    {
+      "metric": "Reviews with any fallback label",
+      "before": 78.9,
+      "after": 100,
+      "delta": -21.1,
+      "improved": false,
+      "target": "<40%"
+    }
+  ],
+  "pmReadinessScore": {
+    "score": 3.5,
+    "maxScore": 10,
+    "rationale": "Not ready for PM discovery research — high false-positive rate and fallback dominance.",
+    "remainingWeaknesses": [
+      "LLM false-positive rate 22.2% — classifier keeps non-research reviews.",
+      "Unclear Repetition Cause still 96.6% — root-cause insights weak.",
+      "Other Discovery Frustration 77.4% — theme bucket still overloaded.",
+      "100% of research reviews contain fallback labels.",
+      "Few findings include per-field classification_reasons for PM audit.",
+      "Limited improvement vs benchmark on key fallback metrics."
+    ]
+  },
+  "warnings": []
+}

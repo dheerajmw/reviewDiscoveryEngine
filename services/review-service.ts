@@ -158,6 +158,12 @@ export async function getClassifiedReviewsForRun(
           {},
         )
       : undefined,
+    classification_reasons: row.evidence
+      ? parseJsonColumn<NonNullable<ClassifiedReview["evidence"]>>(
+          row.evidence,
+          {},
+        ).classification_reasons
+      : undefined,
   }));
 }
 
@@ -184,6 +190,7 @@ export async function saveRepresentativeQuotes(
         barrier: match?.barrier ?? null,
         root_cause: match?.root_cause ?? null,
         unmet_need: match?.unmet_need ?? null,
+        classification_reasons: match?.classification_reasons ?? match?.evidence?.classification_reasons ?? null,
       };
     }),
   );
@@ -194,8 +201,8 @@ export async function saveRepresentativeQuotes(
     const chunk = rows.slice(i, i + BATCH_SIZE);
     await db.batch(
       chunk.map((row) => ({
-        sql: `INSERT INTO representative_quotes (id, run_id, theme, quote_text, source, segment, confidence, barrier, root_cause, unmet_need)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        sql: `INSERT INTO representative_quotes (id, run_id, theme, quote_text, source, segment, confidence, barrier, root_cause, unmet_need, classification_reasons)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
           row.id,
           row.run_id,
@@ -207,6 +214,9 @@ export async function saveRepresentativeQuotes(
           row.barrier,
           row.root_cause,
           row.unmet_need,
+          row.classification_reasons
+            ? toJson(row.classification_reasons)
+            : null,
         ],
       })),
       "write",
@@ -269,6 +279,12 @@ export async function searchQuotes(
     barrier: row.barrier ? String(row.barrier) : null,
     root_cause: row.root_cause ? String(row.root_cause) : null,
     unmet_need: row.unmet_need ? String(row.unmet_need) : null,
+    classification_reasons: row.classification_reasons
+      ? parseJsonColumn<NonNullable<QuoteRecord["classification_reasons"]>>(
+          row.classification_reasons,
+          {},
+        )
+      : undefined,
   }));
 }
 

@@ -4,6 +4,8 @@ import { frequencyToChartData } from "@/lib/chart-data";
 import type { AggregationResult } from "@/lib/types";
 import Card from "@/components/ui/Card";
 
+export const DASHBOARD_THEMES_SECTION_ID = "dashboard-themes";
+
 interface ThemeChartProps {
   aggregation: AggregationResult;
 }
@@ -13,7 +15,7 @@ export default function ThemeChart({ aggregation }: ThemeChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card title="Recommendation frustrations">
+      <Card id={DASHBOARD_THEMES_SECTION_ID} title="Discovery themes" className="scroll-mt-20">
         <p className="text-sm text-on-surface-variant">No theme data available.</p>
       </Card>
     );
@@ -21,8 +23,10 @@ export default function ThemeChart({ aggregation }: ThemeChartProps) {
 
   return (
     <Card
-      title="Recommendation frustrations"
-      subtitle="What are the most common frustrations with recommendations?"
+      id={DASHBOARD_THEMES_SECTION_ID}
+      title="Discovery themes"
+      subtitle="Frustrations and positive discovery experiences (Q2)"
+      className="scroll-mt-20"
     >
       <div className="space-y-6">
         {data.map((item, index) => (

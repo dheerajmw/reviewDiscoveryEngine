@@ -70,15 +70,29 @@ function collectSampleQuotes(context: AnalysisContext): string {
 }
 
 export function buildChatContextBlock(context: AnalysisContext): string {
-  const { evidence, findings } = context;
+  const { evidence, findings, executive } = context;
   const report = findings.report;
 
-  const opportunityLines = report
-    ? report.unmet_needs
+  const opportunityLines = executive
+    ? executive.strategic_opportunities
         .slice(0, 3)
-        .map((f) => `- ${f.title}: ${f.summary}`)
+        .map((o) => `- ${o.spotify_opportunity} (${o.size}, score ${o.opportunity_score})`)
         .join("\n")
-    : findings.unmet_needs.slice(0, 3).map((n) => `- ${n}`).join("\n");
+    : report
+      ? report.unmet_needs
+          .slice(0, 3)
+          .map((f) => `- ${f.title}: ${f.summary}`)
+          .join("\n")
+      : findings.unmet_needs.slice(0, 3).map((n) => `- ${n}`).join("\n");
+
+  const executiveBlock = executive
+    ? `
+=== EXECUTIVE SYNTHESIS ===
+Summary: ${executive.executive_summary}
+Top discovery problem: ${executive.top_discovery_problems[0]?.title ?? "n/a"}
+Top frustration: ${executive.top_recommendation_frustrations[0]?.title ?? "n/a"}
+`
+    : "";
 
   return `
 BOUNDARY: This is the ONLY data you may use. Do not use any information outside this block.
@@ -86,7 +100,7 @@ BOUNDARY: This is the ONLY data you may use. Do not use any information outside 
 TOTAL REVIEWS: ${context.totalReviews}
 DISCOVERY-RELATED: ${context.discoveryRelevantCount} (${evidence.excludedCount} non-discovery excluded)
 ${context.filterNote ? `FILTER NOTE: ${context.filterNote}\n` : ""}
-
+${executiveBlock}
 === RESEARCH FINDINGS ===
 Why discovery fails: ${findings.why_discovery_fails}
 Top frustrations: ${findings.top_frustrations.slice(0, 5).join("; ")}

@@ -9,7 +9,7 @@ import {
   buildClassificationAuditRecords,
   buildConfidenceHistogram,
 } from "@/lib/classification-audit";
-import { getGeminiApiKey, GEMINI_MODEL } from "@/lib/gemini-config";
+import { getLlmApiKey, LLM_MODEL } from "@/lib/llm-config";
 import {
   llmFallbackWarning,
   shouldFallbackToMockOnLlmError,
@@ -65,19 +65,19 @@ export async function POST(request: Request) {
     return NextResponse.json(response);
   }
 
-  const apiKey = getGeminiApiKey();
+  const apiKey = getLlmApiKey();
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
-          "GEMINI_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
+          "CEREBRAS_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
       },
       { status: 500 },
     );
   }
 
   try {
-    const cacheLookup = await lookupClassificationCache(reviews, GEMINI_MODEL);
+    const cacheLookup = await lookupClassificationCache(reviews, LLM_MODEL);
     let taxonomyReport;
     let freshlyClassified: Awaited<ReturnType<typeof classifyReviews>>["classified"] = [];
     let llmFallback = false;
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
         const result = await classifyReviews(cacheLookup.missReviews, apiKey);
         freshlyClassified = result.classified;
         taxonomyReport = result.taxonomyReport;
-        await saveClassificationCache(freshlyClassified, GEMINI_MODEL);
+        await saveClassificationCache(freshlyClassified, LLM_MODEL);
       } catch (error) {
         if (!shouldFallbackToMockOnLlmError(error)) {
           throw error;

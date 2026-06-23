@@ -6,7 +6,7 @@ import {
   isQuestionAnswerableFromContext,
   noRelevantDataResponse,
 } from "@/lib/chat-guard";
-import { getGeminiApiKey } from "@/lib/gemini-config";
+import { getLlmApiKey } from "@/lib/llm-config";
 import {
   llmFallbackWarning,
   shouldFallbackToMockOnLlmError,
@@ -82,12 +82,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ...response, mock: true });
   }
 
-  const apiKey = getGeminiApiKey();
+  const apiKey = getLlmApiKey();
   if (!apiKey) {
     return NextResponse.json(
       {
         error:
-          "GEMINI_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
+          "CEREBRAS_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
       },
       { status: 500 },
     );

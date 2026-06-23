@@ -148,7 +148,7 @@ There is no separate LLM “insights” API — narrative summaries come from **
 ## Tech stack
 
 - **Framework:** Next.js 16 (App Router), React 19, TypeScript
-- **LLM:** Google Gemini (`gemini-2.0-flash` by default) for classification and chat
+- **LLM:** Cerebras Cloud (`gpt-oss-120b` by default) for classification and chat
 - **Database:** Turso (libSQL) — runs, reviews, classifications, quote cache
 - **Styling:** Tailwind CSS v4
 
@@ -159,7 +159,7 @@ There is no separate LLM “insights” API — narrative summaries come from **
 ### Prerequisites
 
 - Node.js 20+
-- [Gemini API key](https://aistudio.google.com/apikey) (optional if using mock mode)
+- [Cerebras API key](https://cloud.cerebras.ai) (optional if using mock mode)
 - Turso database (optional — defaults to local `file:data/research.db`)
 
 ### Setup
@@ -167,7 +167,7 @@ There is no separate LLM “insights” API — narrative summaries come from **
 ```bash
 npm install
 cp .env.local.example .env.local
-# Edit .env.local — at minimum set GEMINI_API_KEY for live classification
+# Edit .env.local — at minimum set CEREBRAS_API_KEY for live classification
 npm run dev
 ```
 
@@ -198,9 +198,12 @@ See [`.env.local.example`](.env.local.example). Key variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `GEMINI_API_KEY` | Live LLM classification and chat |
-| `GEMINI_MODEL` | Model slug (default `gemini-2.0-flash`) |
-| `GEMINI_DAILY_TOKEN_BUDGET` | Optional cap for quota-split UI (default `1000000`) |
+| `CEREBRAS_API_KEY` | Live LLM classification and chat |
+| `CEREBRAS_MODEL` | Model slug (default `gpt-oss-120b`; preview: `zai-glm-4.7`) |
+| `LLM_DAILY_TOKEN_BUDGET` | Optional cap for quota-split UI (default `1000000` TPD) |
+| `LLM_REQUESTS_PER_DAY` | Daily request budget for split UI (default `2400`) |
+| `LLM_CLASSIFY_BATCH_SIZE` | Reviews per LLM call (default `10`, auto-capped for output tokens) |
+| `LLM_BATCH_DELAY_MS` | Delay floor between batches (auto ~26s from 5 RPM + 30K TPM) |
 | `USE_MOCK_CLASSIFIER` | `true` = rule-based demo mode |
 | `TURSO_DATABASE_URL` | Research repository (local file or remote) |
 | `TURSO_AUTH_TOKEN` | Required for remote Turso |

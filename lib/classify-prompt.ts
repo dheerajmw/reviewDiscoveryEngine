@@ -15,8 +15,8 @@ Follow this STRICT pipeline for EACH review, in order:
 
 STEP 1 — RESEARCH RELEVANCE
 Decide whether the review provides meaningful evidence for at least ONE research question.
-- KEEP: specific complaints or praise about recommendations, discovery, repetition, exploration, control, playlists, algorithms, DJ, shuffle, external discovery (TikTok), or unmet needs.
-- REJECT: generic praise ("love Spotify", "great app", "nice UI", "good music selection", "playlist looks cool") with no discovery/recommendation substance.
+- KEEP: specific complaints OR praise about recommendations, discovery, repetition, exploration, control, playlists, algorithms, DJ, shuffle, Discover Weekly, Release Radar, recommendation quality/diversity.
+- REJECT: billing/pricing, ads, crashes, login, account issues, UI bugs, playback bugs, queue bugs, playlist promotions ("drop your playlist", "follow me"), social spam, generic praise ("love Spotify", "best app") with no discovery substance.
 
 STEP 2 — RESEARCH QUESTION MAPPING (only if research_relevant=true)
 List every question ID the review can support with direct or strongly implied evidence.
@@ -32,15 +32,43 @@ find new artists | explore genres | refresh playlists | discover hidden gems | d
 STEP 5 — TAXONOMY CLASSIFICATION (only if research_relevant=true)
 Assign each taxonomy field independently from review meaning — NEVER copy one field from another.
 
+POSITIVE vs NEGATIVE themes (CRITICAL):
+- Use POSITIVE theme family when user praises discovery, Discover Weekly, DJ, or successful artist introduction.
+- Use NEGATIVE theme family for frustrations only.
+- NEVER assign "Other Discovery Frustration" to positive reviews.
+- NEVER merge positive experiences into negative frustration buckets.
+
+TAXONOMY RULES (CRITICAL):
+- Choose EXACTLY ONE label from the allowed list for each field. Copy the label string exactly.
+- If none fit perfectly, choose the CLOSEST label from the list. Do NOT invent new labels.
+- Forbidden invented labels include: "Strong Discovery Playlists" as frustration, "Great Recommendations", "Recommendation Success" for complaints.
+- Provide classification_reasons for ALL of: theme, barrier, root_cause, unmet_need, segment, behavior, emotion — one sentence each citing review evidence.
+- For root_cause prefer a specific mechanism. Use Unclear Repetition Cause only when no mechanism is inferable.
+- For unmet_need prefer a specific need. Use General Discovery Improvement only as last resort.
+
+THEME guidance:
+- Use "Positive Discovery Experience" when the user is satisfied with discovering new music (Discover Weekly praise, DJ praise, recommendations work well, introduced to new artists).
+- Use frustration themes only when the user describes a problem.
+
+ROOT CAUSE guidance (avoid "Unclear Repetition Cause" unless no mechanism is inferable):
+- Similarity-Based Reinforcement: recommendations repeat highly similar artists/songs.
+- Listening History Loop: past listening dominates future recommendations.
+- Engagement Optimization Bias: system optimizes engagement/familiarity over novelty.
+- Limited Exploration Strategy: insufficient exploration of new artists/genres.
+- Lack of User Steering Signals: user cannot communicate discovery preferences.
+- Playlist or Radio Loop: playlist/radio/shuffle repeats same content.
+- Discovery Surface Design Issues: Discover Weekly / Radio / DJ / Home feed fails to expose novelty.
+- Cross-Content Recommendation Bias: podcasts, audiobooks, or unrelated content pollutes music discovery.
+
+UNMET NEED guidance (avoid "General Discovery Improvement" unless nothing else fits):
+- Better Artist Discovery, Stronger Discovery Playlists, Adjustable Novelty, Discovery Control, Explainable Recommendations, Genre Exploration, Freshness Guarantees, Cross-Genre Exploration.
+
 FORBIDDEN inference chains:
 - theme → root_cause (e.g. Repetition Fatigue does NOT automatically mean Similarity-Based Reinforcement)
-- theme → unmet_need (e.g. Repetition Fatigue does NOT automatically mean Adjustable Novelty)
+- theme → unmet_need
 - keyword "genre" alone → Genre Lock-In
 - keyword "shuffle" alone → Repetition Fatigue
 - keyword "control" alone → Lack of Discovery Control
-
-Each of theme, barrier, segment, emotion, root_cause, unmet_need, behavior must be justified by distinct evidence in the review text.
-Positive discovery experiences are valid — do not force a problem theme when the user describes success.
 
 Use ONLY these closed taxonomy enums:
 ${formatTaxonomyForPrompt()}
@@ -51,6 +79,7 @@ When research_relevant=false:
 - evidence: ""
 - user_goal: "other"
 - discovery_relevant: false
+- classification_reasons: {}
 - use fallback labels exactly:
   theme "${NON_RESEARCH_FALLBACK.theme}"
   barrier "${NON_RESEARCH_FALLBACK.barrier}"
@@ -63,7 +92,7 @@ When research_relevant=false:
 
 When research_relevant=true:
 - discovery_relevant: true
-- behavior should align with user_goal where possible (Find New Music or Artists, Explore by Genre or Mood, Evaluate Recommendations, etc.)
+- behavior should align with user_goal where possible
 
 Return ONLY valid JSON:
 {
@@ -83,6 +112,15 @@ Return ONLY valid JSON:
       "segment": "Long-Term Power Listener",
       "root_cause": "Similarity-Based Reinforcement",
       "unmet_need": "Better Artist Discovery",
+      "classification_reasons": {
+        "theme": "User states recommendations repeat the same artists.",
+        "barrier": "User cannot get novel music in recommendations.",
+        "root_cause": "Recommendations reinforce similar artists from history.",
+        "unmet_need": "User wants to discover artists beyond current rotation.",
+        "segment": "Long-term listener with deep listening history.",
+        "behavior": "User is actively trying to find new artists.",
+        "emotion": "User expresses frustration with repetitive feeds."
+      },
       "confidence": 0.87
     }
   ]
@@ -101,5 +139,5 @@ export function buildClassifyUserPrompt(reviews: RawReview[]): string {
     primary_category: review.primary_category,
   }));
 
-  return `Analyze these ${reviews.length} discovery-related reviews using the 5-step PM research pipeline:\n${JSON.stringify(payload, null, 2)}`;
+  return `Analyze these ${reviews.length} discovery-related reviews using the 5-step PM research pipeline. Use EXACT taxonomy labels only:\n${JSON.stringify(payload, null, 2)}`;
 }

@@ -6,15 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "evaluate": "tsx scripts/classification-evaluation.ts",
-    "evaluate:mock": "tsx scripts/classification-evaluation.ts --mock-after",
-    "test": "npx tsx --test lib/review-preprocessing/preprocess.test.ts lib/classify.test.ts lib/review-split.test.ts"
+    "evaluate": "npx tsx scripts/classification-evaluation.ts",
+    "evaluate:mock": "npx tsx scripts/classification-evaluation.ts --mock-after",
+    "evaluate:pm-quality": "npx tsx scripts/pm-research-quality-evaluation.mts",
+    "evaluate:pm-quality:mock": "npx tsx scripts/pm-research-quality-evaluation.mts --mock",
+    "audit:discovery-signal": "npx tsx scripts/discovery-signal-audit.mts",
+    "test": "npx tsx --test lib/review-preprocessing/preprocess.test.ts lib/classify.test.ts lib/review-split.test.ts lib/executive/executive.test.ts lib/quality/quality.test.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@libsql/client": "^0.17.4",
     "app-store-scraper": "^0.18.0",
     "google-play-scraper": "^10.1.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "next": "16.2.9",
     "papaparse": "^5.5.3",
     "react": "19.2.4",

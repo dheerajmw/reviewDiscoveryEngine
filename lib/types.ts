@@ -87,6 +87,8 @@ export interface ClassificationEvidence {
   research_quote?: string;
   supports_questions?: ResearchQuestionId[];
   classification_user_goal?: ClassificationUserGoal;
+  /** Per-field PM justification for assigned taxonomy labels. */
+  classification_reasons?: Partial<Record<TaxonomyDimension, string>>;
 }
 
 export interface ClassifiedReview extends RawReview {
@@ -111,6 +113,8 @@ export interface ClassifiedReview extends RawReview {
   unmet_need: string;
   confidence: number;
   evidence?: ClassificationEvidence;
+  /** Per-field PM justification (mirrors evidence.classification_reasons). */
+  classification_reasons?: Partial<Record<TaxonomyDimension, string>>;
 }
 
 export interface ClassificationAuditRecord {
@@ -127,6 +131,7 @@ export interface ClassificationAuditRecord {
   unmet_need: string;
   evidence: ClassificationEvidence;
   confidence: number;
+  classification_reasons?: Partial<Record<TaxonomyDimension, string>>;
 }
 
 export interface TaxonomyViolation {
@@ -278,6 +283,143 @@ export interface AnalysisBundle {
   aggregation: AggregationResult;
   findings: ResearchFindings;
   curation?: CurationStats;
+  /** Executive insight synthesis — narrative findings for leadership. */
+  executive?: ExecutiveResearchReport;
+}
+
+// ─── Executive product research engine ───────────────────────────────────
+
+export type ConfidenceLevel = "High" | "Medium" | "Low";
+export type EvidenceStrength = "Strong" | "Medium" | "Weak";
+export type QuoteAlignmentScore = "Strong" | "Medium" | "Weak";
+export type BusinessImpactArea =
+  | "Retention"
+  | "Engagement"
+  | "Discovery"
+  | "Monetization";
+export type OpportunitySize = "Small" | "Medium" | "Large";
+
+export interface ProductInsight {
+  id: string;
+  insight: string;
+  supporting_reviews: number;
+  supporting_segments: string[];
+  supporting_sources: string[];
+  themes: string[];
+  barriers: string[];
+  root_causes: string[];
+  unmet_needs: string[];
+  representative_quotes: QuoteEvidence[];
+  confidence: number;
+  /** 1 (low) – 5 (critical) */
+  severity: number;
+  opportunity_size: OpportunitySize;
+  /** Mechanism extraction layer */
+  symptom?: string;
+  mechanism?: string;
+  product_implication?: string;
+  opportunity?: string;
+  research_domain?: string;
+  is_positive?: boolean;
+}
+
+export interface ExecutiveFinding {
+  id: string;
+  title: string;
+  description: string;
+  evidence_count: number;
+  affected_segments: string[];
+  representative_quotes: QuoteEvidence[];
+  /** @deprecated Use evidence_strength in UI */
+  confidence: ConfidenceLevel;
+  evidence_strength: EvidenceStrength;
+  source_count: number;
+  business_impact: BusinessImpactArea[];
+  related_insight_id: string;
+  symptom?: string;
+  mechanism?: string;
+  product_implication?: string;
+  opportunity?: string;
+  research_domain?: string;
+  is_positive?: boolean;
+}
+
+export interface StrategicOpportunity {
+  id: string;
+  problem: string;
+  current_user_behavior: string;
+  root_cause: string;
+  spotify_opportunity: string;
+  size: OpportunitySize;
+  opportunity_score: number;
+  impact_score: number;
+  frequency_score: number;
+  confidence_score: number;
+  supporting_reviews: number;
+  affected_segments: string[];
+  representative_quotes: QuoteEvidence[];
+  related_finding_id: string;
+}
+
+export interface SegmentIntelligenceProfile {
+  segment: string;
+  display_name: string;
+  primary_challenge: string;
+  primary_unmet_need: string;
+  discovery_behavior: string;
+  representative_quote: QuoteEvidence | null;
+  review_count: number;
+}
+
+export interface DiscoveryBehaviorNarrative {
+  behavior: string;
+  narrative: string;
+  evidence_count: number;
+  quote: string;
+}
+
+export interface UnmetNeedNarrative {
+  need: string;
+  narrative: string;
+  evidence_count: number;
+}
+
+export interface SlideFinding {
+  headline: string;
+  evidence_count: number;
+  supporting_quote: string;
+  business_implication: string;
+  recommended_action: string;
+}
+
+export interface ExecutiveQualityReport {
+  total_candidates: number;
+  accepted: number;
+  rejected: number;
+  rejection_reasons: string[];
+}
+
+export interface ExecutiveResearchReport {
+  generated_at: string;
+  executive_summary: string;
+  dashboard_headline: string;
+  insights: ProductInsight[];
+  positive_discovery_signals: ExecutiveFinding[];
+  top_discovery_problems: ExecutiveFinding[];
+  top_recommendation_frustrations: ExecutiveFinding[];
+  discovery_behaviors: DiscoveryBehaviorNarrative[];
+  segment_differences: SegmentIntelligenceProfile[];
+  unmet_needs: UnmetNeedNarrative[];
+  strategic_opportunities: StrategicOpportunity[];
+  key_quotes: QuoteEvidence[];
+  confidence_assessment: string;
+  slides: SlideFinding[];
+  quality: ExecutiveQualityReport;
+  director_readiness?: {
+    score: number;
+    maxScore: number;
+    rationale: string;
+  };
 }
 
 export interface ResearchFindings {
@@ -308,6 +450,7 @@ export interface AnalysisContext {
   discoveryRelevantCount: number;
   evidence: AggregationResult;
   findings: ResearchFindings;
+  executive?: ExecutiveResearchReport;
   filterNote?: string;
 }
 
@@ -355,6 +498,7 @@ export interface QuoteRecord {
   barrier: string | null;
   root_cause: string | null;
   unmet_need: string | null;
+  classification_reasons?: Partial<Record<TaxonomyDimension, string>>;
 }
 
 export interface QuoteSearchFilters {

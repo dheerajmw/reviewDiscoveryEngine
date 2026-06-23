@@ -9,6 +9,7 @@ import {
   estimateLlmClassification,
 } from "@/lib/classify-client";
 import { fetchFindings } from "@/lib/findings-client";
+import { computeExecutiveInsights } from "@/lib/insights-client";
 import { persistAnalysisRun } from "@/lib/runs-client";
 import type { PipelineStep } from "@/lib/pipeline";
 import type { CurationStats, RawReview } from "@/lib/types";
@@ -26,6 +27,9 @@ import UploadPreview from "./UploadPreview";
 import CurationEmptyState from "./CurationEmptyState";
 import CurationSummary from "./CurationSummary";
 import QuotaSplitPanel from "./QuotaSplitPanel";
+import LlmEstimatePanel, {
+  type LlmProviderLimits,
+} from "./LlmEstimatePanel";
 
 const MIN_CURATION_UI_MS = 700;
 
@@ -48,15 +52,34 @@ export default function UploadSection() {
   });
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
   const [mockClassifierEnabled, setMockClassifierEnabled] = useState(true);
+  const [llmConfig, setLlmConfig] = useState<{
+    model: string;
+    limits: LlmProviderLimits;
+    provider?: string;
+  } | null>(null);
   const [curationStats, setCurationStats] = useState<CurationStats | null>(null);
   const [curationNote, setCurationNote] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/classify/config")
       .then((res) => res.json())
-      .then((data: { mockEnabled?: boolean }) => {
-        setMockClassifierEnabled(Boolean(data.mockEnabled));
-      })
+      .then(
+        (data: {
+          mockEnabled?: boolean;
+          provider?: string;
+          model?: string;
+          limits?: LlmProviderLimits;
+        }) => {
+          setMockClassifierEnabled(Boolean(data.mockEnabled));
+          if (data.model && data.limits) {
+            setLlmConfig({
+              model: data.model,
+              limits: data.limits,
+              provider: data.provider,
+            });
+          }
+        },
+      )
       .catch(() => {
         setMockClassifierEnabled(true);
       });
@@ -185,12 +208,16 @@ export default function UploadSection() {
       setPipelineStep("aggregating");
       const aggregation = await fetchAggregation(results);
       const findings = await fetchFindings(aggregation);
+      const executive = computeExecutiveInsights({
+        classified: results,
+        aggregation,
+      });
 
       setPipelineStep("saving");
       const runId = await persistAnalysisRun({
         datasetName: loadedFileName ?? `Analysis ${new Date().toLocaleDateString()}`,
         classified: results,
-        analysis: { aggregation, findings, curation: stats },
+        analysis: { aggregation, findings, executive, curation: stats },
         usedMockClassifier,
         curation: stats,
       });
@@ -389,7 +416,17 @@ export default function UploadSection() {
                     <UploadPreview reviews={curatedReviews} />
                   </div>
 
-                  {llmEstimate?.exceedsDailyTokenQuota ? (
+                  {llmEstimate && llmConfig ? (
+                    <LlmEstimatePanel
+                      estimate={llmEstimate}
+                      model={llmConfig.model}
+                      limits={llmConfig.limits}
+                      provider={llmConfig.provider}
+                    />
+                  ) : null}
+
+                  {(llmEstimate?.exceedsDailyTokenQuota ||
+                    llmEstimate?.exceedsDailyRequestQuota) ? (
                     <QuotaSplitPanel
                       reviews={curatedReviews}
                       curationStats={curationStats}
@@ -398,27 +435,23 @@ export default function UploadSection() {
                     />
                   ) : null}
 
-                  {llmEstimate && !llmEstimate.exceedsDailyTokenQuota && (
-                    <p className="text-xs text-on-surface-variant">
-                      Live LLM run: ~{llmEstimate.batches} Gemini requests, ~
-                      {llmEstimate.estimatedMinutes} min (throttled for rate
-                      limits).
-                    </p>
-                  )}
-
                   <button
                     type="button"
                     onClick={handleAnalyze}
-                    disabled={Boolean(llmEstimate?.exceedsDailyTokenQuota)}
+                    disabled={Boolean(
+                      llmEstimate?.exceedsDailyTokenQuota ||
+                        llmEstimate?.exceedsDailyRequestQuota,
+                    )}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary shadow-sm transition-all hover:shadow-lg hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Icon name="analytics" />
                     Analyze &amp; Save to Repository
                   </button>
 
-                  {llmEstimate?.exceedsDailyTokenQuota ? (
+                  {(llmEstimate?.exceedsDailyTokenQuota ||
+                    llmEstimate?.exceedsDailyRequestQuota) ? (
                     <p className="text-center text-xs text-on-surface-variant">
-                      Full analysis is disabled while over the daily Gemini token budget.
+                      Full analysis is disabled while over the daily LLM token budget.
                       Split and save parts above, then analyze one part per day
                       from the Research Repository.
                     </p>

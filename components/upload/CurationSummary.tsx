@@ -10,6 +10,9 @@ const REASON_LABELS: Record<string, string> = {
   customer_support: "Customer support",
   off_topic: "Off-topic",
   not_discovery_related: "Not discovery-related",
+  playlist_promotion: "Playlist promotion",
+  social_spam: "Social spam",
+  praise_only: "Generic praise only",
 };
 
 interface CurationSummaryProps {

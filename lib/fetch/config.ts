@@ -16,9 +16,10 @@ export const SPOTIFY_APP_STORE_ID = 324684580;
 export const DEFAULT_REDDIT_SUBREDDITS = [
   "spotify",
   "truespotify",
-  "SpotifyPlaylists",
   "LetsTalkMusic",
   "music",
+  "listentothis",
+  "ifyoulikeblank",
 ] as const;
 
 export const DEFAULT_REDDIT_SUBREDDIT_LABELS = DEFAULT_REDDIT_SUBREDDITS.map(
@@ -28,14 +29,21 @@ export const DEFAULT_REDDIT_SUBREDDIT_LABELS = DEFAULT_REDDIT_SUBREDDITS.map(
 /** Comment search topics — each is queried as "spotify <term>" (not subreddit names). */
 export const DEFAULT_REDDIT_DISCOVERY_QUERIES = [
   "discover weekly",
-  "recommendations",
-  "algorithm",
-  "discovery",
-  "radio",
-  "playlist",
-  "recommend",
-  "wrapped",
+  "release radar",
+  "spotify dj",
+  "recommendation algorithm",
+  "music discovery",
+  "same songs repeat",
+  "recommendation quality",
+  "genre bubble",
+  "shuffle repeat",
+  "find new artists",
   "daily mix",
+  "recommendation diversity",
+  "discovery fatigue",
+  "autoplay recommendations",
+  "listening history loop",
+  "artist discovery",
 ] as const;
 
 export const DEFAULT_REDDIT_QUERY_INPUT =

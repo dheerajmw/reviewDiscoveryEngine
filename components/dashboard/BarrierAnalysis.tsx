@@ -1,5 +1,7 @@
 import type { AggregationResult } from "@/lib/types";
 
+export const DASHBOARD_BARRIERS_SECTION_ID = "dashboard-barriers";
+
 interface BarrierAnalysisProps {
   aggregation: AggregationResult;
 }
@@ -21,7 +23,10 @@ export default function BarrierAnalysis({ aggregation }: BarrierAnalysisProps) {
   );
 
   return (
-    <section className="stitch-dash-section">
+    <section
+      id={DASHBOARD_BARRIERS_SECTION_ID}
+      className="stitch-dash-section scroll-mt-20"
+    >
       <div className="stitch-dash-section-header">
         <div>
           <h4 className="text-xl font-semibold text-on-surface">

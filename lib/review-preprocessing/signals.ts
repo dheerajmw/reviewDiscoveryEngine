@@ -22,6 +22,12 @@ export const EXPLICIT_DISCOVERY_PATTERNS: RegExp[] = [
   /\bhidden gems?\b/,
   /\btrending music\b/,
   /\bwrapped\b/,
+  /\brecommendation (quality|relevance|diversity|accuracy|trust)\b/,
+  /\brecommendation (loop|irrelevance|distrust)\b/,
+  /\bplaylist contamination\b/,
+  /\bdiscovery fatigue\b/,
+  /\bbroaden (my )?taste\b/,
+  /\bdiscover (genres?|songs?)\b/,
   /\bmade for you\b/,
   /\bautoplay\b/,
   /\bfeed\b/,
@@ -120,6 +126,95 @@ export const DISCOVERY_FAILURE_PATTERNS: RegExp[] = [
   /\b(poor (recommendations|suggestions|personalization))\b/,
   /\b(repetitive (recommendations|playlists|songs|artists))\b/,
 ];
+
+/** PM discovery substance — experience (recommendations, algorithms, discovery surfaces). */
+export const DISCOVERY_EXPERIENCE_PATTERNS: RegExp[] = [
+  /\b(find(ing)? (new )?(music|artist|artists|songs|genres?))\b/,
+  /\b(discover(ing)? (new )?(music|artist|artists|songs|genres?))\b/,
+  /\b(recommendation (quality|accuracy|diversity))\b/,
+  /\b(recommend(ation)?s? (work|are) (well|great|spot on|amazing|excellent))\b/,
+  /\b(algorithm(ic)? (behavior|recommend|playlist|radio))\b/,
+  /\b(personaliz(ed|ation) recommend)\b/,
+  /\b(discover weekly|release radar|daily mix|made for you)\b/,
+  /\b(spotify dj\b|\bdj mix\b|\bdj feature\b)/,
+  /\b(smart shuffle|song radio|artist radio|mix(es)?\b)/,
+  /\b(playlist recommend|recommended (songs|artists|playlist))\b/,
+  /\b(introduced me to|found (great|new|amazing) artists?)\b/,
+  /\b(recommendation diversity|diverse recommend)\b/,
+];
+
+/** PM discovery substance — friction (repetition, loops, irrelevance, distrust). */
+export const DISCOVERY_FRICTION_PATTERNS: RegExp[] = [
+  /\b(same (songs?|artists?|music) (repeatedly|again|over and over))\b/,
+  /\b(repetitive recommend)/,
+  /\b(lack of novelty|low novelty|no novelty)\b/,
+  /\b(genre bubble|genre lock|stuck in (a )?genre|only (pop|mainstream))\b/,
+  /\b(recommendation loop|echo chamber|filter bubble)\b/,
+  /\b(playlist contamination|random (songs?|tracks?) (in|into) (my )?playlist)\b/,
+  /\b(unrelated (songs?|tracks?)|irrelevant recommend)\b/,
+  /\b(don'?t trust (the )?(algorithm|recommend)|algorithm distrust)\b/,
+  ...IMPLICIT_DISCOVERY_PATTERNS,
+  ...DISCOVERY_FAILURE_PATTERNS,
+];
+
+/** PM discovery substance — explicit user intent to explore/discover. */
+export const DISCOVERY_INTENT_PATTERNS: RegExp[] = [
+  /\b(want to|trying to|try to|need to|looking to) (explore|discover|find (new|something new))\b/,
+  /\b(broaden (my )?taste|expand (my )?taste|outside (my )?comfort zone)\b/,
+  /\b(explore (new )?(music|genres?|artists?))\b/,
+  /\b(find (hidden gems?|new artists?|new music))\b/,
+  /\b(discover something new)\b/,
+];
+
+/** Hard excludes — never discovery-relevant unless paired with discovery substance. */
+export const PLAYLIST_PROMO_PATTERNS: RegExp[] = [
+  /\b(drop (your|a) playlist|share (your|a|one of) (mine|playlist))\b/i,
+  /\b(follow (me|my account)|check me out|open\.spotify\.com\/playlist)\b/i,
+  /\b(i('ll| will) (share|follow) (back|you))\b/i,
+  /\b(promo(te)? (my|your) (playlist|music|song))\b/i,
+  /\b(listen to my (playlist|music))\b/i,
+];
+
+export const SOCIAL_SPAM_PATTERNS: RegExp[] = [
+  /\b(subscribe to my|link in bio|follow for follow)\b/i,
+  /\b(check out my (channel|page|profile))\b/i,
+];
+
+export const NOISE_WITHOUT_DISCOVERY_PATTERNS: RegExp[] = [
+  ...BILLING_PATTERNS,
+  ...ADS_PATTERNS,
+  ...TECHNICAL_PATTERNS,
+];
+
+export function countPmDiscoverySubstance(text: string): {
+  experience: number;
+  friction: number;
+  intent: number;
+  total: number;
+} {
+  const experience = countPatternHits(text, DISCOVERY_EXPERIENCE_PATTERNS);
+  const friction = countPatternHits(text, DISCOVERY_FRICTION_PATTERNS);
+  const intent = countPatternHits(text, DISCOVERY_INTENT_PATTERNS);
+  return { experience, friction, intent, total: experience + friction + intent };
+}
+
+export function hasHardDiscoveryExclusion(text: string): {
+  excluded: boolean;
+  reason?: string;
+} {
+  const lower = text.toLowerCase();
+  if (PLAYLIST_PROMO_PATTERNS.some((p) => p.test(lower))) {
+    return { excluded: true, reason: "playlist promotion or sharing thread" };
+  }
+  if (SOCIAL_SPAM_PATTERNS.some((p) => p.test(lower))) {
+    return { excluded: true, reason: "social spam or self-promotion" };
+  }
+  return { excluded: false };
+}
+
+export function hasPmDiscoverySubstance(text: string): boolean {
+  return countPmDiscoverySubstance(text).total > 0;
+}
 
 import type { UserGoal } from "./types";
 

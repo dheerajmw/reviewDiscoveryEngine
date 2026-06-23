@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  EXPORT_REPORT_BASENAME,
-  PLATFORM_ASSISTANT_NAME,
-} from "@/lib/brand";
+import { EXPORT_REPORT_BASENAME, PLATFORM_ASSISTANT_NAME } from "@/lib/brand";
+import { exportDashboardPdf } from "@/lib/export-dashboard-pdf";
 import { filterDiscoveryReviews } from "@/lib/analysis-modes";
 import { aggregateReviewSubset } from "@/lib/aggregation";
 import { buildAnalysisContext } from "@/lib/chat-context";
+import { computeExecutiveInsights } from "@/lib/insights-client";
 import { computeFindings } from "@/lib/findings-client";
 import { ensureFindingsReport } from "@/lib/findings";
 import {
@@ -45,6 +44,7 @@ import FindingDetailDrawer, {
   type DrawerSelection,
 } from "./evidence/FindingDetailDrawer";
 import DashboardExecutiveSummary from "./DashboardExecutiveSummary";
+import ExecutiveResearchPanel from "./ExecutiveResearchPanel";
 import BarrierAnalysis from "./BarrierAnalysis";
 import FrequencyChart from "./FrequencyChart";
 import Opportunities from "./Opportunities";
@@ -130,28 +130,54 @@ export default function Dashboard({
 
   const findingsReport = filteredFindings.report!;
 
+  const filteredCount = filteredEvidence.discoveryRelevantCount;
+  const isFiltered = sourceFilter !== "all" || confidenceFilter !== "all";
+
+  const executiveReport = useMemo(() => {
+    if (
+      !isFiltered &&
+      analysis.executive &&
+      sourceFilter === "all" &&
+      confidenceFilter === "all"
+    ) {
+      return analysis.executive;
+    }
+    return computeExecutiveInsights({
+      classified: filteredClassified,
+      aggregation: filteredEvidence,
+    });
+  }, [
+    analysis.executive,
+    filteredClassified,
+    filteredEvidence,
+    isFiltered,
+    sourceFilter,
+    confidenceFilter,
+  ]);
+
   const opportunityEvidence = useMemo(
     () => buildOpportunitiesFromEvidence(filteredEvidence),
     [filteredEvidence],
   );
-
-  const filteredCount = filteredEvidence.discoveryRelevantCount;
-  const isFiltered = sourceFilter !== "all" || confidenceFilter !== "all";
 
   const chatContext = useMemo(
     () =>
       buildAnalysisContext(
         filteredEvidence,
         filteredFindings,
-        isFiltered
-          ? {
-              filterNote: `Dashboard filters active: ${filteredCount} of ${analysis.aggregation.totalReviews} reviews shown`,
-            }
-          : undefined,
+        {
+          executive: executiveReport,
+          ...(isFiltered
+            ? {
+                filterNote: `Dashboard filters active: ${filteredCount} of ${analysis.aggregation.totalReviews} reviews shown`,
+              }
+            : {}),
+        },
       ),
     [
       filteredEvidence,
       filteredFindings,
+      executiveReport,
       isFiltered,
       filteredCount,
       analysis.aggregation.totalReviews,
@@ -186,6 +212,12 @@ export default function Dashboard({
     );
   };
 
+  const handleExportDashboardPdf = async () => {
+    await exportDashboardPdf({
+      filename: `${runMeta?.dataset_name ?? EXPORT_REPORT_BASENAME}-dashboard.pdf`,
+    });
+  };
+
   const handleExportPmReportJson = () => {
     const json = buildPmReportJson({
       findings: filteredFindings,
@@ -209,6 +241,7 @@ export default function Dashboard({
       evidence: filteredEvidence,
       datasetName: runMeta?.dataset_name,
       classified: filteredClassified,
+      executive: executiveReport,
     });
     if (format === "pdf") {
       exportPmReportPdf(md, `${runMeta?.dataset_name ?? "PM Research Report"}`);
@@ -262,6 +295,7 @@ export default function Dashboard({
         onExportMarkdown={handleExportMarkdown}
         onExportJson={handleExportJson}
         onExportCsv={handleExportCsv}
+        onExportDashboardPdf={handleExportDashboardPdf}
         onExportPmReport={handleExportPmReport}
         onOpenChat={() => setChatOpen(true)}
         onOpenEvidenceList={handleOpenEvidenceList}
@@ -270,7 +304,10 @@ export default function Dashboard({
           report={findingsReport}
           aggregation={filteredEvidence}
           discoveryRelevantCount={filteredEvidence.discoveryRelevantCount}
+          executive={executiveReport}
         />
+
+        <ExecutiveResearchPanel report={executiveReport} />
 
         {runId && (
           <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-xs text-primary">
@@ -442,6 +479,7 @@ export default function Dashboard({
       <button
         type="button"
         onClick={() => setChatOpen(true)}
+        data-dashboard-no-print
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-on-primary shadow-lg transition-all hover:scale-105 hover:opacity-90 active:scale-95"
       >
         <Icon name="forum" filled />

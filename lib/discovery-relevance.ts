@@ -4,9 +4,9 @@ import {
 } from "./discovery-relevance-prompt";
 import { formatLlmError } from "./llm-errors";
 import {
-  createGeminiClient,
+  createLlmClient,
   generateJsonCompletion,
-} from "./gemini-client";
+} from "./llm-client";
 import type { DiscoveryRelevanceAssessment, RawReview } from "./types";
 
 const EXCLUDE_PATTERNS = [
@@ -90,7 +90,7 @@ export async function assessDiscoveryRelevanceBatch(
   apiKey: string,
 ): Promise<DiscoveryRelevanceAssessment[]> {
   try {
-    const client = createGeminiClient(apiKey);
+    const client = createLlmClient(apiKey);
     const content = await generateJsonCompletion(
       client,
       DISCOVERY_RELEVANCE_SYSTEM_PROMPT,

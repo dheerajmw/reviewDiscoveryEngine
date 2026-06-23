@@ -37,6 +37,37 @@ type RuleSet = { label: string; keywords: string[]; weight?: number }[];
 
 const THEME_RULES: RuleSet = [
   {
+    label: "Positive Discovery Experience",
+    keywords: [
+      "love discover weekly",
+      "discover weekly",
+      "release radar",
+      "spotify dj",
+      "daily mix",
+      "great recommendations",
+      "introduced me to",
+      "introduced me",
+      "found new artists",
+      "find new music",
+      "find great new",
+      "recommendations work",
+      "recommendations are",
+      "spot on",
+      "love the dj",
+      "amazing discovery",
+      "best feature",
+      "hidden gem",
+      "genuine find",
+      "consistently helps",
+      "discovery features",
+      "go-to discovery",
+      "artist radio",
+      "new music every week",
+      "discover artists",
+    ],
+    weight: 3,
+  },
+  {
     label: "Repetition Fatigue",
     keywords: [
       "same song",
@@ -217,6 +248,28 @@ const ROOT_CAUSE_RULES: RuleSet = [
       "radio repeat",
       "playlist loop",
       "dj loops familiar",
+      "shuffle repeat",
+      "same songs on shuffle",
+    ],
+  },
+  {
+    label: "Discovery Surface Design Issues",
+    keywords: [
+      "discover weekly useless",
+      "release radar bad",
+      "daily mix bad",
+      "dj doesn't",
+      "home feed",
+      "on repeat not updating",
+    ],
+  },
+  {
+    label: "Cross-Content Recommendation Bias",
+    keywords: [
+      "podcast recommend",
+      "audiobook recommend",
+      "podcast in recommend",
+      "unrelated podcast",
     ],
   },
 ];
@@ -254,6 +307,14 @@ const UNMET_NEED_RULES: RuleSet = [
       "improve release radar",
       "stronger discovery",
     ],
+  },
+  {
+    label: "Genre Exploration",
+    keywords: ["explore genre", "outside genre", "different genre", "genre exploration"],
+  },
+  {
+    label: "Freshness Guarantees",
+    keywords: ["no repetition", "avoid repeat", "fresh recommend", "never repeat"],
   },
 ];
 
@@ -339,6 +400,19 @@ function mockClassifyReview(review: RawReview, index: number): {
 
   const text = review.text;
   const themeMatch = matchFromRules(text, THEME_RULES, "Other Discovery Frustration");
+  const positiveDiscovery =
+    /\b(introduced me to|discover(ed)? new|spot on|find (great )?new music|hidden gem|genuine find|consistently helps|go-to discovery|recommendations? (are |is )?(spot on|great|excellent|usually spot on))\b/i.test(
+      text,
+    ) &&
+    !/\b(same artist|on repeat|frustrat|hate|terrible|useless|broken)\b/i.test(
+      text,
+    );
+  const themeLabel =
+    positiveDiscovery && themeMatch.label === "Other Discovery Frustration"
+      ? /\b(discover weekly|release radar|daily mix|spotify dj)\b/i.test(text)
+        ? "Strong Discovery Playlists"
+        : "Positive Discovery Experience"
+      : themeMatch.label;
   const barrierMatch = matchFromRules(text, BARRIER_RULES, "Unclear Discovery Struggle");
   const behaviorMatch = matchFromRules(
     text,
@@ -383,7 +457,7 @@ function mockClassifyReview(review: RawReview, index: number): {
       user_goal: draft.user_goal,
       discovery_relevant: true,
       discovery_reason: draft.observation,
-      theme: themeMatch.label,
+      theme: themeLabel,
       barrier: barrierMatch.label,
       behavior: behaviorMatch.label,
       emotion: emotionMatch.label,

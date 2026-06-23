@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchAggregation } from "@/lib/aggregate-client";
 import { classifyAllReviews } from "@/lib/classify-client";
 import { fetchFindings } from "@/lib/findings-client";
+import { computeExecutiveInsights } from "@/lib/insights-client";
 import { completeQueuedAnalysisRun } from "@/lib/runs-client";
 import type { PipelineStep } from "@/lib/pipeline";
 import type { AnalysisRunSummary, RawReview } from "@/lib/types";
@@ -49,13 +50,17 @@ export default function PendingRunView({
 
       setPhaseNote("Generating research findings from evidence…");
       const findings = await fetchFindings(aggregation);
+      const executive = computeExecutiveInsights({
+        classified,
+        aggregation,
+      });
 
       setPipelineStep("saving");
       setPhaseNote("Writing results to the research repository…");
       await completeQueuedAnalysisRun({
         runId,
         classified,
-        analysis: { aggregation, findings },
+        analysis: { aggregation, findings, executive },
         usedMockClassifier,
         curation: {
           total_loaded: runMeta.total_reviews,
@@ -102,7 +107,7 @@ export default function PendingRunView({
               </h2>
               <p className="mt-1 text-sm text-on-surface-variant">
                 This batch was saved from a split dataset and is waiting in the
-                repository. Run analysis when you have Gemini quota available
+                repository. Run analysis when you have Cerebras quota available
                 (typically one part per day on the free tier).
               </p>
             </div>

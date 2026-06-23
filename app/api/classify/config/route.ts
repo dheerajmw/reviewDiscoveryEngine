@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isMockClassifierEnabled } from "@/lib/classify-mock";
+import { LLM_PROVIDER_LABEL } from "@/lib/llm-config";
 import {
   estimateLlmClassification,
   getClassifyBatchDelayMs,
@@ -13,6 +14,7 @@ export async function GET() {
 
   return NextResponse.json({
     mockEnabled,
+    provider: LLM_PROVIDER_LABEL,
     model: LLM_RATE_LIMITS.model,
     limits: LLM_RATE_LIMITS,
     batchSize,

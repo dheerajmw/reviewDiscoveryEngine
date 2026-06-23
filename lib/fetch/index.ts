@@ -5,6 +5,7 @@ import {
   isFetchSourceId,
   MAX_SOURCES_PER_REQUEST,
 } from "./config";
+import { filterForDiscoveryCollection } from "./discovery-collection";
 import {
   fetchAppStoreReviews,
   fetchPlayStoreReviews,
@@ -67,22 +68,34 @@ export async function fetchLiveReviews(
   }
 
   const reviews = toRawReviews(dedupeByText(combined));
+  const discoveryOnly = request.discoveryOnly !== false;
+  const filtered = discoveryOnly
+    ? filterForDiscoveryCollection(reviews)
+    : reviews;
 
-  if (reviews.length === 0) {
+  if (filtered.length === 0) {
     const failedSources = sources.filter((source) => !bySource[source]);
     const detail =
       failedSources.length > 0
         ? `All selected sources failed (${failedSources.join(", ")}). Try another source, lower the min rating filter, or use a saved corpus.`
-        : "No reviews returned. Try another source, lower the min rating filter, or increase the fetch count.";
+        : discoveryOnly
+          ? "No discovery-keyword reviews returned. Try more sources, raise limitPerSource, or set discoveryOnly: false."
+          : "No reviews returned. Try another source, lower the min rating filter, or increase the fetch count.";
     throw new Error(detail);
   }
 
+  const warning =
+    discoveryOnly && filtered.length < reviews.length
+      ? `Discovery filter: kept ${filtered.length} of ${reviews.length} fetched reviews (${reviews.length - filtered.length} generic reviews dropped).`
+      : undefined;
+
   return {
-    reviews,
-    count: reviews.length,
+    reviews: filtered,
+    count: filtered.length,
     bySource,
     fetchedAt: new Date().toISOString(),
-    label: buildLabel(sources, limitPerSource),
+    label: buildLabel(sources, limitPerSource) + (discoveryOnly ? "-discovery" : ""),
+    warning,
   };
 }
 
@@ -176,5 +189,7 @@ export function parseFetchReviewsRequest(
         : 0,
     redditQuery:
       typeof body.redditQuery === "string" ? body.redditQuery.trim() : undefined,
+    discoveryOnly:
+      body.discoveryOnly === undefined ? true : Boolean(body.discoveryOnly),
   };
 }

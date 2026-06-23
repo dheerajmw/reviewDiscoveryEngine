@@ -3,14 +3,15 @@ import {
   estimateLlmClassification,
   getClassifyBatchDelayMs,
   getClassifyBatchSize,
+  getLlmRequestCooldownMs,
 } from "./llm-limits";
+import { isTransientRateLimit } from "./llm-errors";
 import type { ClassifiedReview, RawReview } from "./types";
 
 export { DEFAULT_CLASSIFY_BATCH_SIZE as CLASSIFY_BATCH_SIZE };
 export { estimateLlmClassification };
 
-const BATCH_RETRY_DELAY_MS = 15_000;
-const MAX_BATCH_RETRIES = 3;
+const MAX_BATCH_RETRIES = 4;
 
 export interface ClassifyAllResult {
   classified: ClassifiedReview[];
@@ -20,6 +21,19 @@ export interface ClassifyAllResult {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function formatPartialProgressError(
+  message: string,
+  completed: number,
+  total: number,
+): string {
+  if (completed > 0 && completed < total) {
+    return (
+      `${message} ${completed}/${total} reviews are cached — retry Analyze to continue (cached reviews skip the API).`
+    );
+  }
+  return message;
 }
 
 async function classifyBatch(
@@ -46,9 +60,13 @@ async function classifyBatch(
     }
 
     lastError = data.error ?? lastError;
+    const retryable =
+      response.status === 429 ||
+      response.status === 503 ||
+      isTransientRateLimit(new Error(lastError));
 
-    if (response.status === 429 && attempt < MAX_BATCH_RETRIES - 1) {
-      await sleep(BATCH_RETRY_DELAY_MS * (attempt + 1));
+    if (retryable && attempt < MAX_BATCH_RETRIES - 1) {
+      await sleep(getLlmRequestCooldownMs() * (attempt + 1));
       continue;
     }
 
@@ -75,12 +93,20 @@ export async function classifyAllReviews(
     }
 
     const batch = reviews.slice(i, i + batchSize);
-    const result = await classifyBatch(batch);
+    try {
+      const result = await classifyBatch(batch);
 
-    classified.push(...result.classified);
-    mock = mock || result.mock;
-    warning = warning ?? result.warning;
-    onProgress?.(classified.length, reviews.length);
+      classified.push(...result.classified);
+      mock = mock || result.mock;
+      warning = warning ?? result.warning;
+      onProgress?.(classified.length, reviews.length);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Classification failed.";
+      throw new Error(
+        formatPartialProgressError(message, classified.length, reviews.length),
+      );
+    }
   }
 
   return { classified, mock, warning };

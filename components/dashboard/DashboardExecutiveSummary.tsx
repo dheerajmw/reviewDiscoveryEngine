@@ -2,34 +2,109 @@
 
 import type {
   AggregationResult,
+  ExecutiveResearchReport,
   ResearchFindingsReport,
 } from "@/lib/types";
 import Icon from "@/components/ui/Icon";
+import { DASHBOARD_BARRIERS_SECTION_ID } from "./BarrierAnalysis";
+import { DASHBOARD_THEMES_SECTION_ID } from "./ThemeChart";
 
 interface DashboardExecutiveSummaryProps {
   report: ResearchFindingsReport;
   aggregation: AggregationResult;
   discoveryRelevantCount: number;
+  executive?: ExecutiveResearchReport;
   onViewFindings?: () => void;
+}
+
+function scrollToSection(sectionId: string) {
+  document.getElementById(sectionId)?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+function SummaryStatCard({
+  label,
+  value,
+  actionLabel,
+  valueClassName = "text-on-surface",
+  icon,
+  iconContainerClassName,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  actionLabel: string;
+  valueClassName?: string;
+  icon: string;
+  iconContainerClassName: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${actionLabel} (${value} ${label.toLowerCase()})`}
+      className="group stitch-dash-card flex w-full flex-col gap-3 p-4 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.99]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-outline transition-colors group-hover:text-primary">
+          {label}
+        </p>
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${iconContainerClassName} group-hover:bg-primary group-hover:text-on-primary`}
+        >
+          <Icon name={icon} filled={icon === "category"} />
+        </div>
+      </div>
+
+      <p className={`text-[28px] font-bold leading-none ${valueClassName}`}>
+        {value}
+      </p>
+
+      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+        {actionLabel}
+        <Icon
+          name="arrow_forward"
+          className="text-sm transition-transform group-hover:translate-x-0.5"
+        />
+      </span>
+    </button>
+  );
 }
 
 export default function DashboardExecutiveSummary({
   report,
   aggregation,
   discoveryRelevantCount,
+  executive,
 }: DashboardExecutiveSummaryProps) {
-  const topTheme = aggregation.themeEvidence[0];
-  const topFrustration = report.top_frustrations[0];
-  const themePct = topTheme?.pct ?? topFrustration?.pct ?? 0;
-  const themeLabel =
-    topTheme?.label ?? topFrustration?.title ?? "discovery friction";
-  const confidencePct = Math.round(report.why_discovery_fails.confidence * 100);
+  const headline =
+    executive?.dashboard_headline ??
+    report.why_discovery_fails.summary;
+
+  const positiveCount =
+    executive?.positive_discovery_signals?.length ??
+    aggregation.themeEvidence.filter((t) =>
+      [
+        "Positive Discovery Experience",
+        "Strong Discovery Playlists",
+        "Recommendation Success",
+        "Successful Artist Discovery",
+        "Discovery Delight",
+      ].includes(t.label),
+    ).length;
+
   const activeThemes = Object.keys(aggregation.themeFrequency).filter(
     (k) => (aggregation.themeFrequency[k]?.count ?? 0) > 0,
   ).length;
   const activeBarriers = Object.keys(aggregation.barrierAnalysis).filter(
     (k) => (aggregation.barrierAnalysis[k]?.count ?? 0) > 0,
   ).length;
+  const findingCount =
+    (executive?.top_discovery_problems?.length ?? 0) +
+    (executive?.positive_discovery_signals?.length ?? 0);
 
   return (
     <section className="grid grid-cols-1 gap-gutter lg:grid-cols-3">
@@ -46,38 +121,13 @@ export default function DashboardExecutiveSummary({
             </span>
           </div>
           <h3 className="max-w-2xl text-2xl font-semibold leading-tight tracking-tight text-on-surface md:text-[28px]">
-            {themePct > 0 ? (
-              <>
-                <span className="font-bold text-primary">{themePct}% of reviews</span>{" "}
-                point to{" "}
-                <span className="underline decoration-primary/30 decoration-4 underline-offset-4">
-                  {themeLabel}
-                </span>{" "}
-                as a top frustration.
-              </>
-            ) : (
-              <>
-                <span className="font-bold text-primary">
-                  {discoveryRelevantCount} Spotify reviews
-                </span>{" "}
-                analyzed for music discovery patterns.
-              </>
-            )}
+            {headline}
           </h3>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-on-surface-variant">
-            {report.why_discovery_fails.summary}
+            {executive?.executive_summary ?? report.why_discovery_fails.summary}
           </p>
         </div>
         <div className="relative mt-8 flex flex-wrap items-center gap-6">
-          <div className="flex flex-col">
-            <span className="text-2xl font-bold text-primary">
-              {(confidencePct / 10).toFixed(1)}/10
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-widest text-outline">
-              Confidence score
-            </span>
-          </div>
-          <div className="hidden h-10 w-px bg-outline-variant sm:block" />
           <div className="flex flex-col">
             <span className="text-2xl font-bold text-on-surface">
               {discoveryRelevantCount.toLocaleString()}
@@ -88,41 +138,47 @@ export default function DashboardExecutiveSummary({
           </div>
           <div className="hidden h-10 w-px bg-outline-variant sm:block" />
           <div className="flex flex-col">
-            <span className="text-2xl font-bold text-on-surface">
-              {report.why_discovery_fails.evidence_count.toLocaleString()}
+            <span className="text-2xl font-bold text-primary">
+              {findingCount > 0 ? findingCount : report.why_discovery_fails.evidence_count}
             </span>
             <span className="text-[10px] font-medium uppercase tracking-widest text-outline">
-              Matched evidence
+              Executive findings
             </span>
           </div>
+          {positiveCount > 0 ? (
+            <>
+              <div className="hidden h-10 w-px bg-outline-variant sm:block" />
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold text-on-surface">
+                  {positiveCount}
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-widest text-outline">
+                  Positive signals
+                </span>
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-gutter sm:grid-cols-2 lg:grid-cols-1">
-        <div className="stitch-dash-card flex items-center justify-between p-4">
-          <div>
-            <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-outline">
-              Active themes
-            </p>
-            <p className="text-[28px] font-bold text-primary">{activeThemes}</p>
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Icon name="category" filled />
-          </div>
-        </div>
-        <div className="stitch-dash-card flex items-center justify-between p-4">
-          <div>
-            <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-outline">
-              Discovery barriers
-            </p>
-            <p className="text-[28px] font-bold text-on-surface">
-              {activeBarriers}
-            </p>
-          </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary-container text-on-secondary-container">
-            <Icon name="block" />
-          </div>
-        </div>
+        <SummaryStatCard
+          label="Active themes"
+          value={activeThemes}
+          actionLabel="View theme breakdown"
+          valueClassName="text-primary"
+          icon="category"
+          iconContainerClassName="bg-primary/10 text-primary"
+          onClick={() => scrollToSection(DASHBOARD_THEMES_SECTION_ID)}
+        />
+        <SummaryStatCard
+          label="Discovery barriers"
+          value={activeBarriers}
+          actionLabel="View barrier analysis"
+          icon="block"
+          iconContainerClassName="bg-secondary-container text-on-secondary-container"
+          onClick={() => scrollToSection(DASHBOARD_BARRIERS_SECTION_ID)}
+        />
       </div>
     </section>
   );

@@ -1,7 +1,10 @@
 import { PLATFORM_NAME } from "./brand";
+import { formatExecutiveReportMarkdown } from "./executive";
+import { computeExecutiveInsights } from "./insights-client";
 import type {
   AggregationResult,
   ClassifiedReview,
+  ExecutiveResearchReport,
   ResearchFindings,
   ResearchFindingsReport,
 } from "./types";
@@ -37,12 +40,37 @@ ${quotes || "- (none)"}
 `;
 }
 
+export function buildExecutiveReportMarkdown(input: {
+  executive: ExecutiveResearchReport;
+  datasetName?: string;
+}): string {
+  const header = `# Executive Product Research — ${input.datasetName ?? PLATFORM_NAME}\n\n`;
+  return header + formatExecutiveReportMarkdown(input.executive);
+}
+
 export function buildPmReportMarkdown(input: {
   findings: ResearchFindings;
   evidence: AggregationResult;
   datasetName?: string;
   classified?: ClassifiedReview[];
+  executive?: ExecutiveResearchReport;
 }): string {
+  const executive =
+    input.executive ??
+    (input.classified
+      ? computeExecutiveInsights({
+          classified: input.classified,
+          aggregation: input.evidence,
+        })
+      : undefined);
+
+  if (executive) {
+    return buildExecutiveReportMarkdown({
+      executive,
+      datasetName: input.datasetName,
+    });
+  }
+
   const { findings, evidence, datasetName = PLATFORM_NAME } = input;
 
   const report: ResearchFindingsReport = ensureFindingsReport(
@@ -146,7 +174,17 @@ export function buildPmReportJson(input: {
   evidence: AggregationResult;
   classified?: ClassifiedReview[];
   datasetName?: string;
+  executive?: ExecutiveResearchReport;
 }) {
+  const executive =
+    input.executive ??
+    (input.classified
+      ? computeExecutiveInsights({
+          classified: input.classified,
+          aggregation: input.evidence,
+        })
+      : undefined);
+
   const report = ensureFindingsReport(
     input.findings,
     input.evidence,
@@ -163,7 +201,8 @@ export function buildPmReportJson(input: {
       input.classified ?? [],
     ),
     report,
-    opportunities: buildOpportunitiesFromEvidence(input.evidence),
+    executive,
+    opportunities: executive?.strategic_opportunities ?? buildOpportunitiesFromEvidence(input.evidence),
   };
 }
 
@@ -211,6 +250,18 @@ ${markdown
 
 export function downloadPmReportMarkdown(content: string, filename: string): void {
   downloadFile(content, filename, "text/markdown");
+}
+
+export function downloadExecutiveReportMarkdown(
+  executive: ExecutiveResearchReport,
+  filename: string,
+  datasetName?: string,
+): void {
+  downloadFile(
+    buildExecutiveReportMarkdown({ executive, datasetName }),
+    filename,
+    "text/markdown",
+  );
 }
 
 export function downloadPmReportJson(content: object, filename: string): void {

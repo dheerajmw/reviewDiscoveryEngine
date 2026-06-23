@@ -5,6 +5,7 @@ interface CardProps {
   subtitle?: string;
   children: ReactNode;
   className?: string;
+  id?: string;
   variant?: "default" | "flat";
 }
 
@@ -13,6 +14,7 @@ export default function Card({
   subtitle,
   children,
   className = "",
+  id,
   variant = "default",
 }: CardProps) {
   const shell =
@@ -21,7 +23,7 @@ export default function Card({
       : "stitch-dash-card p-6";
 
   return (
-    <section className={`${shell} ${className}`}>
+    <section id={id} className={`${shell} ${className}`}>
       {title && (
         <div className="mb-6">
           <h3 className="text-xl font-semibold text-on-surface">{title}</h3>

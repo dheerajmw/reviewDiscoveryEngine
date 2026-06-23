@@ -19,7 +19,7 @@ import {
   buildFieldConfidenceHistogram,
 } from "../lib/classification-audit";
 import { loadEnvLocal } from "../lib/env-loader";
-import { getGeminiApiKey, GEMINI_MODEL } from "../lib/gemini-config";
+import { getLlmApiKey, LLM_MODEL } from "../lib/llm-config";
 import { measureAllBucketPrecision } from "../lib/evaluation-ground-truth";
 import type { RawReview } from "../lib/types";
 
@@ -54,9 +54,9 @@ function loadSampleReviews(size: number): RawReview[] {
 }
 
 async function classifyWithLlm(reviews: RawReview[]): Promise<Awaited<ReturnType<typeof classifyReviews>>> {
-  const apiKey = getGeminiApiKey();
+  const apiKey = getLlmApiKey();
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY required. Set in .env.local or use --mock-after.");
+    throw new Error("CEREBRAS_API_KEY required. Set in .env.local or use --mock-after.");
   }
 
   const allClassified: Awaited<ReturnType<typeof classifyReviews>>["classified"] = [];
@@ -110,7 +110,7 @@ async function main() {
     afterClassified = classifyReviewsMockWithReport(reviews).classified;
     afterMode = "new mock (independent fields, no inheritance)";
   } else {
-    afterMode = `LLM (${GEMINI_MODEL} via Gemini)`;
+    afterMode = `LLM (${LLM_MODEL} via Cerebras)`;
     const llmResult = await classifyWithLlm(reviews);
     afterClassified = llmResult.classified;
   }

@@ -84,6 +84,20 @@ describe("research evidence classification", () => {
     assert.ok(classified[0].supports_questions?.includes("unmet_needs"));
   });
 
+  it("rejects playlist promotion threads in mock research gate", () => {
+    const draft = buildResearchEvidenceDraft(
+      review("Drop your playlist! Follow me and I'll share mine."),
+    );
+    assert.equal(draft.research_relevant, false);
+  });
+
+  it("classifies positive discovery with dedicated theme in mock path", () => {
+    const text =
+      "Discover Weekly introduced me to so many new artists — recommendations are spot on!";
+    const { classified } = classifyReviewsMockWithReport([review(text)]);
+    assert.equal(classified[0].theme, "Positive Discovery Experience");
+  });
+
   it("does not force theme-derived root cause in mock classification", () => {
     const text =
       "Discover Weekly feels repetitive and I want to find new artists outside my usual taste.";

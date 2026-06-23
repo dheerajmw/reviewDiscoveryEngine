@@ -4,23 +4,18 @@ export const DISCOVERY_RELEVANCE_SYSTEM_PROMPT = `You are a product research ana
 
 For each review, decide whether it is DISCOVERY-RELEVANT using semantic understanding — not keyword matching.
 
-Mark discovery_relevant: true ONLY when the review meaningfully discusses:
-- recommendations or recommendation quality
-- music discovery or finding new music/artists
-- playlists used for discovery (Discover Weekly, Release Radar, Daily Mix, algorithmic playlists)
-- personalization of music suggestions
-- novelty, repetition, or sameness in suggested music
-- genre exploration or being stuck in one genre
-- algorithm behavior affecting what music is surfaced
+Mark discovery_relevant: true ONLY when the review discusses at least one of:
+- Discovery experience: finding new music/artists/genres, recommendation quality, algorithm behavior, Discover Weekly/DJ/Radio/Mixes, recommendation accuracy/diversity
+- Discovery friction: same songs repeatedly, repetitive recommendations, lack of novelty, genre bubble, recommendation loops, playlist contamination, irrelevance, distrust
+- Discovery intent: user trying to explore, discover, find something new, broaden taste
 
 Mark discovery_relevant: false when the review is primarily about:
-- ads or too many advertisements
-- premium pricing, billing, subscriptions, refunds
-- login, account, or password issues
-- playback bugs, crashes, app not opening, glitches
-- shuffle/skip limits as a premium feature complaint (without discovery context)
-- generic app praise/complaints with no discovery topic
-- technical/UI issues unrelated to recommendations
+- pricing, premium restrictions, ads, crashes, login, account issues, UI bugs, playback/queue bugs
+- playlist sharing/promotion ("drop your playlist", "follow me", "check out my playlist")
+- social spam or self-promotion
+- generic praise with no discovery substance
+
+Unless discovery/recommendation quality is explicitly discussed, exclude billing/ads/bug-only reviews.
 
 For each review return:
 - discovery_relevant: boolean

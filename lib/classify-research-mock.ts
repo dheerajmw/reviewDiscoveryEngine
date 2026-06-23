@@ -1,6 +1,8 @@
 import {
   countDiscoverySignals,
   countPatternHits,
+  hasHardDiscoveryExclusion,
+  hasPmDiscoverySubstance,
   PRAISE_PATTERNS,
 } from "./review-preprocessing/signals";
 import type { RawReview } from "./types";
@@ -210,18 +212,16 @@ export function buildResearchEvidenceDraft(
 ): ResearchEvidenceDraft {
   const text = review.text?.trim() ?? "";
   const lower = text.toLowerCase();
+  const hardExclude = hasHardDiscoveryExclusion(lower);
   const discoverySignals = countDiscoverySignals(lower);
   const praiseHits = countPatternHits(lower, PRAISE_PATTERNS);
   const genericHits = countPatternHits(lower, GENERIC_LOW_VALUE_PATTERNS);
   const substantiveHits = countPatternHits(lower, SUBSTANTIVE_SIGNAL_PATTERNS);
+  const pmSubstance = hasPmDiscoverySubstance(lower);
 
   const tooShort = lower.length < 35;
-  const genericPraiseOnly =
-    (praiseHits >= 1 || genericHits >= 1) &&
-    discoverySignals.total === 0 &&
-    substantiveHits === 0;
 
-  if (tooShort || genericPraiseOnly) {
+  if (hardExclude.excluded || tooShort) {
     return {
       research_relevant: false,
       supports_questions: [],
@@ -231,7 +231,22 @@ export function buildResearchEvidenceDraft(
     };
   }
 
-  if (discoverySignals.total === 0 && substantiveHits === 0) {
+  const genericPraiseOnly =
+    (praiseHits >= 1 || genericHits >= 1) &&
+    !pmSubstance &&
+    substantiveHits === 0;
+
+  if (genericPraiseOnly) {
+    return {
+      research_relevant: false,
+      supports_questions: [],
+      observation: "",
+      evidence: "",
+      user_goal: "other",
+    };
+  }
+
+  if (!pmSubstance && substantiveHits === 0) {
     return {
       research_relevant: false,
       supports_questions: [],

@@ -1,21 +1,33 @@
 import Icon from "@/components/ui/Icon";
+import type { EvidenceStrength } from "@/lib/types";
 
 interface EvidenceMetaProps {
   evidenceCount: number;
-  confidence: number;
+  confidence?: number;
+  evidenceStrength?: EvidenceStrength;
+  sourceCount?: number;
   sourceDistribution?: Record<string, number>;
   pct?: number;
 }
 
+const STRENGTH_STYLES: Record<EvidenceStrength, string> = {
+  Strong: "bg-primary/15 text-primary",
+  Medium: "bg-secondary-container/50 text-on-secondary-container",
+  Weak: "bg-surface-container-high text-on-surface-variant",
+};
+
 export default function EvidenceMeta({
   evidenceCount,
   confidence,
+  evidenceStrength,
+  sourceCount,
   sourceDistribution,
   pct,
 }: EvidenceMetaProps) {
   const sources = Object.entries(sourceDistribution ?? {}).sort(
     (a, b) => b[1] - a[1],
   );
+  const diversity = sourceCount ?? sources.length;
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -28,10 +40,25 @@ export default function EvidenceMeta({
         <Icon name="groups" className="text-sm" />
         {evidenceCount} reviews
       </span>
-      <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-2 py-0.5 text-on-surface-variant">
-        <Icon name="verified" className="text-sm text-primary" />
-        {Math.round(confidence * 100)}% confidence
-      </span>
+      {evidenceStrength ? (
+        <>
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${STRENGTH_STYLES[evidenceStrength]}`}
+          >
+            <Icon name="verified" className="text-sm" />
+            {evidenceStrength} evidence
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-2 py-0.5 text-on-surface-variant">
+            <Icon name="hub" className="text-sm" />
+            {diversity} sources
+          </span>
+        </>
+      ) : confidence !== undefined ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-2 py-0.5 text-on-surface-variant">
+          <Icon name="verified" className="text-sm text-primary" />
+          {Math.round(confidence * 100)}% confidence
+        </span>
+      ) : null}
       {sources.slice(0, 4).map(([source, count]) => (
         <span
           key={source}

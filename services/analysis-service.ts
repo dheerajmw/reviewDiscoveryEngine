@@ -11,6 +11,7 @@ import type {
   AnalysisBundle,
   AnalysisRunSummary,
   ClassifiedReview,
+  ExecutiveResearchReport,
   ResearchFindings,
   RawReview,
   RunComparisonResult,
@@ -129,7 +130,7 @@ async function upsertFinding(
       toJson(bundle.findings.segment_challenges),
       toJson(bundle.findings.unmet_needs),
       toJson(bundle.aggregation),
-      toJson({}),
+      toJson({ executive: bundle.executive ?? null }),
       toJson(bundle.findings),
     ],
   });
@@ -265,6 +266,10 @@ export async function listAnalysisRuns(
 }
 
 function rowToBundle(row: Record<string, unknown>): AnalysisBundle {
+  const interpretation = parseJsonColumn<{ executive?: ExecutiveResearchReport | null }>(
+    row.interpretation_data,
+    {},
+  );
   return {
     aggregation: parseJsonColumn<AggregationResult>(row.aggregation_data, {
       totalReviews: 0,
@@ -298,6 +303,7 @@ function rowToBundle(row: Record<string, unknown>): AnalysisBundle {
       ),
       unmet_needs: parseJsonColumn<string[]>(row.unmet_needs, []),
     }),
+    executive: interpretation.executive ?? undefined,
   };
 }
 

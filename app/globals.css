@@ -450,3 +450,53 @@ body {
   font-size: 14px;
   letter-spacing: -0.01em;
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html.dashboard-pdf-export,
+  body.dashboard-pdf-export {
+    background: #fcf8ff !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body.dashboard-pdf-export #dashboard-layout-shell,
+  body.dashboard-pdf-export #dashboard-layout-column,
+  body.dashboard-pdf-export #dashboard-export-root,
+  body.dashboard-pdf-export #dashboard-scroll-main,
+  body.dashboard-pdf-export #dashboard-scroll-content {
+    display: block !important;
+    flex: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+  }
+
+  body.dashboard-pdf-export #dashboard-scroll-main {
+    padding: 0 !important;
+  }
+
+  body.dashboard-pdf-export aside,
+  body.dashboard-pdf-export [data-dashboard-no-print],
+  body.dashboard-pdf-export .fixed {
+    display: none !important;
+  }
+
+  body.dashboard-pdf-export * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.dashboard-pdf-export .stitch-dash-card {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+}

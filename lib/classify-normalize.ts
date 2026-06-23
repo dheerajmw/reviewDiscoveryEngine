@@ -5,15 +5,30 @@ import {
   normalizeSupportsQuestions,
   type ClassificationUserGoal,
 } from "./classify-research";
+import {
+  isPositiveTheme,
+  POSITIVE_THEME_SET,
+  THEME_FALLBACK,
+} from "./taxonomy";
 import { normalizeTaxonomyFields } from "./taxonomy";
 import type {
   ClassificationEvidence,
   ClassifiedReview,
   RawReview,
+  TaxonomyDimension,
   TaxonomyViolation,
 } from "./types";
 
 const DEFAULT_CONFIDENCE = 0.7;
+const REASON_FIELDS: TaxonomyDimension[] = [
+  "theme",
+  "barrier",
+  "root_cause",
+  "unmet_need",
+  "behavior",
+  "segment",
+  "emotion",
+];
 
 export interface ClassificationItemInput {
   research_relevant?: boolean;
@@ -32,6 +47,14 @@ export interface ClassificationItemInput {
   root_cause?: string;
   unmet_need?: string;
   confidence?: number;
+  classification_reasons?: Partial<Record<TaxonomyDimension, string>>;
+  theme_reason?: string;
+  barrier_reason?: string;
+  root_cause_reason?: string;
+  unmet_need_reason?: string;
+  behavior_reason?: string;
+  segment_reason?: string;
+  emotion_reason?: string;
 }
 
 function normalizeConfidence(value: unknown, fallback = DEFAULT_CONFIDENCE): number {
@@ -45,12 +68,103 @@ function parseLabel(value: string | undefined): string {
   return typeof value === "string" ? value : "";
 }
 
+function parseClassificationReasons(
+  item: ClassificationItemInput,
+): Partial<Record<TaxonomyDimension, string>> {
+  const reasons: Partial<Record<TaxonomyDimension, string>> = {};
+
+  if (item.classification_reasons && typeof item.classification_reasons === "object") {
+    for (const field of REASON_FIELDS) {
+      const value = item.classification_reasons[field];
+      if (typeof value === "string" && value.trim()) {
+        reasons[field] = value.trim();
+      }
+    }
+  }
+
+  const legacy: [TaxonomyDimension, string | undefined][] = [
+    ["theme", item.theme_reason],
+    ["barrier", item.barrier_reason],
+    ["root_cause", item.root_cause_reason],
+    ["unmet_need", item.unmet_need_reason],
+    ["behavior", item.behavior_reason],
+    ["segment", item.segment_reason],
+    ["emotion", item.emotion_reason],
+  ];
+
+  for (const [field, value] of legacy) {
+    if (typeof value === "string" && value.trim() && !reasons[field]) {
+      reasons[field] = value.trim();
+    }
+  }
+
+  return reasons;
+}
+
+function reviewLooksPositive(
+  review: RawReview,
+  item: ClassificationItemInput,
+): boolean {
+  if (review.discovery_outcome === "successful") return true;
+  const text = `${review.text} ${review.cleaned_text ?? ""}`.toLowerCase();
+  if (
+    /\b(love|amazing|great|excellent|best|awesome|discovered new|introduced me to|found new artist|spot on|consistently helps|hidden gem|genuine find)\b/.test(
+      text,
+    ) &&
+    !/\b(hate|terrible|awful|worst|frustrat|annoy|broken|useless)\b/.test(text)
+  ) {
+    return true;
+  }
+  if (item.emotion === "Curiosity" && item.discovery_relevant !== false) {
+    return true;
+  }
+  return false;
+}
+
+function guardThemePolarity(
+  fields: {
+    theme: string;
+    emotion: string;
+  },
+  review: RawReview,
+  item: ClassificationItemInput,
+): { theme: string; emotion: string } {
+  const positive = reviewLooksPositive(review, item);
+
+  if (positive && fields.theme === THEME_FALLBACK) {
+    return {
+      theme: "Positive Discovery Experience",
+      emotion: fields.emotion === "Neutral" ? "Curiosity" : fields.emotion,
+    };
+  }
+
+  if (
+    positive &&
+    !isPositiveTheme(fields.theme) &&
+    fields.theme !== THEME_FALLBACK
+  ) {
+    const praiseTheme = /\b(discover weekly|release radar|daily mix|spotify dj)\b/i.test(
+      review.text,
+    )
+      ? "Strong Discovery Playlists"
+      : "Positive Discovery Experience";
+    return { theme: praiseTheme, emotion: fields.emotion };
+  }
+
+  if (!positive && isPositiveTheme(fields.theme) && item.research_relevant) {
+    return fields;
+  }
+
+  return fields;
+}
+
 export function mergeClassificationItem(
   review: RawReview,
   item: ClassificationItemInput,
   index: number,
 ): { review: ClassifiedReview; violations: TaxonomyViolation[] } {
   const research_relevant = Boolean(item.research_relevant);
+  const classification_reasons = parseClassificationReasons(item);
 
   if (!research_relevant) {
     const confidence = normalizeConfidence(item.confidence, 0.3);
@@ -63,6 +177,7 @@ export function mergeClassificationItem(
       research_quote: "",
       supports_questions: [],
       classification_user_goal: "other",
+      classification_reasons: {},
     };
 
     return {
@@ -98,6 +213,7 @@ export function mergeClassificationItem(
         unmet_need: NON_RESEARCH_FALLBACK.unmet_need,
         confidence,
         evidence,
+        classification_reasons: {},
       },
       violations: [],
     };
@@ -127,6 +243,14 @@ export function mergeClassificationItem(
     index,
   );
 
+  const polarity = guardThemePolarity(
+    { theme: fields.theme, emotion: fields.emotion },
+    review,
+    item,
+  );
+  fields.theme = polarity.theme;
+  fields.emotion = polarity.emotion;
+
   const evidence: ClassificationEvidence = {
     discovery:
       typeof item.discovery_reason === "string"
@@ -137,6 +261,7 @@ export function mergeClassificationItem(
     research_quote: researchQuote || undefined,
     supports_questions,
     classification_user_goal,
+    classification_reasons,
   };
 
   return {
@@ -172,6 +297,7 @@ export function mergeClassificationItem(
       unmet_need: fields.unmet_need,
       confidence: normalizeConfidence(item.confidence, DEFAULT_CONFIDENCE),
       evidence,
+      classification_reasons,
     },
     violations,
   };

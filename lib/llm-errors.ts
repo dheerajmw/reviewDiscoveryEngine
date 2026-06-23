@@ -1,3 +1,5 @@
+import { LLM_CONSOLE_URL, LLM_PROVIDER_LABEL } from "./llm-config";
+
 interface ApiErrorLike {
   status?: number;
   message?: string;
@@ -16,16 +18,49 @@ function getErrorStatus(error: unknown): number | undefined {
   return undefined;
 }
 
-function isRateLimited(error: unknown): boolean {
-  const message = getErrorMessage(error).toLowerCase();
-  const status = getErrorStatus(error);
+function isDailyQuotaMessage(message: string): boolean {
+  const lower = message.toLowerCase();
   return (
-    status === 429 ||
-    message.includes("resource exhausted") ||
-    message.includes("too many requests") ||
-    message.includes("rate limit") ||
-    message.includes("quota exceeded")
+    lower.includes("per day") ||
+    lower.includes("daily") ||
+    lower.includes("tpd") ||
+    lower.includes("tokens per day") ||
+    lower.includes("requests per day") ||
+    lower.includes("rpd")
   );
+}
+
+function isTransientQuotaMessage(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("per minute") ||
+    lower.includes("per hour") ||
+    lower.includes("tpm") ||
+    lower.includes("rpm") ||
+    lower.includes("tph") ||
+    lower.includes("rph")
+  );
+}
+
+function isRateLimited(error: unknown): boolean {
+  const message = getErrorMessage(error);
+  const lower = message.toLowerCase();
+  const status = getErrorStatus(error);
+  if (status === 429) return true;
+  return (
+    lower.includes("resource exhausted") ||
+    lower.includes("too many requests") ||
+    lower.includes("rate limit") ||
+    isTransientQuotaMessage(message) ||
+    (lower.includes("quota") &&
+      lower.includes("exceeded") &&
+      !isDailyQuotaMessage(message))
+  );
+}
+
+export function isRetryableServerError(error: unknown): boolean {
+  const status = getErrorStatus(error);
+  return status === 502 || status === 503 || status === 504;
 }
 
 /** Network / region / firewall blocked the LLM request. */
@@ -51,12 +86,14 @@ export function isLlmAuthError(error: unknown): boolean {
     (status === 403 && message.includes("api key")) ||
     message.includes("api key not valid") ||
     message.includes("invalid api key") ||
+    message.includes("authentication") ||
+    message.includes("invalid authentication") ||
     (message.includes("permission denied") && message.includes("api key")) ||
     (message.includes("unauthorized") && status === 401)
   );
 }
 
-/** Use rule-based mock when live Gemini cannot be reached. */
+/** Use rule-based mock when live LLM cannot be reached. */
 export function shouldFallbackToMockOnLlmError(error: unknown): boolean {
   return isLlmNetworkBlockedError(error) || isLlmAuthError(error);
 }
@@ -64,52 +101,57 @@ export function shouldFallbackToMockOnLlmError(error: unknown): boolean {
 export function llmFallbackWarning(error: unknown): string {
   if (isLlmNetworkBlockedError(error)) {
     return (
-      "Gemini could not be reached from this network (VPN, region, or firewall). " +
+      `${LLM_PROVIDER_LABEL} could not be reached from this network (VPN, region, or firewall). ` +
       "Using demo classification for this run. Try another network or set USE_MOCK_CLASSIFIER=true."
     );
   }
   if (isLlmAuthError(error)) {
     return (
-      "Gemini rejected the API key. Using demo classification for this run. " +
-      "Update GEMINI_API_KEY in .env.local or set USE_MOCK_CLASSIFIER=true."
+      `${LLM_PROVIDER_LABEL} rejected the API key. Using demo classification for this run. ` +
+      "Update CEREBRAS_API_KEY in .env.local or set USE_MOCK_CLASSIFIER=true."
     );
   }
-  return "Gemini unavailable. Using demo classification for this run.";
+  return "LLM unavailable. Using demo classification for this run.";
 }
 
 export function formatLlmError(error: unknown): string {
   const message = getErrorMessage(error);
-  const lower = message.toLowerCase();
   const status = getErrorStatus(error);
 
   if (isRateLimited(error) && !isQuotaError(error)) {
     return (
-      "Gemini rate limit hit. Wait and retry, reduce the review count, " +
-      "split into repository batches, or set USE_MOCK_CLASSIFIER=true."
+      `${LLM_PROVIDER_LABEL} rate limit hit (5 RPM / 30K TPM). Wait ~15s and click Analyze again — ` +
+      "cached reviews will be skipped. Reduce LLM_CLASSIFY_BATCH_SIZE if this persists."
     );
   }
 
   if (isQuotaError(error)) {
     return (
-      "Gemini quota exhausted. Check usage at aistudio.google.com, " +
-      "reduce the review count, split into repository batches, or set USE_MOCK_CLASSIFIER=true."
+      `${LLM_PROVIDER_LABEL} daily quota exhausted. Check usage at ${LLM_CONSOLE_URL}, ` +
+      "split into repository batches, or set USE_MOCK_CLASSIFIER=true."
+    );
+  }
+
+  if (isRetryableServerError(error)) {
+    return (
+      `${LLM_PROVIDER_LABEL} is temporarily overloaded. Wait a minute and retry, or try a different model.`
     );
   }
 
   if (isLlmNetworkBlockedError(error)) {
     return (
-      "Gemini could not be reached from this network. " +
+      `${LLM_PROVIDER_LABEL} could not be reached from this network. ` +
       "Try a different network, disable VPN, or set USE_MOCK_CLASSIFIER=true for demo mode."
     );
   }
 
   if (isLlmAuthError(error)) {
-    return "Invalid GEMINI_API_KEY. Create one at aistudio.google.com/apikey.";
+    return `Invalid CEREBRAS_API_KEY. Create one at ${LLM_CONSOLE_URL} → API keys.`;
   }
 
   if (status === 403) {
     return (
-      "Gemini denied this request (403). Check API access at aistudio.google.com, " +
+      `${LLM_PROVIDER_LABEL} denied this request (403). Check API access at ${LLM_CONSOLE_URL}, ` +
       "or set USE_MOCK_CLASSIFIER=true for demo mode."
     );
   }
@@ -118,16 +160,31 @@ export function formatLlmError(error: unknown): string {
 }
 
 export function isQuotaError(error: unknown): boolean {
-  const lower = getErrorMessage(error).toLowerCase();
+  const message = getErrorMessage(error);
+  const lower = message.toLowerCase();
+  const status = getErrorStatus(error);
+
+  // Cerebras returns 429 + "quota exceeded" for per-minute limits — not daily TPD.
+  if (status === 429 && !isDailyQuotaMessage(message)) {
+    return false;
+  }
+  if (isTransientQuotaMessage(message)) {
+    return false;
+  }
+
   return (
     lower.includes("billing") ||
     lower.includes("insufficient") ||
     lower.includes("credits") ||
-    lower.includes("quota exceeded") ||
-    (lower.includes("quota") && lower.includes("exceeded"))
+    isDailyQuotaMessage(message) ||
+    (lower.includes("quota") && lower.includes("exceeded") && isDailyQuotaMessage(message))
   );
 }
 
-export function isRetryableRateLimit(error: unknown): boolean {
+export function isTransientRateLimit(error: unknown): boolean {
   return isRateLimited(error) && !isQuotaError(error);
+}
+
+export function isRetryableRateLimit(error: unknown): boolean {
+  return isTransientRateLimit(error) || isRetryableServerError(error);
 }

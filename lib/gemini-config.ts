@@ -1,8 +1,9 @@
-export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
-
-export function getGeminiApiKey(): string | undefined {
-  const key =
-    process.env.GEMINI_API_KEY?.trim() ||
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
-  return key || undefined;
-}
+/** @deprecated Import from ./llm-config instead */
+export {
+  GEMINI_MODEL,
+  getGeminiApiKey,
+  getLlmApiKey,
+  LLM_BASE_URL,
+  LLM_MODEL,
+  LLM_PROVIDER,
+} from "./llm-config";

@@ -4,10 +4,14 @@ import {
   BILLING_PATTERNS,
   countDiscoverySignals,
   countPatternHits,
+  countPmDiscoverySubstance,
   DISCOVERY_FAILURE_PATTERNS,
   DISCOVERY_SUCCESS_PATTERNS,
-  IMPLICIT_DISCOVERY_PATTERNS,
   EXPLICIT_DISCOVERY_PATTERNS,
+  hasHardDiscoveryExclusion,
+  hasPmDiscoverySubstance,
+  IMPLICIT_DISCOVERY_PATTERNS,
+  NOISE_WITHOUT_DISCOVERY_PATTERNS,
   PRAISE_PATTERNS,
   TECHNICAL_PATTERNS,
   USER_GOAL_RULES,
@@ -77,7 +81,7 @@ export function detectPrimaryCategory(
   return "mixed";
 }
 
-/** Phase 3 — explicit + implicit discovery relevance for PM research. */
+/** Phase 3 — PM discovery relevance: experience, friction, or intent required. */
 export function assessDiscoveryRelevance(
   cleaned: string,
   primaryCategory: PrimaryCategory,
@@ -88,27 +92,70 @@ export function assessDiscoveryRelevance(
   explicit_signal_count: number;
   implicit_signal_count: number;
 } {
-  const { explicit, implicit, total } = countDiscoverySignals(cleaned);
+  const { explicit, implicit } = countDiscoverySignals(cleaned);
+  const pmSubstance = countPmDiscoverySubstance(cleaned);
+  const hardExclude = hasHardDiscoveryExclusion(cleaned);
 
-  if (total === 0) {
+  if (hardExclude.excluded) {
     return {
       discovery_relevant: false,
-      discovery_reason:
-        primaryCategory === "discovery"
-          ? "Marked discovery category but no detectable signals after normalization."
-          : `No discovery signals; primary focus appears to be ${primaryCategory}.`,
-      confidence: 0.85,
+      discovery_reason: `Excluded: ${hardExclude.reason}.`,
+      confidence: 0.9,
       explicit_signal_count: explicit,
       implicit_signal_count: implicit,
     };
   }
 
-  const signalNote =
-    explicit >= 1 && implicit >= 1
-      ? "explicit and implicit discovery signals"
-      : explicit >= 1
-        ? "explicit recommendation or discovery language"
-        : "implicit repetition, sameness, or exploration signals";
+  const hasSubstance = hasPmDiscoverySubstance(cleaned);
+  const noiseHits = countPatternHits(cleaned, NOISE_WITHOUT_DISCOVERY_PATTERNS);
+  const praiseHits = countPatternHits(cleaned, PRAISE_PATTERNS);
+  const genericPraiseOnly = praiseHits >= 1 && !hasSubstance;
+
+  if (!hasSubstance) {
+    return {
+      discovery_relevant: false,
+      discovery_reason:
+        primaryCategory === "discovery"
+          ? "No PM discovery experience, friction, or intent signals detected."
+          : `No discovery substance; primary focus appears to be ${primaryCategory}.`,
+      confidence: 0.88,
+      explicit_signal_count: explicit,
+      implicit_signal_count: implicit,
+    };
+  }
+
+  if (genericPraiseOnly) {
+    return {
+      discovery_relevant: false,
+      discovery_reason:
+        "Generic praise without specific discovery or recommendation evidence.",
+      confidence: 0.9,
+      explicit_signal_count: explicit,
+      implicit_signal_count: implicit,
+    };
+  }
+
+  if (
+    (primaryCategory === "billing" ||
+      primaryCategory === "ads" ||
+      primaryCategory === "technical") &&
+    noiseHits >= 1 &&
+    pmSubstance.experience === 0 &&
+    pmSubstance.friction === 0
+  ) {
+    return {
+      discovery_relevant: false,
+      discovery_reason: `${primaryCategory} complaint without explicit discovery/recommendation discussion.`,
+      confidence: 0.88,
+      explicit_signal_count: explicit,
+      implicit_signal_count: implicit,
+    };
+  }
+
+  const substanceParts: string[] = [];
+  if (pmSubstance.experience >= 1) substanceParts.push("discovery experience");
+  if (pmSubstance.friction >= 1) substanceParts.push("discovery friction");
+  if (pmSubstance.intent >= 1) substanceParts.push("discovery intent");
 
   const mixedNote =
     primaryCategory === "mixed"
@@ -117,10 +164,14 @@ export function assessDiscoveryRelevance(
 
   return {
     discovery_relevant: true,
-    discovery_reason: `Review contains ${signalNote}.${mixedNote}`,
+    discovery_reason: `Review discusses ${substanceParts.join(", ")}.${mixedNote}`,
     confidence: Math.min(
       0.95,
-      0.68 + explicit * 0.06 + implicit * 0.05 + (primaryCategory === "discovery" ? 0.08 : 0),
+      0.72 +
+        pmSubstance.experience * 0.05 +
+        pmSubstance.friction * 0.05 +
+        pmSubstance.intent * 0.06 +
+        (primaryCategory === "discovery" ? 0.06 : 0),
     ),
     explicit_signal_count: explicit,
     implicit_signal_count: implicit,

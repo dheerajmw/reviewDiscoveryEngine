@@ -27,6 +27,8 @@ export interface FetchReviewsRequest {
   country?: string;
   minRating?: number;
   redditQuery?: string;
+  /** When true, keep only reviews matching discovery collection keywords (Play Store, App Store, all sources). */
+  discoveryOnly?: boolean;
 }
 
 export interface FetchReviewsResult {

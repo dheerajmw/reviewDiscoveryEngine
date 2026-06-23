@@ -46,6 +46,7 @@ export function buildClassificationAuditRecord(
     unmet_need: review.unmet_need,
     evidence,
     confidence: review.confidence,
+    classification_reasons: review.classification_reasons ?? evidence.classification_reasons,
   };
 }
 

@@ -1,0 +1,347 @@
+{
+  "generatedAt": "2026-06-22T14:19:32.042Z",
+  "corpus": {
+    "total": 1996,
+    "discovery_curated": 176,
+    "discovery_classified": 173,
+    "classifier": "mock"
+  },
+  "executive_quality_gate": {
+    "total_candidates": 8,
+    "accepted": 2,
+    "rejected": 6,
+    "rejection_reasons": [
+      "Fewer than 5 supporting reviews (4)",
+      "Supported by only one source (social-media)",
+      "Fewer than 5 supporting reviews (2)",
+      "Fewer than 5 supporting reviews (1)",
+      "Supported by only one source (reddit)"
+    ]
+  },
+  "findings_audited": [
+    {
+      "title": "Discovery sessions converge on familiar content, undermining the promise of algorithmic playlists.",
+      "supporting_review_count": 34,
+      "supporting_segments": [
+        "General Listener",
+        "Discovery Seeker",
+        "Playlist Curator"
+      ],
+      "supporting_quotes": [
+        {
+          "text": "Except Spotify's discover weekly is stupendously dumb and desperate. I've put 10 years of my music listening into Spotify and it still has no damn clue what I enjoy, and anytime I listen to a song more than a few times, ",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        },
+        {
+          "text": "The real problem with Spotify's DJ is that, if you use it a lot, it gets into a feedback loop where it keeps playing the same songs that it serves you up because it thinks you like them. It's pretty bad at finding new mu",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        },
+        {
+          "text": "i have the whole setup but i cannot tell the difference. Their dolby demo kind of seems like its something but i honestly don't listen that actively to notice. I miss 'discover weekly', collaborative playlists , spotify ",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        }
+      ],
+      "supporting_themes": [
+        "Repetition Fatigue"
+      ],
+      "supporting_root_causes": [],
+      "confidence": "Low",
+      "opportunity_score": 13.5,
+      "audits": {
+        "actionability": {
+          "score": 2,
+          "rationale": "Names a product-addressable mechanism or user need PMs can design against."
+        },
+        "root_cause_depth": {
+          "level": 2,
+          "label": "Behavior",
+          "executiveQuality": false
+        },
+        "strategic_value": {
+          "score": "High",
+          "influences": [
+            "Discovery strategy",
+            "Recommendation strategy",
+            "Retention strategy"
+          ]
+        },
+        "mvp_relevance": {
+          "aiNative": true,
+          "concept": "AI freshness agent that enforces artist diversity constraints per discovery session."
+        },
+        "slide_worthiness": {
+          "score": "Maybe",
+          "why": "Directionally useful but may need sharpening or merging before Director review."
+        }
+      }
+    }
+  ],
+  "redundancy": {
+    "originalCount": 1,
+    "mergedCount": 1,
+    "recommended": [
+      {
+        "title": "Discovery sessions converge on familiar content, undermining the promise of algorithmic playlists.",
+        "evidence_count": 34,
+        "merged_from": []
+      }
+    ]
+  },
+  "top_3_executive_findings": [
+    {
+      "title": "Discovery sessions converge on familiar content, undermining the promise of algorithmic playlists.",
+      "supporting_review_count": 34,
+      "supporting_segments": [
+        "General Listener",
+        "Discovery Seeker",
+        "Playlist Curator"
+      ],
+      "supporting_quotes": [
+        {
+          "text": "Except Spotify's discover weekly is stupendously dumb and desperate. I've put 10 years of my music listening into Spotify and it still has no damn clue what I enjoy, and anytime I listen to a song more than a few times, ",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        },
+        {
+          "text": "The real problem with Spotify's DJ is that, if you use it a lot, it gets into a feedback loop where it keeps playing the same songs that it serves you up because it thinks you like them. It's pretty bad at finding new mu",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        },
+        {
+          "text": "i have the whole setup but i cannot tell the difference. Their dolby demo kind of seems like its something but i honestly don't listen that actively to notice. I miss 'discover weekly', collaborative playlists , spotify ",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        }
+      ],
+      "supporting_themes": [
+        "Repetition Fatigue"
+      ],
+      "supporting_root_causes": [],
+      "confidence": "Low",
+      "opportunity_score": 13.5,
+      "audits": {
+        "actionability": {
+          "score": 2,
+          "rationale": "Names a product-addressable mechanism or user need PMs can design against."
+        },
+        "root_cause_depth": {
+          "level": 2,
+          "label": "Behavior",
+          "executiveQuality": false
+        },
+        "strategic_value": {
+          "score": "High",
+          "influences": [
+            "Discovery strategy",
+            "Recommendation strategy",
+            "Retention strategy"
+          ]
+        },
+        "mvp_relevance": {
+          "aiNative": true,
+          "concept": "AI freshness agent that enforces artist diversity constraints per discovery session."
+        },
+        "slide_worthiness": {
+          "score": "Maybe",
+          "why": "Directionally useful but may need sharpening or merging before Director review."
+        }
+      }
+    }
+  ],
+  "top_3_strategic_opportunities": [
+    {
+      "id": "opp-",
+      "problem": "Users articulate discovery challenges that converge on familiarity over exploration.",
+      "current_user_behavior": "Users engage with algorithmic playlists expecting novelty, but disengage when familiar artists dominate.",
+      "root_cause": "Multiple reinforcement mechanisms bias recommendations toward familiarity.",
+      "spotify_opportunity": "Implement freshness constraints on Discover Weekly and Release Radar to cap artist repeat rate.",
+      "size": "Medium",
+      "opportunity_score": 37.5,
+      "impact_score": 3,
+      "frequency_score": 5,
+      "confidence_score": 2.5,
+      "supporting_reviews": 129,
+      "affected_segments": [
+        "Discovery Seeker",
+        "General Listener",
+        "Playlist Curator"
+      ],
+      "representative_quotes": [
+        {
+          "review_id": "review-1945",
+          "source": "social-media",
+          "text": "This is great to hear, though I'm curious why photos on your phone / pinterest would be relevant to a recommendation system? Surely the biggest signal would be what Spotify already uses: the features of various relevant factors (your previous listening sessions, your current session, what other similar sessions look like, etc.), that said, their recommendation system is surprisingly terrible given how much easier music recommendations must be versus video, yet YouTube seems to have had this nailed for 15+ years whereas Spotify's \"Discover Weekly\" is so bad. > I come up with an idea of generating playlists from images. Images that you shot on your phone yourself, or that you found on Pinterest, or a painting that you really like and feel inspired by. This is genuinely interesting! Do you send the images to an LLM with a prompt like \"generate a list of songs that would go well with this\"?",
+          "segment": "Discovery-Focused Listener",
+          "theme": "Other Discovery Frustration",
+          "confidence": 0.576,
+          "barrier": "Unclear Discovery Struggle",
+          "root_cause": "Unclear Repetition Cause",
+          "unmet_need": "General Discovery Improvement"
+        },
+        {
+          "review_id": "review-1701",
+          "source": "spotify-community",
+          "text": "Superuser Contribution_ My Release Radar playlist both disappeared and refuses to update!. Hi I love my weekly updated Release Radar playlist so this is extremely frustrating to me! PlanPremiumCountryUnited StatesDeviceSamsung S22+, Asus Zenbook (2025 model), Operating SystemLatest version of Android, Windows 11, My Question or IssueSo the... Regular Hi I love my weekly updated Release Radar playlist so this is extremely frustrating to me! Country United States Device Samsung S22+, Asus Zenbook (2025 model), Operat... 4 weeks ago 3 weeks ago Zu_Zapidad Casual Listener * *",
+          "segment": "Discovery-Focused Listener",
+          "theme": "Other Discovery Frustration",
+          "confidence": 0.573,
+          "barrier": "Unclear Discovery Struggle",
+          "root_cause": "Unclear Repetition Cause",
+          "unmet_need": "General Discovery Improvement"
+        },
+        {
+          "review_id": "review-1975",
+          "source": "social-media",
+          "text": "Hey guys! I’ve been working on this 3rd party Spotify app, and I’m finally launching Discover Together! It analyzes you and a buddy’s Spotify profiles and uses machine learning to curate a very special Spotify playlist sent straight to your library that is filled with songs that are recommended based on your guys’ blended music tastes to discover new music together  .It is basically a Spotify Discover Weekly Playlist but for two people to bond over new songs together! Would mean a lot if you guys could try it out here with a friend or two, and I guarantee you guys will find your next favorite song  Also lmk any feedback and it would be amazing if you could share with more friends/family/significant others/tinder or hinge dates especially with Valentine's Day coming up  If you like the app, show us some love on Product Hunt here",
+          "segment": "Discovery-Focused Listener",
+          "theme": "Other Discovery Frustration",
+          "confidence": 0.541,
+          "barrier": "Unclear Discovery Struggle",
+          "root_cause": "Unclear Repetition Cause",
+          "unmet_need": "General Discovery Improvement"
+        }
+      ],
+      "related_finding_id": "finding-"
+    },
+    {
+      "id": "opp-repetition-fatigue",
+      "problem": "Users experience discovery friction: discovery sessions converge on already-known music rather than introducing meaningful novelty.",
+      "current_user_behavior": "Users skip recommendations and return to saved playlists when discovery surfaces feel repetitive.",
+      "root_cause": "Multiple reinforcement mechanisms bias recommendations toward familiarity.",
+      "spotify_opportunity": "Redesign Discover Weekly and Release Radar with freshness guarantees and artist repeat caps.",
+      "size": "Small",
+      "opportunity_score": 13.5,
+      "impact_score": 4,
+      "frequency_score": 1.3,
+      "confidence_score": 2.6,
+      "supporting_reviews": 34,
+      "affected_segments": [
+        "General Listener",
+        "Discovery Seeker",
+        "Playlist Curator"
+      ],
+      "representative_quotes": [
+        {
+          "review_id": "review-1948",
+          "source": "social-media",
+          "text": "Except Spotify's discover weekly is stupendously dumb and desperate. I've put 10 years of my music listening into Spotify and it still has no damn clue what I enjoy, and anytime I listen to a song more than a few times, Spotify spends the next 4 weeks trying to cram songs with the same \"tags\" down my throat. I had to spend three weeks clicking the \"Don't like this\" button on EVERY song in my discover weekly before the algorithm figured out \"hey, maybe this guy from rural america doesn't actually like songs that are exclusively japanese meme songs\" Like everything in ML, Spotify recommendation works great if you have average or unspecial tastes, because it's just regurgitating the average of your cohort back at you.",
+          "segment": "Discovery-Focused Listener",
+          "theme": "Repetition Fatigue",
+          "confidence": 0.579,
+          "barrier": "Unclear Discovery Struggle",
+          "root_cause": "Unclear Repetition Cause",
+          "unmet_need": "General Discovery Improvement"
+        },
+        {
+          "review_id": "review-1940",
+          "source": "social-media",
+          "text": "The real problem with Spotify's DJ is that, if you use it a lot, it gets into a feedback loop where it keeps playing the same songs that it serves you up because it thinks you like them. It's pretty bad at finding new music which is ironic because I find Spotify's Discover Weekly algorithm to be quite good (sometimes)",
+          "segment": "Discovery-Focused Listener",
+          "theme": "Repetition Fatigue",
+          "confidence": 0.578,
+          "barrier": "Unclear Discovery Struggle",
+          "root_cause": "Unclear Repetition Cause",
+          "unmet_need": "General Discovery Improvement"
+        },
+        {
+          "review_id": "review-1973",
+          "source": "social-media",
+          "text": "i have the whole setup but i cannot tell the difference. Their dolby demo kind of seems like its something but i honestly don't listen that actively to notice. I miss 'discover weekly', collaborative playlists , spotify curated playlists, on repeat ect.",
+          "segment": "Discovery-Focused Listener",
+          "theme": "Repetition Fatigue",
+          "confidence": 0.578,
+          "barrier": "Unclear Discovery Struggle",
+          "root_cause": "Unclear Repetition Cause",
+          "unmet_need": "General Discovery Improvement"
+        }
+      ],
+      "related_finding_id": "finding-repetition-fatigue"
+    }
+  ],
+  "top_3_mvp_opportunities": [
+    {
+      "title": "Discovery sessions converge on familiar content, undermining the promise of algorithmic playlists.",
+      "supporting_review_count": 34,
+      "supporting_segments": [
+        "General Listener",
+        "Discovery Seeker",
+        "Playlist Curator"
+      ],
+      "supporting_quotes": [
+        {
+          "text": "Except Spotify's discover weekly is stupendously dumb and desperate. I've put 10 years of my music listening into Spotify and it still has no damn clue what I enjoy, and anytime I listen to a song more than a few times, ",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        },
+        {
+          "text": "The real problem with Spotify's DJ is that, if you use it a lot, it gets into a feedback loop where it keeps playing the same songs that it serves you up because it thinks you like them. It's pretty bad at finding new mu",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        },
+        {
+          "text": "i have the whole setup but i cannot tell the difference. Their dolby demo kind of seems like its something but i honestly don't listen that actively to notice. I miss 'discover weekly', collaborative playlists , spotify ",
+          "source": "social-media",
+          "segment": "Discovery-Focused Listener"
+        }
+      ],
+      "supporting_themes": [
+        "Repetition Fatigue"
+      ],
+      "supporting_root_causes": [],
+      "confidence": "Low",
+      "opportunity_score": 13.5,
+      "audits": {
+        "actionability": {
+          "score": 2,
+          "rationale": "Names a product-addressable mechanism or user need PMs can design against."
+        },
+        "root_cause_depth": {
+          "level": 2,
+          "label": "Behavior",
+          "executiveQuality": false
+        },
+        "strategic_value": {
+          "score": "High",
+          "influences": [
+            "Discovery strategy",
+            "Recommendation strategy",
+            "Retention strategy"
+          ]
+        },
+        "mvp_relevance": {
+          "aiNative": true,
+          "concept": "AI freshness agent that enforces artist diversity constraints per discovery session."
+        },
+        "slide_worthiness": {
+          "score": "Maybe",
+          "why": "Directionally useful but may need sharpening or merging before Director review."
+        }
+      }
+    }
+  ],
+  "top_3_quotes": [
+    {
+      "text": "This is great to hear, though I'm curious why photos on your phone / pinterest would be relevant to a recommendation system? Surely the biggest signal would be what Spotify already uses: the features ",
+      "source": "social-media",
+      "segment": "Discovery-Focused Listener"
+    },
+    {
+      "text": "Superuser Contribution_ My Release Radar playlist both disappeared and refuses to update!. Hi I love my weekly updated Release Radar playlist so this is extremely frustrating to me! PlanPremiumCountry",
+      "source": "spotify-community",
+      "segment": "Discovery-Focused Listener"
+    },
+    {
+      "text": "Hey guys! I’ve been working on this 3rd party Spotify app, and I’m finally launching Discover Together! It analyzes you and a buddy’s Spotify profiles and uses machine learning to curate a very specia",
+      "source": "social-media",
+      "segment": "Discovery-Focused Listener"
+    }
+  ],
+  "biggest_weakness": "Quality gate accepts too few clusters — executive layer falls back to thin or templated findings.",
+  "pm_readiness_score": 5,
+  "director_readiness_score": 3,
+  "director_would_believe": "NO",
+  "director_would_believe_why": "Findings read as templated synthesis over weak clusters — insufficient mechanism depth and evidence diversity for executive prioritization."
+}

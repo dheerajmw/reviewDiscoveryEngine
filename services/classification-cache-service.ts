@@ -1,4 +1,4 @@
-import { GEMINI_MODEL } from "@/lib/gemini-config";
+import { LLM_MODEL } from "@/lib/llm-config";
 import { hashReviewContent } from "@/lib/review-content-hash";
 import {
   boolFromDb,
@@ -49,7 +49,7 @@ function rowToClassified(
 
 export async function lookupClassificationCache(
   reviews: RawReview[],
-  model = GEMINI_MODEL,
+  model = LLM_MODEL,
 ): Promise<CacheLookupResult> {
   const db = await ensureTursoSchema();
   const hits = new Map<number, ClassifiedReview>();
@@ -79,7 +79,7 @@ export async function lookupClassificationCache(
 
 export async function saveClassificationCache(
   classified: ClassifiedReview[],
-  model = GEMINI_MODEL,
+  model = LLM_MODEL,
 ): Promise<void> {
   if (classified.length === 0) return;
 

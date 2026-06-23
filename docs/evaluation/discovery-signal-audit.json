@@ -1,0 +1,393 @@
+{
+  "generatedAt": "2026-06-22T16:26:52.192Z",
+  "corpus": {
+    "total": 1996,
+    "curated_discovery": 176,
+    "classified_discovery": 173,
+    "insight_candidates": 8,
+    "qualified_insights": 2,
+    "executive_findings": 1,
+    "strategic_opportunities": 2
+  },
+  "task1_exclusion_audit": {
+    "total_excluded": 1800,
+    "by_category": [
+      {
+        "category": "off_topic",
+        "count": 1521,
+        "percent": "84.5%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "Been using this for YEARS, it's pretty epic, cool and awesome but what a shame I don't have premium lol"
+          },
+          {
+            "source": "playstore",
+            "text": "best player in Pakistan"
+          }
+        ]
+      },
+      {
+        "category": "too_short",
+        "count": 82,
+        "percent": "4.6%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "It's great trust me✨"
+          },
+          {
+            "source": "playstore",
+            "text": "not f2p friendly"
+          }
+        ]
+      },
+      {
+        "category": "premium",
+        "count": 53,
+        "percent": "2.9%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "Got too expensive, used to be my daily driver but now I'm using apple music. Same service at a cheaper cost."
+          },
+          {
+            "source": "playstore",
+            "text": "will steal ur money and not give u ur subscription"
+          }
+        ]
+      },
+      {
+        "category": "generic_praise",
+        "count": 52,
+        "percent": "2.9%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "best music app. only problem is ad"
+          },
+          {
+            "source": "playstore",
+            "text": "I love this app before yt music I love Spotify cuz it's song can stay if we remove the tab or smth🥰🥰 But pls remove premium pls🥰🥰🙏🏻"
+          }
+        ]
+      },
+      {
+        "category": "bugs",
+        "count": 38,
+        "percent": "2.1%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "Would seriously love to give this 4 stars. Sucks when it comes to unpaid sub but the student deal is really good. What I do have a problem with is the new Android widget. Tried tak"
+          },
+          {
+            "source": "playstore",
+            "text": "Keeps crashing all the time, since last update"
+          }
+        ]
+      },
+      {
+        "category": "ads",
+        "count": 30,
+        "percent": "1.7%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "too many ads in between music 😞 ads kills the vibes 😔 too obsessed with this app"
+          },
+          {
+            "source": "playstore",
+            "text": "Very disappointing experience. The app shows too many ads. When listening to songs, two ads play before the music starts and more ads appear after the song ends. It completely ruin"
+          }
+        ]
+      },
+      {
+        "category": "playback",
+        "count": 14,
+        "percent": "0.8%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "Every time I stream anything, the app has gaps in the sound. Reminds me of the old days of CD skipping, except it's worse."
+          },
+          {
+            "source": "playstore",
+            "text": "I am a long time Spotify user and have no issue with the app, but I hate the new widget. the old one never has to load or be refreshed but this one does. i hate seeing it on my hom"
+          }
+        ]
+      },
+      {
+        "category": "playlist_sharing",
+        "count": 6,
+        "percent": "0.3%",
+        "samples": [
+          {
+            "source": "reddit",
+            "text": "Your #1 Feel Good Dance Playlist! — SIL3NTKILL SELECTS - The Official Dance (Feel Good) Playlist  Check me out!  Need some tunes for your next party? Or working out at the gym and "
+          },
+          {
+            "source": "reddit",
+            "text": "Recommend Songs for My Playlists While Finding a Song for Yourself! — Hey everyone! Feel free to dive into my playlists and discover new music while helping me expand my music libr"
+          }
+        ]
+      },
+      {
+        "category": "account",
+        "count": 4,
+        "percent": "0.2%",
+        "samples": [
+          {
+            "source": "playstore",
+            "text": "Spotify itself is a good app and super reliable to use, but sometimes there just way too many unexplained errors, like I wanted to open my Spotify account via email because I forgo"
+          },
+          {
+            "source": "reddit",
+            "text": "I think I might have been hacked — I checked my phone after like 10 minutes of not using it, and it was playing a random song I've never heard of, and said playing from web chrome."
+          }
+        ]
+      }
+    ],
+    "missed_discovery_signal_in_excluded": 293,
+    "missed_discovery_samples": [
+      {
+        "source": "playstore",
+        "category": "off_topic",
+        "text": "As a Spotify premium user, I don't have much to complain about. But, the one thing that made me rate this 2-stars (hopefully, y'all need to take such feedback v",
+        "reason": "No PM discovery experience, friction, or intent signals detected."
+      },
+      {
+        "source": "playstore",
+        "category": "too_short",
+        "text": "top music algorithm",
+        "reason": "Review is too short to support PM discovery research."
+      },
+      {
+        "source": "playstore",
+        "category": "off_topic",
+        "text": "The recommendation system is fire 🔥🔥",
+        "reason": "No PM discovery experience, friction, or intent signals detected."
+      },
+      {
+        "source": "playstore",
+        "category": "off_topic",
+        "text": "“Love this app! The playlists are amazing and the recommendations are always on point.”",
+        "reason": "No PM discovery experience, friction, or intent signals detected."
+      },
+      {
+        "source": "playstore",
+        "category": "off_topic",
+        "text": "Spotify's free experience has become very frustrating. There are too many unskippable ads, sometimes 3–5 in a row, and basic features like song selection, repea",
+        "reason": "No PM discovery experience, friction, or intent signals detected."
+      }
+    ]
+  },
+  "task2_source_scoring": [
+    {
+      "source": "social-media",
+      "label": "Social Media",
+      "total": 191,
+      "discovery_included": 79,
+      "discovery_review_rate": 41.4,
+      "high_confidence_rate": 100,
+      "classified_research": 78,
+      "executive_finding_contribution": 2,
+      "composite_score": 60.7
+    },
+    {
+      "source": "spotify-community",
+      "label": "Spotify Community",
+      "total": 265,
+      "discovery_included": 23,
+      "discovery_review_rate": 8.7,
+      "high_confidence_rate": 100,
+      "classified_research": 23,
+      "executive_finding_contribution": 1,
+      "composite_score": 34.3
+    },
+    {
+      "source": "reddit",
+      "label": "Reddit",
+      "total": 495,
+      "discovery_included": 40,
+      "discovery_review_rate": 8.1,
+      "high_confidence_rate": 100,
+      "classified_research": 38,
+      "executive_finding_contribution": 1,
+      "composite_score": 34
+    },
+    {
+      "source": "appstore",
+      "label": "App Store",
+      "total": 437,
+      "discovery_included": 18,
+      "discovery_review_rate": 4.1,
+      "high_confidence_rate": 100,
+      "classified_research": 18,
+      "executive_finding_contribution": 0,
+      "composite_score": 22.1
+    },
+    {
+      "source": "playstore",
+      "label": "Play Store",
+      "total": 588,
+      "discovery_included": 16,
+      "discovery_review_rate": 2.7,
+      "high_confidence_rate": 100,
+      "classified_research": 16,
+      "executive_finding_contribution": 1,
+      "composite_score": 31.4
+    }
+  ],
+  "task2_source_rank": [
+    {
+      "source": "Social Media",
+      "discovery_rate": "41.4%",
+      "included": 79,
+      "total": 191
+    },
+    {
+      "source": "Spotify Community",
+      "discovery_rate": "8.7%",
+      "included": 23,
+      "total": 265
+    },
+    {
+      "source": "Reddit",
+      "discovery_rate": "8.1%",
+      "included": 40,
+      "total": 495
+    },
+    {
+      "source": "App Store",
+      "discovery_rate": "4.1%",
+      "included": 18,
+      "total": 437
+    },
+    {
+      "source": "Play Store",
+      "discovery_rate": "2.7%",
+      "included": 16,
+      "total": 588
+    }
+  ],
+  "task3_collection_keywords": [
+    "discover weekly",
+    "release radar",
+    "spotify dj",
+    "daily mix",
+    "made for you",
+    "for you",
+    "recommendation",
+    "recommendations",
+    "recommended",
+    "algorithm",
+    "personalization",
+    "personalized",
+    "find new artist",
+    "finding new artist",
+    "music discovery",
+    "discover new",
+    "artist discovery",
+    "same songs",
+    "same artist",
+    "same music",
+    "on repeat",
+    "repetition",
+    "repetitive",
+    "shuffle",
+    "smart shuffle",
+    "radio",
+    "autoplay",
+    "genre bubble",
+    "genre lock",
+    "stuck in a genre",
+    "discovery fatigue",
+    "exploration",
+    "explore new",
+    "novelty",
+    "hidden gem",
+    "recommendation trust",
+    "recommendation quality",
+    "recommendation diversity",
+    "feedback loop",
+    "listening history",
+    "discover mode",
+    "blend",
+    "song radio",
+    "artist radio"
+  ],
+  "task4_quality_target": {
+    "current": {
+      "discovery_curated": 176,
+      "classified_discovery": 173,
+      "executive_findings": 2,
+      "mechanism_findings": 0,
+      "opportunities": 2
+    },
+    "target": {
+      "discovery_curated": "500-1000",
+      "classified_discovery": 300,
+      "executive_findings": 5,
+      "mechanism_findings": 3,
+      "opportunities": 3,
+      "director_readiness": 7
+    },
+    "keyword_filter_projection": {
+      "corpus_after_keyword_filter": 445,
+      "curated_after_filter": 152,
+      "qualified_insights_projected": 2
+    }
+  },
+  "task5_finding_diversity": {
+    "findings": [
+      {
+        "id": "",
+        "insight": "Users articulate discovery challenges that converge on familiarity over exploration.",
+        "volume": 129,
+        "percent_of_research": "74.6%",
+        "exceeds_50pct": true
+      },
+      {
+        "id": "repetition-fatigue",
+        "insight": "Users experience discovery friction: discovery sessions converge on already-known music rather than introducing meaningf",
+        "volume": 34,
+        "percent_of_research": "19.7%",
+        "exceeds_50pct": false
+      }
+    ],
+    "largest_finding_pct": "74.6%",
+    "any_exceeds_50pct": true
+  },
+  "keyword_analysis": {
+    "corpus_with_discovery_keywords": 445,
+    "included_with_discovery_keywords": 152,
+    "keyword_hit_rate_in_corpus": "22.3%"
+  },
+  "recommendation": {
+    "primary": "C",
+    "rationale": "Classification and synthesis work; discovery signal density (8.8% curation yield) is the binding constraint.",
+    "options": {
+      "A_better_classification": {
+        "expected_discovery_lift": "+10-20% classified yield",
+        "expected_findings_lift": "+0-1 findings",
+        "impact": "Low — mock/Gemini already classify; bottleneck is input pool"
+      },
+      "B_better_synthesis": {
+        "expected_discovery_lift": "0%",
+        "expected_findings_lift": "+0-1 via lower quality gate",
+        "impact": "Low — validated; lowering gate increases false positives"
+      },
+      "C_more_discovery_data": {
+        "expected_discovery_lift": "+200-400 curated reviews with targeted collection",
+        "expected_findings_lift": "+3-5 executive findings at 500+ curated",
+        "impact": "High — only path to 3-5 mechanism-level findings"
+      }
+    },
+    "collection_priority": [
+      "Social Media",
+      "Spotify Community",
+      "Reddit"
+    ]
+  }
+}

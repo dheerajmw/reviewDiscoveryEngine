@@ -153,6 +153,21 @@ export default function QuoteExplorer({ runId, datasetName }: QuoteExplorerProps
                       .join(" · ")}
                   </p>
                 )}
+                {quote.classification_reasons &&
+                  Object.keys(quote.classification_reasons).length > 0 && (
+                    <div className="mt-3 space-y-1 border-t border-outline-variant/60 pt-2">
+                      {(["theme", "root_cause", "unmet_need", "barrier"] as const)
+                        .filter((field) => quote.classification_reasons?.[field])
+                        .map((field) => (
+                          <p key={field} className="text-xs text-on-surface-variant">
+                            <span className="font-medium capitalize text-on-surface">
+                              {field.replace("_", " ")}:
+                            </span>{" "}
+                            {quote.classification_reasons?.[field]}
+                          </p>
+                        ))}
+                    </div>
+                  )}
               </li>
             ))}
           </ul>

@@ -19,11 +19,11 @@ const {
 const { mergeClassificationItem } = await import("../lib/classify-normalize");
 const { isMockClassifierEnabled } = await import("../lib/classify-mock");
 const { createGeminiClient, generateJsonCompletion } = await import("../lib/gemini-client");
-const { getGeminiApiKey } = await import("../lib/gemini-config");
+const { getGeminiApiKey, GEMINI_MODEL } = await import("../lib/gemini-config");
 const { formatLlmError, shouldFallbackToMockOnLlmError } = await import("../lib/llm-errors");
 const { normalizeTaxonomyFields } = await import("../lib/taxonomy");
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+const GEMINI_MODEL_NAME = GEMINI_MODEL;
 
 const TAXONOMY_FIELDS = [
   "theme",
@@ -145,8 +145,11 @@ function compareField(
   // Known taxonomy remap: positive praise theme is not in closed enum
   if (field === "theme" && e === "Positive Discovery Experience") {
     return {
-      match: false,
-      note: `taxonomy maps "Positive Discovery Experience" → "Other Discovery Frustration" (no positive theme in closed enum)`,
+      match: a === e,
+      note:
+        a !== e
+          ? `expected canonical theme Positive Discovery Experience, got ${a}`
+          : undefined,
     };
   }
   if (field === "barrier" && e === "Poor Context Awareness" && a === "Poor Personalization Context") {
@@ -182,7 +185,7 @@ async function main() {
   console.log("=".repeat(72));
   console.log("GEMINI CLASSIFICATION VALIDATION");
   console.log("=".repeat(72));
-  console.log(`Model:                ${GEMINI_MODEL}`);
+  console.log(`Model:                ${GEMINI_MODEL_NAME}`);
   console.log(`USE_MOCK_CLASSIFIER:  ${process.env.USE_MOCK_CLASSIFIER ?? "(unset)"}`);
   console.log(`Mock env enabled:     ${isMockClassifierEnabled()}`);
   console.log(`API key present:      ${Boolean(getGeminiApiKey())}`);
@@ -315,7 +318,7 @@ async function main() {
       root_cause: finalReview.root_cause,
       unmet_need: finalReview.unmet_need,
       confidence: finalReview.confidence,
-      model_used: GEMINI_MODEL,
+      model_used: GEMINI_MODEL_NAME,
       fallback_used: false,
     };
 
@@ -327,7 +330,7 @@ async function main() {
     console.log("\n--- Expected vs actual ---");
     const mismatches: string[] = [];
     for (const [field, expected] of Object.entries(tc.expected)) {
-      const actual = (finalReview as Record<string, unknown>)[field];
+      const actual = (finalReview as unknown as Record<string, unknown>)[field];
       const { match, note } = compareField(field, actual, expected);
       const status = match ? "✓" : "✗";
       const line = `${status} ${field}: expected=${JSON.stringify(expected)} actual=${JSON.stringify(actual)}`;
@@ -432,7 +435,7 @@ function printReport(input: ReportInput) {
     console.log(`${c.pass ? "PASS" : "FAIL"} — ${c.label}${c.detail ? ` (${c.detail})` : ""}`);
   }
   console.log(`\nTotal field mismatches vs expectations: ${mismatches}`);
-  console.log(`Model used: ${GEMINI_MODEL}`);
+  console.log(`Model used: ${GEMINI_MODEL_NAME}`);
   console.log(`fallback_used: false (script calls Gemini directly; mock classifier not invoked)`);
   if (excluded.length > 0) {
     console.log(`\nExcluded (discovery_relevant=false): reviews ${excluded.map((r) => r.review_id).join(", ")}`);
