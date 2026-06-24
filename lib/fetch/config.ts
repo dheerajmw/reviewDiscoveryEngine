@@ -60,6 +60,60 @@ export function parseRedditQueryInput(query?: string): string[] {
     .filter(Boolean);
 }
 
+/** Wall-clock budget for one Reddit source fetch (serverless-safe). */
+export const REDDIT_FETCH_BUDGET_MS = 50_000;
+export const PULLPUSH_REQUEST_TIMEOUT_MS = 12_000;
+export const PULLPUSH_MAX_PAGES = 2;
+
+export interface RedditFetchPlan {
+  maxQueries: number;
+  subredditCommentCount: number;
+  subredditSubmissionCount: number;
+  perQueryBatch: number;
+  perSubCommentBatch: number;
+  perSubSubmissionBatch: number;
+  maxApiRequests: number;
+}
+
+/** Scale Pullpush fan-out so smaller limits finish within the serverless budget. */
+export function redditFetchPlan(
+  limit: number,
+  availableQueries: number,
+): RedditFetchPlan {
+  const maxQueries =
+    limit >= 400
+      ? Math.min(availableQueries, 10)
+      : limit >= 150
+        ? Math.min(availableQueries, 6)
+        : Math.min(availableQueries, 4);
+
+  const subredditCommentCount = limit >= 150 ? 2 : 1;
+  const subredditSubmissionCount =
+    limit >= 300 ? 4 : limit >= 120 ? 3 : limit >= 60 ? 2 : 1;
+
+  const maxApiRequests =
+    limit >= 400 ? 20 : limit >= 150 ? 14 : limit >= 80 ? 10 : 8;
+
+  return {
+    maxQueries,
+    subredditCommentCount,
+    subredditSubmissionCount,
+    perQueryBatch: Math.min(30, Math.max(12, Math.ceil(limit / maxQueries))),
+    perSubCommentBatch: Math.min(
+      35,
+      Math.max(12, Math.ceil(limit / subredditCommentCount)),
+    ),
+    perSubSubmissionBatch: Math.min(
+      25,
+      Math.max(
+        10,
+        Math.ceil(limit / Math.max(subredditSubmissionCount, 1)),
+      ),
+    ),
+    maxApiRequests,
+  };
+}
+
 export const MIN_LIMIT_PER_SOURCE = 10;
 export const DEFAULT_MAX_LIMIT_PER_SOURCE = 1000;
 export const DEFAULT_LIMIT_PER_SOURCE = 50;

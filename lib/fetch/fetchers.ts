@@ -6,6 +6,10 @@ import {
   DEFAULT_REDDIT_SUBREDDITS,
   GLOBAL_REGION_ID,
   parseRedditQueryInput,
+  PULLPUSH_MAX_PAGES,
+  PULLPUSH_REQUEST_TIMEOUT_MS,
+  REDDIT_FETCH_BUDGET_MS,
+  redditFetchPlan,
   SPOTIFY_PLAY_ID,
   STORE_REGION_CODES,
   USER_AGENT,
@@ -15,7 +19,12 @@ import type {
   FetchedReviewRow,
   PlayStoreSort,
 } from "./types";
-import { dedupeByText, filterByMinRating, sleep } from "./utils";
+import {
+  dedupeByText,
+  fetchWithRetry,
+  filterByMinRating,
+  sleep,
+} from "./utils";
 
 async function fetchPlayStoreReviewsForRegion(options: {
   limit: number;
@@ -138,16 +147,48 @@ export async function fetchAppStoreReviews(options: {
   });
 }
 
+interface PullpushBudget {
+  deadline: number;
+  reserveRequest: () => boolean;
+}
+
+async function runWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>,
+  shouldStop: () => boolean,
+): Promise<void> {
+  if (items.length === 0) return;
+  let next = 0;
+  const runners = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (next < items.length) {
+        if (shouldStop()) return;
+        const item = items[next];
+        next += 1;
+        await worker(item);
+      }
+    },
+  );
+  await Promise.all(runners);
+}
+
 async function pullpushFetch<T>(
   type: "submission" | "comment",
   params: Record<string, string | number | undefined>,
   limit: number,
   mapRow: (item: T) => FetchedReviewRow | null,
+  budget?: PullpushBudget,
 ): Promise<FetchedReviewRow[]> {
   const rows: FetchedReviewRow[] = [];
   let before: number | undefined;
+  let pages = 0;
 
-  while (rows.length < limit) {
+  while (rows.length < limit && pages < PULLPUSH_MAX_PAGES) {
+    if (budget && Date.now() > budget.deadline) break;
+    if (budget && !budget.reserveRequest()) break;
+
     const url = new URL(`https://api.pullpush.io/reddit/search/${type}/`);
     for (const [key, value] of Object.entries(params)) {
       if (value != null && value !== "") url.searchParams.set(key, String(value));
@@ -155,15 +196,22 @@ async function pullpushFetch<T>(
     url.searchParams.set("size", String(Math.min(100, limit - rows.length)));
     if (before) url.searchParams.set("before", String(before));
 
-    const response = await fetch(url.toString(), {
-      headers: { "User-Agent": USER_AGENT },
-    });
-    if (!response.ok) {
-      throw new Error(`Reddit archive API returned ${response.status}.`);
+    let response: Response;
+    try {
+      response = await fetchWithRetry(url.toString(), {
+        headers: { "User-Agent": USER_AGENT },
+        timeoutMs: PULLPUSH_REQUEST_TIMEOUT_MS,
+        retries: 1,
+      });
+    } catch {
+      break;
     }
+
+    if (!response.ok) break;
 
     const json = (await response.json()) as { data?: T[] };
     const data = json.data ?? [];
+    pages += 1;
     if (!data.length) break;
 
     for (const item of data) {
@@ -174,10 +222,32 @@ async function pullpushFetch<T>(
 
     before = (data[data.length - 1] as { created_utc?: number })?.created_utc;
     if (!before) break;
-    await sleep(400);
+    await sleep(300);
   }
 
   return rows;
+}
+
+function mapRedditComment(
+  comment: {
+    body?: string;
+    created_utc?: number;
+    permalink?: string;
+  },
+): FetchedReviewRow | null {
+  const text = comment.body?.trim() ?? "";
+  if (text.length < 25 || text === "[deleted]" || text === "[removed]") {
+    return null;
+  }
+  return {
+    source: "reddit",
+    text,
+    rating: "",
+    date: comment.created_utc
+      ? new Date(comment.created_utc * 1000).toISOString()
+      : "",
+    url: comment.permalink ? `https://reddit.com${comment.permalink}` : "",
+  };
 }
 
 export async function fetchRedditReviews(options: {
@@ -197,14 +267,61 @@ export async function fetchRedditReviews(options: {
 
   const subreddits = [...DEFAULT_REDDIT_SUBREDDITS];
   const queries = parseRedditQueryInput(options.query);
+  const plan = redditFetchPlan(options.limit, queries.length);
+  const deadline = Date.now() + REDDIT_FETCH_BUDGET_MS;
+  let apiRequests = 0;
+  const budget: PullpushBudget = {
+    deadline,
+    reserveRequest: () => {
+      if (apiRequests >= plan.maxApiRequests) return false;
+      apiRequests += 1;
+      return true;
+    },
+  };
 
-  for (const sub of subreddits) {
-    if (rows.length >= options.limit) break;
-    try {
+  const remaining = () => Math.max(0, options.limit - rows.length);
+  const shouldStop = () => rows.length >= options.limit || Date.now() > deadline;
+
+  await runWithConcurrency(
+    queries.slice(0, plan.maxQueries),
+    3,
+    async (query) => {
+      const batch = await pullpushFetch(
+        "comment",
+        { q: `spotify ${query}` },
+        Math.min(plan.perQueryBatch, remaining()),
+        mapRedditComment,
+        budget,
+      );
+      batch.forEach(add);
+    },
+    shouldStop,
+  );
+
+  await runWithConcurrency(
+    subreddits.slice(0, plan.subredditCommentCount),
+    2,
+    async (sub) => {
+      const batch = await pullpushFetch(
+        "comment",
+        { subreddit: sub },
+        Math.min(plan.perSubCommentBatch, remaining()),
+        mapRedditComment,
+        budget,
+      );
+      batch.forEach(add);
+    },
+    shouldStop,
+  );
+
+  await runWithConcurrency(
+    subreddits.slice(0, plan.subredditSubmissionCount),
+    2,
+    async (sub) => {
       const batch = await pullpushFetch(
         "submission",
         { subreddit: sub },
-        Math.min(80, options.limit - rows.length),
+        Math.min(plan.perSubSubmissionBatch, remaining()),
         (submission: {
           title?: string;
           selftext?: string;
@@ -229,86 +346,12 @@ export async function fetchRedditReviews(options: {
               : `https://reddit.com/r/${sub}`,
           };
         },
+        budget,
       );
       batch.forEach(add);
-    } catch {
-      /* continue other subreddits */
-    }
-  }
-
-  for (const query of queries) {
-    if (rows.length >= options.limit) break;
-    try {
-      const batch = await pullpushFetch(
-        "comment",
-        { q: `spotify ${query}` },
-        Math.min(40, options.limit - rows.length),
-        (comment: {
-          body?: string;
-          created_utc?: number;
-          permalink?: string;
-        }) => {
-          const text = comment.body?.trim() ?? "";
-          if (
-            text.length < 25 ||
-            text === "[deleted]" ||
-            text === "[removed]"
-          ) {
-            return null;
-          }
-          return {
-            source: "reddit",
-            text,
-            rating: "",
-            date: comment.created_utc
-              ? new Date(comment.created_utc * 1000).toISOString()
-              : "",
-            url: comment.permalink ? `https://reddit.com${comment.permalink}` : "",
-          };
-        },
-      );
-      batch.forEach(add);
-    } catch {
-      /* continue */
-    }
-  }
-
-  for (const sub of DEFAULT_REDDIT_SUBREDDITS.slice(0, 2)) {
-    if (rows.length >= options.limit) break;
-    try {
-      const batch = await pullpushFetch(
-        "comment",
-        { subreddit: sub },
-        Math.min(60, options.limit - rows.length),
-        (comment: {
-          body?: string;
-          created_utc?: number;
-          permalink?: string;
-        }) => {
-          const text = comment.body?.trim() ?? "";
-          if (
-            text.length < 25 ||
-            text === "[deleted]" ||
-            text === "[removed]"
-          ) {
-            return null;
-          }
-          return {
-            source: "reddit",
-            text,
-            rating: "",
-            date: comment.created_utc
-              ? new Date(comment.created_utc * 1000).toISOString()
-              : "",
-            url: comment.permalink ? `https://reddit.com${comment.permalink}` : "",
-          };
-        },
-      );
-      batch.forEach(add);
-    } catch {
-      /* continue */
-    }
-  }
+    },
+    shouldStop,
+  );
 
   return dedupeByText(rows).slice(0, options.limit);
 }
