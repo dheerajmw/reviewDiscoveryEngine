@@ -73,6 +73,7 @@ async function chatCompletion(
   temperature: number,
   maxOutputTokens?: number,
   jsonMode = true,
+  signal?: AbortSignal,
 ): Promise<string> {
   const capped =
     maxOutputTokens != null
@@ -85,6 +86,7 @@ async function chatCompletion(
       "Content-Type": "application/json",
       Authorization: `Bearer ${client.apiKey}`,
     },
+    signal,
     body: JSON.stringify({
       model: client.model,
       messages,
@@ -124,6 +126,7 @@ export async function generateJsonCompletion(
   userPrompt: string,
   temperature: number,
   maxOutputTokens?: number,
+  signal?: AbortSignal,
 ): Promise<string> {
   return chatCompletion(
     client,
@@ -133,6 +136,8 @@ export async function generateJsonCompletion(
     ],
     temperature,
     maxOutputTokens,
+    true,
+    signal,
   );
 }
 

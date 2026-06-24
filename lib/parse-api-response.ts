@@ -33,3 +33,18 @@ export async function parseApiJson<T>(response: Response): Promise<T> {
     );
   }
 }
+
+/** Safari/WebKit surfaces failed response.json() as this opaque message. */
+export function isRecoverableApiResponseError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const lower = error.message.toLowerCase();
+  return (
+    lower.includes("did not match the expected pattern") ||
+    lower.includes("unexpected end of json") ||
+    lower.includes("invalid response") ||
+    lower.includes("empty response") ||
+    lower.includes("html error page") ||
+    lower.includes("timed out") ||
+    lower.includes("timeout")
+  );
+}

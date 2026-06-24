@@ -14,7 +14,7 @@ import {
   llmFallbackWarning,
   shouldFallbackToMockOnLlmError,
 } from "@/lib/llm-errors";
-import { MAX_CLASSIFY_BATCH_SIZE } from "@/lib/llm-limits";
+import { MAX_CLASSIFY_BATCH_SIZE, getClassifyPlatformDeadlineMs } from "@/lib/llm-limits";
 import type { RawReview } from "@/lib/types";
 import {
   lookupClassificationCache,
@@ -86,12 +86,28 @@ export async function POST(request: Request) {
     let warning: string | undefined;
 
     if (cacheLookup.missReviews.length > 0) {
+      const deadlineMs = getClassifyPlatformDeadlineMs();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), deadlineMs);
+
       try {
-        const result = await classifyReviews(cacheLookup.missReviews, apiKey);
+        const result = await classifyReviews(cacheLookup.missReviews, apiKey, {
+          signal: controller.signal,
+        });
         freshlyClassified = result.classified;
         taxonomyReport = result.taxonomyReport;
         await saveClassificationCache(freshlyClassified, LLM_MODEL);
       } catch (error) {
+        if (controller.signal.aborted) {
+          return NextResponse.json(
+            {
+              error:
+                "Classification timed out on the server. Retry Analyze — cached reviews are skipped. " +
+                "On Vercel Hobby, set LLM_CLASSIFY_BATCH_SIZE=3 in env; locally or on Pro, try 5.",
+            },
+            { status: 503 },
+          );
+        }
         if (!shouldFallbackToMockOnLlmError(error)) {
           throw error;
         }
@@ -100,6 +116,8 @@ export async function POST(request: Request) {
         taxonomyReport = mockResult.taxonomyReport;
         llmFallback = true;
         warning = llmFallbackWarning(error);
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 
@@ -112,7 +130,6 @@ export async function POST(request: Request) {
 
     const response: Record<string, unknown> = {
       classified,
-      taxonomyReport: taxonomyReport ?? null,
       mock: llmFallback,
       cache: {
         hits: cacheLookup.hits.size,
@@ -120,6 +137,9 @@ export async function POST(request: Request) {
         total: reviews.length,
       },
     };
+    if (auditEnabled || taxonomyReport) {
+      response.taxonomyReport = taxonomyReport ?? null;
+    }
     if (llmFallback) {
       response.llmFallback = true;
       response.warning = warning;

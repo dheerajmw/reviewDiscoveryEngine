@@ -30,6 +30,7 @@ export interface ClassifyResult {
 
 interface RequestOptions {
   maxOutputTokens?: number;
+  signal?: AbortSignal;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -108,6 +109,7 @@ async function requestClassifications(
       buildClassifyUserPrompt(reviews),
       0.2,
       maxOutputTokens,
+      options.signal,
     );
   } catch (error) {
     if (
@@ -181,10 +183,14 @@ function formatTruncationError(): string {
 export async function classifyReviews(
   reviews: RawReview[],
   apiKey: string,
+  options: { signal?: AbortSignal } = {},
 ): Promise<ClassifyResult> {
   try {
-    return await withRetry(() => requestClassifications(apiKey, reviews));
+    return await withRetry(() => requestClassifications(apiKey, reviews, options));
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(formatTruncationError());
+    }
     if (
       error instanceof SyntaxError ||
       error instanceof LlmOutputTruncatedError ||

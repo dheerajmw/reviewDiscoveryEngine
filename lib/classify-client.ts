@@ -7,6 +7,10 @@ import {
 } from "./llm-limits";
 import { isRecoverableParseError } from "./classify";
 import { isTransientRateLimit } from "./llm-errors";
+import {
+  isRecoverableApiResponseError,
+  parseApiJson,
+} from "./parse-api-response";
 import type { ClassifiedReview, RawReview } from "./types";
 
 export { DEFAULT_CLASSIFY_BATCH_SIZE as CLASSIFY_BATCH_SIZE };
@@ -87,6 +91,26 @@ function formatPartialProgressError(
   return message;
 }
 
+function isRecoverableClassifyError(error: unknown): boolean {
+  return isRecoverableParseError(error) || isRecoverableApiResponseError(error);
+}
+
+function isRetryableClassifyResponse(
+  response: Response,
+  error: unknown,
+): boolean {
+  if (
+    response.status === 429 ||
+    response.status === 503 ||
+    response.status === 504
+  ) {
+    return true;
+  }
+  if (response.status >= 500) return true;
+  if (isTransientRateLimit(error)) return true;
+  return isRecoverableApiResponseError(error);
+}
+
 async function classifyBatch(
   batch: RawReview[],
 ): Promise<{ classified: ClassifiedReview[]; mock: boolean; warning?: string }> {
@@ -99,9 +123,34 @@ async function classifyBatch(
       body: JSON.stringify({ reviews: batch }),
     });
 
-    const data = await response.json();
+    let data: {
+      classified?: ClassifiedReview[];
+      mock?: boolean;
+      warning?: string;
+      error?: string;
+    };
+
+    try {
+      data = await parseApiJson(response);
+    } catch (parseError) {
+      lastError =
+        parseError instanceof Error
+          ? parseError.message
+          : "Invalid classification response.";
+      if (
+        isRetryableClassifyResponse(response, parseError) &&
+        attempt < MAX_BATCH_RETRIES - 1
+      ) {
+        await sleep(getLlmRequestCooldownMs() * (attempt + 1));
+        continue;
+      }
+      throw new Error(lastError);
+    }
 
     if (response.ok) {
+      if (!Array.isArray(data.classified) || data.classified.length === 0) {
+        throw new Error("Classification response missing reviews.");
+      }
       return {
         classified: data.classified,
         mock: Boolean(data.mock),
@@ -111,12 +160,10 @@ async function classifyBatch(
     }
 
     lastError = data.error ?? lastError;
-    const retryable =
-      response.status === 429 ||
-      response.status === 503 ||
-      isTransientRateLimit(new Error(lastError));
-
-    if (retryable && attempt < MAX_BATCH_RETRIES - 1) {
+    if (
+      isRetryableClassifyResponse(response, new Error(lastError)) &&
+      attempt < MAX_BATCH_RETRIES - 1
+    ) {
       await sleep(getLlmRequestCooldownMs() * (attempt + 1));
       continue;
     }
@@ -133,7 +180,7 @@ async function classifyBatchResilient(
   try {
     return await classifyBatch(batch);
   } catch (error) {
-    if (batch.length === 1 || !isRecoverableParseError(error)) {
+    if (batch.length === 1 || !isRecoverableClassifyError(error)) {
       throw error;
     }
 

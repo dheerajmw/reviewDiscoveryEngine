@@ -85,6 +85,19 @@ export function maxClassifyBatchSizeForOutput(): number {
 
 export const MAX_CLASSIFY_BATCH_SIZE = 10;
 
+/** Wall-clock budget for one /api/classify call (LLM + Turso cache). */
+export function getClassifyPlatformDeadlineMs(): number {
+  const raw = process.env.CLASSIFY_PLATFORM_DEADLINE_MS;
+  if (raw) {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed >= 5_000) {
+      return Math.floor(parsed);
+    }
+  }
+  // Vercel Hobby hard-caps at 10s; return JSON 503 before an HTML 504 page.
+  return process.env.VERCEL ? 9_000 : 110_000;
+}
+
 /** Default batch size when LLM_CLASSIFY_BATCH_SIZE is unset. */
 export const DEFAULT_CLASSIFY_BATCH_SIZE = 10;
 
