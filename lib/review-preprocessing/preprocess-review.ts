@@ -1,3 +1,4 @@
+import { cleanSpotifyCommunityReviewText } from "../spotify-community-text";
 import { normalizeReviewText } from "./normalize";
 import {
   ADS_PATTERNS,
@@ -253,7 +254,11 @@ export function preprocessReview(
   originalText: string,
   reviewId: string,
 ): PreprocessedReview {
-  const { original_text, cleaned_text } = normalizeReviewText(originalText);
+  const rawText =
+    source === "spotify-community"
+      ? cleanSpotifyCommunityReviewText(originalText)
+      : originalText;
+  const { original_text, cleaned_text } = normalizeReviewText(rawText);
 
   if (cleaned_text.length < MIN_RESEARCH_TEXT_LENGTH) {
     return {

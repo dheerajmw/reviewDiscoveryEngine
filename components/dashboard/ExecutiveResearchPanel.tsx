@@ -7,6 +7,7 @@ import type {
   StrategicOpportunity,
 } from "@/lib/types";
 import { averageQuoteConfidence } from "@/lib/finding-evidence";
+import { formatReviewQuoteText } from "@/lib/spotify-community-text";
 import { SectionHeader } from "./SectionHeader";
 
 function findingConfidenceScore(finding: ExecutiveFinding): number {
@@ -15,6 +16,11 @@ function findingConfidenceScore(finding: ExecutiveFinding): number {
 }
 
 function FindingCard({ finding, index }: { finding: ExecutiveFinding; index: number }) {
+  const leadQuote = finding.representative_quotes[0];
+  const leadQuoteDisplay = leadQuote
+    ? formatReviewQuoteText(leadQuote.source, leadQuote.text)
+    : null;
+
   return (
     <article className="stitch-dash-card rounded-xl border border-outline-variant/40 p-5">
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -78,15 +84,15 @@ function FindingCard({ finding, index }: { finding: ExecutiveFinding; index: num
           </span>
         ))}
       </div>
-      {finding.representative_quotes[0] && (
+      {leadQuoteDisplay && leadQuote ? (
         <blockquote className="border-l-2 border-primary/40 pl-3 text-sm italic text-on-surface-variant">
-          &ldquo;{finding.representative_quotes[0].text.slice(0, 200)}
-          {finding.representative_quotes[0].text.length > 200 ? "…" : ""}&rdquo;
+          &ldquo;{leadQuoteDisplay.slice(0, 200)}
+          {leadQuoteDisplay.length > 200 ? "…" : ""}&rdquo;
           <footer className="mt-1 text-xs not-italic text-on-surface-variant/80">
-            — {finding.representative_quotes[0].source}
+            — {leadQuote.source}
           </footer>
         </blockquote>
-      )}
+      ) : null}
     </article>
   );
 }

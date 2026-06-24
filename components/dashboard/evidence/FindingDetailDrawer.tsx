@@ -12,6 +12,7 @@ import {
   averageQuoteConfidence,
   resolveFindingConfidence,
 } from "@/lib/finding-evidence";
+import { formatReviewQuoteText } from "@/lib/spotify-community-text";
 import Icon from "@/components/ui/Icon";
 import SourceBadge from "@/components/ui/SourceBadge";
 import EvidenceMeta from "./EvidenceMeta";
@@ -275,7 +276,7 @@ export default function FindingDetailDrawer({
                   className="rounded-xl border border-outline-variant bg-surface-container-low p-3"
                 >
                   <p className="text-sm leading-relaxed text-on-surface">
-                    &ldquo;{quote.text}&rdquo;
+                    &ldquo;{formatReviewQuoteText(quote.source, quote.text)}&rdquo;
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <SourceBadge source={quote.source} />

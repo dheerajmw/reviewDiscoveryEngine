@@ -18,6 +18,7 @@ import {
   STORE_REGION_CODES,
   USER_AGENT,
 } from "./config";
+import { cleanSpotifyCommunityReviewText } from "../spotify-community-text";
 import type {
   AppStoreSort,
   FetchedReviewRow,
@@ -417,10 +418,11 @@ function parseCommunityBoardMarkdown(markdown: string) {
       .replace(/\n{3,}/g, "\n")
       .trim();
 
-    const text =
+    const text = cleanSpotifyCommunityReviewText(
       body.length > 40
         ? `${title}. ${body}`.replace(/\s+/g, " ").trim()
-        : title;
+        : title,
+    );
     if (text.length < 25) continue;
 
     threads.push({ url, text: text.slice(0, 2000) });

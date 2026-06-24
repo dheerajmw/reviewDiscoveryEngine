@@ -1,4 +1,5 @@
 import type { ClassifiedReview } from "@/lib/types";
+import { formatReviewQuoteText } from "@/lib/spotify-community-text";
 import SourceBadge from "@/components/ui/SourceBadge";
 
 interface RawReviewPanelProps {
@@ -17,7 +18,9 @@ export default function RawReviewPanel({ review }: RawReviewPanelProps) {
           </span>
         )}
       </div>
-      <p className="text-sm leading-relaxed text-on-surface">{review.text}</p>
+      <p className="text-sm leading-relaxed text-on-surface">
+        {formatReviewQuoteText(review.source, review.text)}
+      </p>
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
         <div>
           <dt className="text-outline">Theme</dt>

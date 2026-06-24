@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { searchQuotes } from "@/lib/runs-client";
+import { formatReviewQuoteText } from "@/lib/spotify-community-text";
 import type { QuoteRecord, QuoteSearchFilters } from "@/lib/types";
 import RepositoryLayout from "@/components/layout/RepositoryLayout";
 import Icon from "@/components/ui/Icon";
@@ -144,7 +145,7 @@ export default function QuoteExplorer({ runId, datasetName }: QuoteExplorerProps
                   )}
                 </div>
                 <p className="text-sm leading-relaxed text-on-surface">
-                  &ldquo;{quote.quote_text}&rdquo;
+                  &ldquo;{formatReviewQuoteText(quote.source, quote.quote_text)}&rdquo;
                 </p>
                 {(quote.root_cause || quote.unmet_need || quote.barrier) && (
                   <p className="mt-2 text-xs text-on-surface-variant">

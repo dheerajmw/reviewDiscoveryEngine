@@ -1,4 +1,5 @@
 import type { QuoteEvidence } from "@/lib/types";
+import { formatReviewQuoteText } from "@/lib/spotify-community-text";
 import Icon from "@/components/ui/Icon";
 import SourceBadge from "@/components/ui/SourceBadge";
 
@@ -48,7 +49,7 @@ export default function FindingQuoteList({
             />
             <div className="min-w-0 flex-1">
               <p className="text-sm leading-relaxed text-on-surface-variant group-hover:text-on-surface">
-                &ldquo;{truncate(quote.text)}&rdquo;
+                &ldquo;{truncate(formatReviewQuoteText(quote.source, quote.text))}&rdquo;
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <SourceBadge source={quote.source} />

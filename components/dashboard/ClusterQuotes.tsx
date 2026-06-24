@@ -1,4 +1,5 @@
 import type { ClusterEvidence } from "@/lib/types";
+import { formatReviewQuoteText } from "@/lib/spotify-community-text";
 import Card from "@/components/ui/Card";
 import Icon from "@/components/ui/Icon";
 
@@ -51,7 +52,7 @@ export default function ClusterQuotes({
                 >
                   <Icon name="format_quote" className="shrink-0 text-primary/60" />
                   <div>
-                    <p className="leading-relaxed">&ldquo;{truncate(quote.text)}&rdquo;</p>
+                    <p className="leading-relaxed">&ldquo;{truncate(formatReviewQuoteText(quote.source, quote.text))}&rdquo;</p>
                     <p className="mt-1 text-xs capitalize text-outline">
                       {quote.source} · {quote.segment}
                     </p>

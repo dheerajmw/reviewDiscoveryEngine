@@ -11,7 +11,7 @@
     "evaluate:pm-quality": "npx tsx scripts/pm-research-quality-evaluation.mts",
     "evaluate:pm-quality:mock": "npx tsx scripts/pm-research-quality-evaluation.mts --mock",
     "audit:discovery-signal": "npx tsx scripts/discovery-signal-audit.mts",
-    "test": "npx tsx --test lib/review-preprocessing/preprocess.test.ts lib/classify.test.ts lib/review-split.test.ts lib/executive/executive.test.ts lib/quality/quality.test.ts lib/finding-evidence.test.ts lib/opportunity-evidence.test.ts lib/root-cause-narratives.test.ts lib/research-questions.test.ts"
+    "test": "npx tsx --test lib/review-preprocessing/preprocess.test.ts lib/classify.test.ts lib/review-split.test.ts lib/executive/executive.test.ts lib/quality/quality.test.ts lib/finding-evidence.test.ts lib/opportunity-evidence.test.ts lib/root-cause-narratives.test.ts lib/research-questions.test.ts lib/spotify-community-text.test.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",
