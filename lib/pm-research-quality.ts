@@ -541,7 +541,22 @@ export function computePmReadinessScore(input: {
     weaknesses.push("No major blockers identified in this evaluation sample.");
   }
 
-  return { score, maxScore: 10, rationale, remainingWeaknesses: weaknesses };
+  return {
+    score,
+    maxScore: 10,
+    rationale,
+    remainingWeaknesses: weaknesses,
+    interpretation: rationale,
+    components: [
+      {
+        id: "legacy_aggregate",
+        label: "Aggregate PM readiness",
+        score,
+        maxScore: 10,
+        detail: rationale,
+      },
+    ],
+  };
 }
 
 export function buildPmResearchQualityReport(input: {

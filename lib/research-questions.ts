@@ -59,7 +59,7 @@ function collectEvidence(findings: EvidenceBackedFinding[]): {
   return {
     quotes,
     source_distribution: mergeSourceDistributions(
-      findings.map((f) => f.source_distribution),
+      ...findings.map((f) => f.source_distribution),
     ),
     confidence: weightedConfidence(findings),
     evidence_count: findings.reduce((sum, f) => sum + f.evidence_count, 0),
