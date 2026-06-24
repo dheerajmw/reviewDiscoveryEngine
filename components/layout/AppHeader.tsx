@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PLATFORM_NAME } from "@/lib/brand";
 import Icon from "@/components/ui/Icon";
 import AppNav from "./AppNav";
+import NewAnalysisLink, { NEW_ANALYSIS_HREF } from "./NewAnalysisLink";
 
 interface AppHeaderProps {
   subtitle?: string;
@@ -15,7 +16,7 @@ export default function AppHeader({ subtitle, activeNav }: AppHeaderProps) {
     <header className="sticky top-0 z-50 border-b border-outline-variant bg-surface-container-lowest">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 md:px-8">
         <div className="flex min-w-0 items-center gap-6">
-          <Link href="/" className="flex min-w-0 items-center gap-2">
+          <Link href={NEW_ANALYSIS_HREF} className="flex min-w-0 items-center gap-2">
             <Icon
               name="analytics"
               className="text-primary md:hidden"
@@ -41,12 +42,7 @@ export default function AppHeader({ subtitle, activeNav }: AppHeaderProps) {
 
         <div className="flex items-center gap-4">
           {isHome ? (
-            <Link
-              href="/"
-              className="rounded-xl bg-primary px-4 py-1.5 text-xs font-medium text-on-primary transition-all hover:opacity-90 active:opacity-80"
-            >
-              New analysis
-            </Link>
+            <NewAnalysisLink className="rounded-xl bg-primary px-4 py-1.5 text-xs font-medium text-on-primary transition-all hover:opacity-90 active:opacity-80" />
           ) : (
             <AppNav active={activeNav} />
           )}

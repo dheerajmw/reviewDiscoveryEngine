@@ -204,6 +204,10 @@ export interface EvidenceBackedFinding {
   source_distribution: Record<string, number>;
   top_segments: { segment: string; count: number; pct: number }[];
   related_review_ids: string[];
+  /** Structural reason this root cause produces repetition (repetition findings only). */
+  mechanism?: string;
+  /** Product change needed to address this root cause (repetition findings only). */
+  product_implication?: string;
 }
 
 export interface SegmentChallengeFinding {
@@ -227,6 +231,21 @@ export interface ResearchFindingsReport {
   unmet_needs: EvidenceBackedFinding[];
 }
 
+export interface ResearchQuestionAnswer {
+  id: ResearchQuestionId;
+  question: string;
+  answer: string;
+  quotes: QuoteEvidence[];
+  source_distribution: Record<string, number>;
+  confidence: number;
+  evidence_count: number;
+}
+
+export type RetentionSignal =
+  | "High churn risk if unaddressed"
+  | "Engagement growth opportunity"
+  | "Cross-segment retention impact";
+
 export interface OpportunityWithEvidence {
   title: string;
   description: string;
@@ -236,6 +255,9 @@ export interface OpportunityWithEvidence {
   quotes: QuoteEvidence[];
   source_distribution: Record<string, number>;
   related_review_ids: string[];
+  affected_segments: string[];
+  retention_signal: RetentionSignal;
+  business_impact_score: number;
 }
 
 export interface ClusterEvidence {
@@ -330,8 +352,10 @@ export interface ExecutiveFinding {
   evidence_count: number;
   affected_segments: string[];
   representative_quotes: QuoteEvidence[];
-  /** @deprecated Use evidence_strength in UI */
+  /** @deprecated Use confidence_score in UI */
   confidence: ConfidenceLevel;
+  /** Mean classification confidence (0–1) across reviews in this finding */
+  confidence_score: number;
   evidence_strength: EvidenceStrength;
   source_count: number;
   business_impact: BusinessImpactArea[];

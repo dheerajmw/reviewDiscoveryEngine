@@ -1,4 +1,9 @@
-import { LLM_CONSOLE_URL, LLM_PROVIDER_LABEL } from "./llm-config";
+import {
+  LLM_API_KEY_ENV,
+  LLM_CONSOLE_URL,
+  LLM_PROVIDER_LABEL,
+} from "./llm-config";
+import { LLM_RATE_LIMITS } from "./llm-limits";
 
 interface ApiErrorLike {
   status?: number;
@@ -108,7 +113,7 @@ export function llmFallbackWarning(error: unknown): string {
   if (isLlmAuthError(error)) {
     return (
       `${LLM_PROVIDER_LABEL} rejected the API key. Using demo classification for this run. ` +
-      "Update CEREBRAS_API_KEY in .env.local or set USE_MOCK_CLASSIFIER=true."
+      `Update ${LLM_API_KEY_ENV} in .env.local or set USE_MOCK_CLASSIFIER=true.`
     );
   }
   return "LLM unavailable. Using demo classification for this run.";
@@ -120,8 +125,9 @@ export function formatLlmError(error: unknown): string {
 
   if (isRateLimited(error) && !isQuotaError(error)) {
     return (
-      `${LLM_PROVIDER_LABEL} rate limit hit (5 RPM / 30K TPM). Wait ~15s and click Analyze again — ` +
-      "cached reviews will be skipped. Reduce LLM_CLASSIFY_BATCH_SIZE if this persists."
+      `${LLM_PROVIDER_LABEL} rate limit hit (${LLM_RATE_LIMITS.requestsPerMinute} RPM / ` +
+      `${LLM_RATE_LIMITS.tokensPerMinute.toLocaleString()} TPM). Wait ~15s and click Analyze again — ` +
+      "cached reviews will be skipped. Lower LLM_CLASSIFY_BATCH_SIZE if truncation persists."
     );
   }
 
@@ -146,7 +152,7 @@ export function formatLlmError(error: unknown): string {
   }
 
   if (isLlmAuthError(error)) {
-    return `Invalid CEREBRAS_API_KEY. Create one at ${LLM_CONSOLE_URL} → API keys.`;
+    return `Invalid ${LLM_API_KEY_ENV}. Create one at ${LLM_CONSOLE_URL} → API keys.`;
   }
 
   if (status === 403) {

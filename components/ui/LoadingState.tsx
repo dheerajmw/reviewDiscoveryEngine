@@ -1,3 +1,4 @@
+import { CURATION_FILTER_DESCRIPTION } from "@/lib/filter-stages";
 import type { PipelineStep } from "@/lib/pipeline";
 import Icon from "./Icon";
 import ProgressBar from "./ProgressBar";
@@ -74,7 +75,7 @@ export default function LoadingState({
         </h2>
         <p className="mt-1 text-sm text-on-surface-variant">
           {curationOnly
-            ? "Removing duplicates and off-topic Spotify reviews before analysis"
+            ? CURATION_FILTER_DESCRIPTION
             : "Filtering, classifying, and building research findings"}
         </p>
       </div>

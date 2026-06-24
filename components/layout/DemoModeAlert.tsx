@@ -19,7 +19,8 @@ export default function DemoModeAlert({ compact = false }: DemoModeAlertProps) {
       <p>
         Demo mode — some results use rule-based generation. Set{" "}
         <code className="font-mono">USE_MOCK_CLASSIFIER=false</code> and add a
-        Cerebras API key for full AI classification.
+        Groq API key (<code className="font-mono">GROQ_API_KEY</code>) for full AI
+        classification.
       </p>
     </div>
   );

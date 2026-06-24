@@ -3,6 +3,10 @@ import { describe, it } from "node:test";
 import { classifyReviewsMockWithReport } from "./classify-mock";
 import { mergeClassificationItem } from "./classify-normalize";
 import { buildResearchEvidenceDraft } from "./classify-research-mock";
+import {
+  inferClosestRootCause,
+  resolveResearchRootCause,
+} from "./taxonomy";
 import type { RawReview } from "./types";
 
 function review(text: string, source = "reddit"): RawReview {
@@ -96,6 +100,138 @@ describe("research evidence classification", () => {
       "Discover Weekly introduced me to so many new artists — recommendations are spot on!";
     const { classified } = classifyReviewsMockWithReport([review(text)]);
     assert.equal(classified[0].theme, "Positive Discovery Experience");
+  });
+
+  it("classifies algorithm anxiety, mood mismatch, and trust erosion themes", () => {
+    const cases: { text: string; theme: string }[] = [
+      {
+        text: "I'm afraid to skip songs because I don't want to ruin my algorithm and mess up future recommendations.",
+        theme: "Algorithm Anxiety",
+      },
+      {
+        text: "Recommendations have the wrong energy for work — totally tone deaf to what I need right now.",
+        theme: "Mood-Context Mismatch",
+      },
+      {
+        text: "Discover Weekly used to be good but quality declined and I stopped opening it.",
+        theme: "Trust Erosion",
+      },
+    ];
+
+    for (const { text, theme } of cases) {
+      const { classified } = classifyReviewsMockWithReport([review(text)]);
+      assert.equal(classified[0].theme, theme);
+    }
+  });
+
+  it("defaults ambiguous segments to Casual Listener instead of Unspecified", () => {
+    const text =
+      "Spotify recommendations feel repetitive lately and I wish they were better.";
+    const { classified } = classifyReviewsMockWithReport([review(text)]);
+    assert.notEqual(classified[0].segment, "Unspecified Segment");
+    assert.equal(classified[0].segment, "Casual Listener");
+  });
+
+  it("assigns specific root causes for repetition-related reviews", () => {
+    const cases: { text: string; root_cause: string }[] = [
+      {
+        text: "The same artists every week with no variety — the algorithm feels stuck.",
+        root_cause: "Similarity-Based Reinforcement",
+      },
+      {
+        text: "There's no way to control recommendations and I wish I could choose what I want.",
+        root_cause: "Lack of User Steering Signals",
+      },
+      {
+        text: "Discover Weekly got worse and the same songs appear in every playlist now.",
+        root_cause: "Discovery Surface Design Issues",
+      },
+      {
+        text: "Spotify recommendations to find new artists only play safe familiar tracks — comfortable but boring, never risks anything new.",
+        root_cause: "Engagement Optimization Bias",
+      },
+      {
+        text: "I'm scared to skip discovery recommendations because it ruins my algorithm and there's no way to try new music safely.",
+        root_cause: "No Exploration Sandbox",
+      },
+    ];
+
+    for (const { text, root_cause } of cases) {
+      const { classified } = classifyReviewsMockWithReport([review(text)]);
+      assert.notEqual(classified[0].root_cause, "Unclear Repetition Cause");
+      assert.equal(classified[0].root_cause, root_cause);
+    }
+  });
+
+  it("resolves unclear repetition root cause via normalization for repetition themes", () => {
+    const { review: classified } = mergeClassificationItem(
+      review("Same songs on repeat every week and I am so frustrated."),
+      {
+        research_relevant: true,
+        supports_questions: ["repetition_causes"],
+        observation: "User reports weekly repetition",
+        evidence: "same songs on repeat",
+        user_goal: "find new artists",
+        discovery_relevant: true,
+        theme: "Repetition Fatigue",
+        barrier: "Low Novelty",
+        behavior: "Find New Music or Artists",
+        emotion: "Frustration",
+        segment: "Long-Term Power Listener",
+        root_cause: "Unclear Repetition Cause",
+        unmet_need: "Better Artist Discovery",
+        confidence: 0.62,
+      },
+      0,
+    );
+
+    assert.notEqual(classified.root_cause, "Unclear Repetition Cause");
+    assert.ok(
+      classified.classification_reasons?.root_cause?.startsWith("[low confidence]"),
+    );
+  });
+
+  it("infers closest root cause from mechanism signals", () => {
+    const inferred = inferClosestRootCause(
+      "I'm afraid to skip because it ruins my recommendations.",
+    );
+    assert.equal(inferred.label, "No Exploration Sandbox");
+
+    const resolved = resolveResearchRootCause(
+      "Unclear Repetition Cause",
+      "Discover Weekly repeats the same artists with no variety.",
+      "Repetition Fatigue",
+      "Low Novelty",
+      0.65,
+    );
+    assert.equal(resolved.root_cause, "Similarity-Based Reinforcement");
+    assert.equal(resolved.low_confidence, true);
+  });
+
+  it("assigns primary behavioral segments from review signals", () => {
+    const cases: { text: string; segment: string }[] = [
+      {
+        text: "I skip familiar songs and constantly explore new genres outside my usual taste.",
+        segment: "Music Explorer",
+      },
+      {
+        text: "Discover Weekly is my main way to find music — I judge it by how fresh it is each week.",
+        segment: "Discovery-Focused Listener",
+      },
+      {
+        text: "Been on Spotify for years, listen hours a day, and now hear the same songs every week.",
+        segment: "Long-Term Power Listener",
+      },
+      {
+        text: "I manually curate all my playlists and don't trust the algorithm's suggestions.",
+        segment: "Playlist-Centric Listener",
+      },
+    ];
+
+    for (const { text, segment } of cases) {
+      const { classified } = classifyReviewsMockWithReport([review(text)]);
+      assert.equal(classified[0].segment, segment);
+    }
   });
 
   it("does not force theme-derived root cause in mock classification", () => {

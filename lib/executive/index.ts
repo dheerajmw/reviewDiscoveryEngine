@@ -25,6 +25,7 @@ import {
 import { synthesizeInsights } from "./insight-synthesis";
 import {
   countMechanismFindings,
+  dedupeSimilarInsights,
   partitionByPolarity,
   selectDiverseInsights,
 } from "./mechanism-extraction";
@@ -56,11 +57,14 @@ export function buildExecutiveResearchReport(input: {
   const { positive, negative } = partitionByPolarity(qualifiedPool);
 
   const positiveSignals = buildExecutiveFindings(
-    positive.slice(0, 3),
+    dedupeSimilarInsights(positive).slice(0, 3),
   );
-  const discoveryProblems = topDiscoveryProblems(negative, 3);
+  const discoveryProblems = topDiscoveryProblems(
+    dedupeSimilarInsights(negative),
+    3,
+  );
   const recommendationFrustrations = topRecommendationFrustrations(
-    negative,
+    dedupeSimilarInsights(negative),
     3,
   );
 

@@ -17,6 +17,7 @@ import {
   exportPmReportPdf,
 } from "@/lib/export-pm-report";
 import { buildOpportunitiesFromEvidence } from "@/lib/opportunity-evidence";
+import { buildResearchQuestionAnswers } from "@/lib/research-questions";
 import { assignReviewIds } from "@/lib/review-ids";
 import {
   buildReportJson,
@@ -48,6 +49,7 @@ import ExecutiveResearchPanel from "./ExecutiveResearchPanel";
 import BarrierAnalysis from "./BarrierAnalysis";
 import FrequencyChart from "./FrequencyChart";
 import Opportunities from "./Opportunities";
+import ResearchQuestionsPanel from "./ResearchQuestionsPanel";
 import ResearchFindingsSummary from "./ResearchFindingsSummary";
 import RootCauses from "./RootCauses";
 import SegmentBreakdown from "./SegmentBreakdown";
@@ -156,8 +158,13 @@ export default function Dashboard({
   ]);
 
   const opportunityEvidence = useMemo(
-    () => buildOpportunitiesFromEvidence(filteredEvidence),
-    [filteredEvidence],
+    () => buildOpportunitiesFromEvidence(filteredEvidence, filteredClassified),
+    [filteredEvidence, filteredClassified],
+  );
+
+  const researchQuestionAnswers = useMemo(
+    () => buildResearchQuestionAnswers(findingsReport, filteredEvidence),
+    [findingsReport, filteredEvidence],
   );
 
   const chatContext = useMemo(
@@ -360,6 +367,10 @@ export default function Dashboard({
           title="Research findings"
           description="Why users struggle to discover, what frustrates them, and what they need — from Spotify discovery reviews."
         />
+        <ResearchQuestionsPanel
+          answers={researchQuestionAnswers}
+          onQuoteClick={handleQuoteClick}
+        />
         <ResearchFindingsSummary
           report={findingsReport}
           discoveryRelevantCount={filteredEvidence.discoveryRelevantCount}
@@ -461,7 +472,11 @@ export default function Dashboard({
           title="Product opportunities"
           description="Derived from top unmet needs in the corpus — each linked to review evidence."
         />
-        <RootCauses findings={findingsReport.repetition_causes} />
+        <RootCauses
+          findings={findingsReport.repetition_causes}
+          onOpenDetail={handleOpenDetail}
+          onQuoteClick={handleQuoteClick}
+        />
         <Opportunities
           opportunities={opportunityEvidence}
           onOpenDetail={handleOpenDetail}

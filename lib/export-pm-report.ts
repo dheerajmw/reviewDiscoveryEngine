@@ -18,6 +18,8 @@ function formatFindingSection(
     summary: string;
     evidence_count: number;
     confidence: number;
+    mechanism?: string;
+    product_implication?: string;
     quotes: { text: string; source: string; segment: string; confidence: number }[];
   },
 ): string {
@@ -29,10 +31,17 @@ function formatFindingSection(
     )
     .join("\n");
 
+  const mechanismBlock = finding.mechanism
+    ? `\n**Mechanism:** ${finding.mechanism}\n`
+    : "";
+  const implicationBlock = finding.product_implication
+    ? `\n**Product implication:** ${finding.product_implication}\n`
+    : "";
+
   return `### ${title}
 
 ${finding.summary}
-
+${mechanismBlock}${implicationBlock}
 **Evidence:** ${finding.evidence_count} reviews · **Confidence:** ${Math.round(finding.confidence * 100)}%
 
 **Top quotes:**
@@ -79,7 +88,10 @@ export function buildPmReportMarkdown(input: {
     input.classified ?? [],
   ).report!;
 
-  const opportunities = buildOpportunitiesFromEvidence(evidence);
+  const opportunities = buildOpportunitiesFromEvidence(
+    evidence,
+    input.classified ?? [],
+  );
 
   const formatFreq = (data: Record<string, { count: number; pct: number }>) =>
     Object.entries(data)

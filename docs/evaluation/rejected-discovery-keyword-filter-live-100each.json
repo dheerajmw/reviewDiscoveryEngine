@@ -1,0 +1,21 @@
+{
+  "fetchedAt": "2026-06-24T08:34:10.392Z",
+  "limitPerSource": 100,
+  "playstore": {
+    "raw": 100,
+    "rejected": 93,
+    "kept": 7
+  },
+  "appstore": {
+    "raw": 100,
+    "rejected": 78,
+    "kept": 22
+  },
+  "combined": {
+    "raw": 200,
+    "rejected": 171,
+    "kept": 29,
+    "rejectionRatePct": 85.5
+  },
+  "outputCsv": "/Users/dheerajj/Desktop/reviewDiscoveryEngine/docs/evaluation/rejected-discovery-keyword-filter-live-100each.csv"
+}

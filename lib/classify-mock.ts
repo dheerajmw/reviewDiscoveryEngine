@@ -7,6 +7,9 @@ import {
   BARRIERS,
   BEHAVIORS,
   EMOTIONS,
+  hasSegmentBehavioralSignals,
+  inferClosestRootCause,
+  isRepetitionRelatedReview,
   ROOT_CAUSES,
   SEGMENTS,
   THEMES,
@@ -117,6 +120,63 @@ const THEME_RULES: RuleSet = [
     ],
   },
   {
+    label: "Algorithm Anxiety",
+    keywords: [
+      "afraid to skip",
+      "scared to skip",
+      "ruin my algorithm",
+      "ruin the algorithm",
+      "mess up my recommendations",
+      "corrupt my",
+      "don't skip",
+      "avoid exploring",
+      "protect my recommendations",
+      "trapped by my history",
+      "listening history trap",
+      "can't explore without",
+    ],
+    weight: 2,
+  },
+  {
+    label: "Mood-Context Mismatch",
+    keywords: [
+      "wrong mood",
+      "wrong energy",
+      "tone deaf",
+      "tone-deaf",
+      "for work",
+      "at work",
+      "relaxation",
+      "relaxing",
+      "social context",
+      "party music",
+      "doesn't match my mood",
+      "not the vibe",
+      "wrong vibe",
+      "context",
+    ],
+    weight: 2,
+  },
+  {
+    label: "Trust Erosion",
+    keywords: [
+      "discover weekly used to",
+      "used to be good",
+      "used to love discover weekly",
+      "stopped opening discover weekly",
+      "gave up on discover weekly",
+      "gave up on discover",
+      "not what it used to be",
+      "quality declined",
+      "quality dropped",
+      "lost trust",
+      "don't trust discover weekly anymore",
+      "disappointed over time",
+      "stopped using discover weekly",
+    ],
+    weight: 4,
+  },
+  {
     label: "Algorithm Distrust",
     keywords: [
       "don't trust the algorithm",
@@ -159,11 +219,23 @@ const BARRIER_RULES: RuleSet = [
       "can't steer",
       "no slider",
       "wish i could adjust",
+      "afraid to skip",
+      "ruin my algorithm",
+      "protect my recommendations",
     ],
   },
   {
     label: "Poor Personalization Context",
-    keywords: ["wrong mood", "wrong context", "doesn't understand me"],
+    keywords: [
+      "wrong mood",
+      "wrong energy",
+      "wrong context",
+      "doesn't understand me",
+      "tone deaf",
+      "for work",
+      "relaxation",
+      "not the vibe",
+    ],
   },
   {
     label: "Ineffective Discovery Surfaces",
@@ -171,6 +243,10 @@ const BARRIER_RULES: RuleSet = [
       "discover weekly useless",
       "release radar bad",
       "daily mix useless",
+      "used to be good",
+      "stopped opening discover weekly",
+      "gave up on discover weekly",
+      "not what it used to be",
     ],
   },
   {
@@ -207,70 +283,6 @@ const BEHAVIOR_RULES: RuleSet = [
   {
     label: "Use Algorithmic Playlists",
     keywords: ["discover weekly", "release radar", "daily mix", "spotify dj"],
-  },
-];
-
-const ROOT_CAUSE_RULES: RuleSet = [
-  {
-    label: "Similarity-Based Reinforcement",
-    keywords: [
-      "listening history",
-      "based on what i already",
-      "similar music",
-      "echo chamber",
-    ],
-  },
-  {
-    label: "Engagement Optimization Bias",
-    keywords: ["engagement", "plays familiar", "optimize listen time"],
-  },
-  {
-    label: "Lack of User Steering Signals",
-    keywords: [
-      "no feedback",
-      "won't listen to feedback",
-      "can't tell spotify",
-      "no signal",
-    ],
-  },
-  {
-    label: "Limited Exploration Strategy",
-    keywords: ["narrow recommend", "limited exploration", "won't explore"],
-  },
-  {
-    label: "Listening History Loop",
-    keywords: ["history loop", "past listens", "what i already heard"],
-  },
-  {
-    label: "Playlist or Radio Loop",
-    keywords: [
-      "discover weekly repeat",
-      "radio repeat",
-      "playlist loop",
-      "dj loops familiar",
-      "shuffle repeat",
-      "same songs on shuffle",
-    ],
-  },
-  {
-    label: "Discovery Surface Design Issues",
-    keywords: [
-      "discover weekly useless",
-      "release radar bad",
-      "daily mix bad",
-      "dj doesn't",
-      "home feed",
-      "on repeat not updating",
-    ],
-  },
-  {
-    label: "Cross-Content Recommendation Bias",
-    keywords: [
-      "podcast recommend",
-      "audiobook recommend",
-      "podcast in recommend",
-      "unrelated podcast",
-    ],
   },
 ];
 
@@ -320,20 +332,137 @@ const UNMET_NEED_RULES: RuleSet = [
 
 const SEGMENT_RULES: RuleSet = [
   {
-    label: "Long-Term Power Listener",
-    keywords: ["years on spotify", "long time user", "decade", "premium for years"],
+    label: "Music Explorer",
+    keywords: [
+      "find new artist",
+      "discover new music",
+      "explore genre",
+      "new genre",
+      "outside my usual",
+      "broaden my taste",
+      "skip the same",
+      "skip familiar",
+      "skip songs i know",
+      "discovery tool",
+      "seek new",
+      "hidden gem",
+      "unfamiliar artist",
+    ],
+    weight: 2,
   },
   {
     label: "Discovery-Focused Listener",
-    keywords: ["discover weekly", "release radar", "find new artists"],
+    keywords: [
+      "discover weekly",
+      "release radar",
+      "spotify dj",
+      "daily mix",
+      "algorithmic playlist",
+      "weekly refresh",
+      "fresh every week",
+      "playlist freshness",
+      "go-to discovery",
+      "primary discovery",
+    ],
+    weight: 2,
   },
-  { label: "Music Explorer", keywords: ["explore genre", "try new genre"] },
+  {
+    label: "Long-Term Power Listener",
+    keywords: [
+      "years on spotify",
+      "long time user",
+      "long-time user",
+      "for years",
+      "over a decade",
+      "decade",
+      "premium for years",
+      "listen every day",
+      "hours a day",
+      "daily listening",
+      "repetition fatigue",
+      "same songs every week",
+      "heavy user",
+      "power user",
+    ],
+    weight: 2,
+  },
   {
     label: "Playlist-Centric Listener",
-    keywords: ["my playlist", "curate playlist", "1000 songs playlist"],
+    keywords: [
+      "my playlist",
+      "curate playlist",
+      "curated playlist",
+      "manually add",
+      "built my own",
+      "don't trust the algorithm",
+      "ignore recommendations",
+      "self-directed",
+      "own library",
+      "1000 songs playlist",
+    ],
+    weight: 2,
   },
-  { label: "New User", keywords: ["just started", "new to spotify", "signed up"] },
+  {
+    label: "Casual Listener",
+    keywords: [
+      "background",
+      "while working",
+      "ambient",
+      "passive",
+      "don't pay attention",
+      "just plays",
+      "easy listening",
+      "shuffle",
+      "low effort",
+    ],
+    weight: 1,
+  },
 ];
+
+const SEGMENT_DEFAULT = "Casual Listener";
+const SEGMENT_UNSPECIFIED = "Unspecified Segment";
+
+function matchRootCause(
+  text: string,
+  theme: string,
+  barrier: string,
+): { label: string; evidence: string; confidence: number } {
+  const inferred = inferClosestRootCause(text);
+  if (inferred.score > 0) {
+    return {
+      label: inferred.label,
+      evidence: inferred.hit,
+      confidence: Math.min(0.55 + inferred.score * 0.12, 0.88),
+    };
+  }
+  if (isRepetitionRelatedReview({ theme, barrier, text })) {
+    return {
+      label: "Engagement Optimization Bias",
+      evidence: "",
+      confidence: 0.55,
+    };
+  }
+  return { label: "Unclear Repetition Cause", evidence: "", confidence: 0.42 };
+}
+
+function matchSegment(text: string): {
+  label: string;
+  evidence: string;
+  confidence: number;
+} {
+  const match = scoreRules(text, SEGMENT_RULES);
+  if (match.score > 0) {
+    return {
+      label: match.label,
+      evidence: match.hit,
+      confidence: Math.min(0.55 + match.score * 0.12, 0.88),
+    };
+  }
+  if (!hasSegmentBehavioralSignals(text)) {
+    return { label: SEGMENT_UNSPECIFIED, evidence: "", confidence: 0.42 };
+  }
+  return { label: SEGMENT_DEFAULT, evidence: "", confidence: 0.52 };
+}
 
 const EMOTION_RULES: RuleSet = [
   { label: "Frustration", keywords: ["frustrat", "annoy", "infuriat"] },
@@ -419,17 +548,13 @@ function mockClassifyReview(review: RawReview, index: number): {
     BEHAVIOR_RULES,
     behaviorFromResearchDraft(draft),
   );
-  const rootCauseMatch = matchFromRules(
-    text,
-    ROOT_CAUSE_RULES,
-    "Unclear Repetition Cause",
-  );
+  const rootCauseMatch = matchRootCause(text, themeLabel, barrierMatch.label);
   const unmetNeedMatch = matchFromRules(
     text,
     UNMET_NEED_RULES,
     "General Discovery Improvement",
   );
-  const segmentMatch = matchFromRules(text, SEGMENT_RULES, "Unspecified Segment");
+  const segmentMatch = matchSegment(text);
   const emotionMatch = matchFromRules(text, EMOTION_RULES, "Neutral");
 
   const confValues = [

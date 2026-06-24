@@ -3,16 +3,17 @@ import {
   topLabels,
 } from "./evidence";
 import {
-  averageConfidence,
   buildSegmentChallengeFindings,
   buildSourceDistribution,
   buildTopSegments,
   clusterToFinding,
   mergeQuotes,
   mergeSourceDistributions,
+  resolveFindingConfidence,
   reviewsMatchingLabel,
   slugify,
 } from "./finding-evidence";
+import { enrichRootCauseFinding } from "./root-cause-narratives";
 import { assignReviewIds } from "./review-ids";
 import type {
   AggregationResult,
@@ -83,7 +84,10 @@ function buildWhyDiscoveryFails(
     title: "Why users struggle to discover new music",
     summary: summaryParts.join(" "),
     evidence_count: evidence.discoveryRelevantCount,
-    confidence: averageConfidence(allMatching.length ? allMatching : reviews),
+    confidence: resolveFindingConfidence(
+      allMatching.length ? allMatching : reviews,
+      combinedQuotes,
+    ),
     quotes: combinedQuotes,
     source_distribution:
       Object.keys(evidence.sourceBreakdown).length > 0
@@ -103,7 +107,7 @@ function buildFrustrationFindings(
     .map((c) =>
       clusterToFinding(
         c,
-        reviewsMatchingLabel(reviews, "theme", c.label),
+        reviews,
         "theme",
         `${c.label} cited in ${c.pct}% of discovery-related reviews.`,
       ),
@@ -134,7 +138,7 @@ function buildFrustrationFindings(
         summary: `${label} expressed in ${entry.pct}% of discovery-related reviews.`,
         pct: entry.pct,
         evidence_count: entry.count,
-        confidence: averageConfidence(matching),
+        confidence: resolveFindingConfidence(matching, quotes),
         quotes,
         source_distribution: buildSourceDistribution(matching),
         top_segments: buildTopSegments(matching),
@@ -167,7 +171,7 @@ function buildFrustrationFindings(
         summary: `${label} blocks discovery for ${entry.pct}% of reviews.`,
         pct: entry.pct,
         evidence_count: entry.count,
-        confidence: averageConfidence(matching),
+        confidence: resolveFindingConfidence(matching, quotes),
         quotes,
         source_distribution: buildSourceDistribution(matching),
         top_segments: buildTopSegments(matching),
@@ -194,7 +198,7 @@ function buildBehaviorFindings(
     .map((c) =>
       clusterToFinding(
         c,
-        reviewsMatchingLabel(reviews, "behavior", c.label),
+        reviews,
         "behavior",
         `Users report ${c.label.toLowerCase()} in ${c.pct}% of discovery-related reviews.`,
       ),
@@ -209,7 +213,7 @@ function buildRepetitionFindings(
     return evidence.repetitionEvidence.map((c) =>
       clusterToFinding(
         c,
-        reviewsMatchingLabel(reviews, "root_cause", c.label),
+        reviews,
         "root_cause",
         `Repetitive listening linked to ${c.label} (${c.pct}% of repetition-related reviews).`,
       ),
@@ -234,18 +238,18 @@ function buildRepetitionFindings(
           confidence: r.confidence,
           root_cause: r.root_cause,
         }));
-      return {
+      return enrichRootCauseFinding({
         id: slugify(`repetition-${label}`),
         title: label,
         summary: `${label} contributes to repetitive listening (${entry.pct}%).`,
         pct: entry.pct,
         evidence_count: entry.count,
-        confidence: averageConfidence(matching),
+        confidence: resolveFindingConfidence(matching, quotes),
         quotes,
         source_distribution: buildSourceDistribution(matching),
         top_segments: buildTopSegments(matching),
         related_review_ids: quotes.map((q) => q.review_id),
-      } satisfies EvidenceBackedFinding;
+      });
     });
 }
 
@@ -258,7 +262,7 @@ function buildUnmetNeedFindings(
     .map((c) =>
       clusterToFinding(
         c,
-        reviewsMatchingLabel(reviews, "unmet_need", c.label),
+        reviews,
         "unmet_need",
         `Users express need for ${c.label.toLowerCase()} (${c.pct}% of reviews).`,
       ),

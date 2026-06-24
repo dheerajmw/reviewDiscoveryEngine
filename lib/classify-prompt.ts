@@ -42,23 +42,42 @@ TAXONOMY RULES (CRITICAL):
 - Choose EXACTLY ONE label from the allowed list for each field. Copy the label string exactly.
 - If none fit perfectly, choose the CLOSEST label from the list. Do NOT invent new labels.
 - Forbidden invented labels include: "Strong Discovery Playlists" as frustration, "Great Recommendations", "Recommendation Success" for complaints.
-- Provide classification_reasons for ALL of: theme, barrier, root_cause, unmet_need, segment, behavior, emotion — one sentence each citing review evidence.
-- For root_cause prefer a specific mechanism. Use Unclear Repetition Cause only when no mechanism is inferable.
+- Provide classification_reasons for ALL of: theme, barrier, root_cause, unmet_need, segment, behavior, emotion — one short sentence each (max 12 words) citing review evidence.
+- For root_cause assign a specific mechanism. Use Unclear Repetition Cause in fewer than 5% of reviews.
+- If root_cause confidence is below 70%, assign the closest mechanism and prefix classification_reasons.root_cause with "[low confidence]".
 - For unmet_need prefer a specific need. Use General Discovery Improvement only as last resort.
 
 THEME guidance:
 - Use "Positive Discovery Experience" when the user is satisfied with discovering new music (Discover Weekly praise, DJ praise, recommendations work well, introduced to new artists).
 - Use frustration themes only when the user describes a problem.
+- Use "Algorithm Anxiety" when the user fears that engaging with unfamiliar music or skipping recommendations will corrupt their algorithm and worsen future recommendations. Signals: afraid to skip, avoiding exploration to protect recommendations, feeling trapped by past listening history, fear of "ruining" Discover Weekly or DJ.
+- Use "Mood-Context Mismatch" when recommendations do not shift with the user's emotional state or situational context. Signals: wrong energy for current mood, recommendations feel tone-deaf to situation, wanting different music for work vs relaxation vs social contexts.
+- Use "Trust Erosion" when the user previously trusted a discovery surface (especially Discover Weekly) but quality has declined and trust has not been rebuilt. Signals: "used to be good", "stopped opening", "gave up on Discover Weekly", disappointment in algorithmic playlists over time.
+- Distinguish "Algorithm Anxiety" (fear of corrupting future recs through skips/exploration) from "Algorithm Distrust" (belief current recommendations are opaque, manipulated, or untrustworthy now).
+- Distinguish "Trust Erosion" (declining quality over time on once-trusted surfaces) from "Weak Discovery Surfaces" (surfaces currently fail without a past-trust narrative).
+- Distinguish "Mood-Context Mismatch" (wrong energy/context for the moment) from "Poor Recommendation Quality" (general misalignment with taste).
 
-ROOT CAUSE guidance (avoid "Unclear Repetition Cause" unless no mechanism is inferable):
-- Similarity-Based Reinforcement: recommendations repeat highly similar artists/songs.
-- Listening History Loop: past listening dominates future recommendations.
-- Engagement Optimization Bias: system optimizes engagement/familiarity over novelty.
-- Limited Exploration Strategy: insufficient exploration of new artists/genres.
-- Lack of User Steering Signals: user cannot communicate discovery preferences.
-- Playlist or Radio Loop: playlist/radio/shuffle repeats same content.
-- Discovery Surface Design Issues: Discover Weekly / Radio / DJ / Home feed fails to expose novelty.
-- Cross-Content Recommendation Bias: podcasts, audiobooks, or unrelated content pollutes music discovery.
+SEGMENT guidance (choose ONE; default to Casual Listener if ambiguous — NOT Unspecified Segment):
+- "Music Explorer": actively seeks new artists/genres, skips familiar content, uses Spotify primarily to discover.
+- "Discovery-Focused Listener": relies on Discover Weekly, Release Radar, DJ as main discovery channel; cares about playlist freshness and weekly novelty.
+- "Long-Term Power Listener": heavy daily listening, 3+ years on platform, long history, repetition fatigue despite high engagement.
+- "Casual Listener": background/ambient listening, low active engagement, passive playlist use — also the DEFAULT when segments 1–5 are unclear but behavioral signals exist.
+- "Playlist-Centric Listener": manually builds and maintains playlists, low trust in algorithms, self-directed discovery.
+- Use "Unspecified Segment" ONLY when the review has zero behavioral signals about listening or discovery (no mention of how they use Spotify).
+
+ROOT CAUSE guidance (MANDATORY for repetition-related reviews — never leave unclear):
+- Repetition-related = theme Repetition Fatigue, Discovery Fatigue, or Algorithm Anxiety, OR explicit repetition/staleness signals in the review.
+- Every repetition-related review MUST receive one root cause from the list below. If mechanism confidence < 70%, pick the closest match and prefix classification_reasons.root_cause with "[low confidence]".
+
+Mechanisms and signals:
+1. Similarity-Based Reinforcement — algorithm recommends music similar to past listens, shrinking candidate pool. Signals: "same artists", "sounds the same", "no variety", "algorithm stuck".
+2. Lack of User Steering Signals — no way to signal exploration intent. Signals: "no way to control", "can't tell it what I want", "no settings", "wish I could choose".
+3. Discovery Surface Design Issues — discovery features prioritise engagement over novelty. Signals: "Discover Weekly got worse", "daily mixes are bad", "same songs in every playlist", "recommendation quality declined".
+4. Engagement Optimization Bias — system maximises stream completion, not new artist exposure (algorithm optimises for engagement not exploration). Signals: "plays safe", "never risks anything new", "only familiar", "comfortable but boring".
+5. No Exploration Sandbox — cannot explore without affecting main algorithm. Signals: "scared to skip", "ruins my recommendations", "no way to try new music safely".
+
+Also use when supported by evidence: Listening History Loop, Limited Exploration Strategy, Playlist or Radio Loop, Cross-Content Recommendation Bias.
+- Use "Unclear Repetition Cause" ONLY for non-repetition reviews with zero inferable mechanism (target <5% of all reviews).
 
 UNMET NEED guidance (avoid "General Discovery Improvement" unless nothing else fits):
 - Better Artist Discovery, Stronger Discovery Playlists, Adjustable Novelty, Discovery Control, Explainable Recommendations, Genre Exploration, Freshness Guarantees, Cross-Genre Exploration.
@@ -128,11 +147,20 @@ Return ONLY valid JSON:
 
 The classifications array MUST match input length and order.`;
 
+const REVIEW_TEXT_PROMPT_LIMIT = 600;
+
+function reviewTextForPrompt(review: RawReview): string {
+  const primary =
+    review.cleaned_text?.trim() || review.text?.trim() || "";
+  if (primary.length <= REVIEW_TEXT_PROMPT_LIMIT) return primary;
+  return `${primary.slice(0, REVIEW_TEXT_PROMPT_LIMIT)}…`;
+}
+
 export function buildClassifyUserPrompt(reviews: RawReview[]): string {
   const payload = reviews.map((review, index) => ({
     index,
     source: review.source,
-    text: review.text,
+    text: reviewTextForPrompt(review),
     cleaned_text: review.cleaned_text,
     preprocess_user_goal: review.user_goal,
     preprocess_discovery_outcome: review.discovery_outcome,

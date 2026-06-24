@@ -1,8 +1,11 @@
 import {
+  APP_STORE_PAGE_COUNTRY_CODES,
+  fetchAppStoreReviewsFromPages,
+} from "./app-store-page";
+import {
   DEFAULT_REDDIT_SUBREDDITS,
   GLOBAL_REGION_ID,
   parseRedditQueryInput,
-  SPOTIFY_APP_STORE_ID,
   SPOTIFY_PLAY_ID,
   STORE_REGION_CODES,
   USER_AGENT,
@@ -102,45 +105,17 @@ async function fetchAppStoreReviewsForRegion(options: {
   country: string;
   minRating?: number;
 }): Promise<FetchedReviewRow[]> {
-  const store = await import("app-store-scraper");
-  const scraper = store.default ?? store;
-  const sort =
-    options.sort === "helpful" ? "mostHelpful" : "mostRecent";
+  void options.sort;
+  const countries =
+    options.country === GLOBAL_REGION_ID
+      ? APP_STORE_PAGE_COUNTRY_CODES
+      : [options.country];
 
-  const rows: FetchedReviewRow[] = [];
-
-  for (let page = 1; page <= 12 && rows.length < options.limit; page++) {
-    try {
-      const reviews = await scraper.reviews({
-        id: SPOTIFY_APP_STORE_ID,
-        country: options.country,
-        page,
-        sort,
-      });
-      if (!reviews?.length) break;
-
-      for (const review of reviews) {
-        rows.push({
-          source: "appstore",
-          text: review.text?.trim() ?? "",
-          rating: review.score ?? "",
-          date: review.updated ?? review.date ?? "",
-          url: review.url ?? "",
-        });
-      }
-    } catch {
-      break;
-    }
-    await sleep(600);
-  }
-
-  return filterByMinRating(
-    dedupeByText(rows.filter((row) => row.text.length >= 15)).slice(
-      0,
-      options.limit,
-    ),
-    options.minRating ?? 0,
-  );
+  return fetchAppStoreReviewsFromPages({
+    limit: options.limit,
+    countries,
+    minRating: options.minRating,
+  });
 }
 
 export async function fetchAppStoreReviews(options: {
@@ -150,17 +125,11 @@ export async function fetchAppStoreReviews(options: {
   minRating?: number;
 }): Promise<FetchedReviewRow[]> {
   if (options.region === GLOBAL_REGION_ID) {
-    const combined: FetchedReviewRow[] = [];
-    for (const country of STORE_REGION_CODES) {
-      if (combined.length >= options.limit) break;
-      const batch = await fetchAppStoreReviewsForRegion({
-        ...options,
-        country,
-        limit: options.limit - combined.length,
-      });
-      combined.push(...batch);
-    }
-    return dedupeByText(combined).slice(0, options.limit);
+    return fetchAppStoreReviewsFromPages({
+      limit: options.limit,
+      countries: APP_STORE_PAGE_COUNTRY_CODES,
+      minRating: options.minRating,
+    });
   }
 
   return fetchAppStoreReviewsForRegion({

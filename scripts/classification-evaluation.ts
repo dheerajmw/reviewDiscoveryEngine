@@ -19,7 +19,7 @@ import {
   buildFieldConfidenceHistogram,
 } from "../lib/classification-audit";
 import { loadEnvLocal } from "../lib/env-loader";
-import { getLlmApiKey, LLM_MODEL } from "../lib/llm-config";
+import { getLlmApiKey, LLM_MODEL, LLM_PROVIDER_LABEL } from "../lib/llm-config";
 import { measureAllBucketPrecision } from "../lib/evaluation-ground-truth";
 import type { RawReview } from "../lib/types";
 
@@ -110,7 +110,7 @@ async function main() {
     afterClassified = classifyReviewsMockWithReport(reviews).classified;
     afterMode = "new mock (independent fields, no inheritance)";
   } else {
-    afterMode = `LLM (${LLM_MODEL} via Cerebras)`;
+    afterMode = `LLM (${LLM_MODEL} via ${LLM_PROVIDER_LABEL})`;
     const llmResult = await classifyWithLlm(reviews);
     afterClassified = llmResult.classified;
   }

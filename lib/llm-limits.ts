@@ -1,8 +1,27 @@
-import { LLM_MODEL } from "./llm-config";
+import { getLlmProvider, LLM_MODEL } from "./llm-config";
+
+/** Groq Developer plan — meta-llama/llama-4-scout-17b-16e-instruct (console.groq.com → Limits). */
+const GROQ_SCOUT_LIMITS = {
+  requestsPerMinute: 30,
+  requestsPerDay: 1_000,
+  tokensPerMinute: 30_000,
+  tokensPerDay: 500_000,
+} as const;
+
+/** Cerebras personal org — gpt-oss-120b (cloud.cerebras.ai → Limits). */
+const CEREBRAS_LIMITS = {
+  requestsPerMinute: 5,
+  requestsPerDay: 2_400,
+  tokensPerMinute: 30_000,
+  tokensPerDay: 1_000_000,
+} as const;
+
+function providerDefaults() {
+  return getLlmProvider() === "groq" ? GROQ_SCOUT_LIMITS : CEREBRAS_LIMITS;
+}
 
 /**
- * Planning limits for Cerebras Cloud classification batches.
- * Defaults match cloud.cerebras.ai → Limits (gpt-oss-120b / zai-glm-4.7).
+ * Planning limits for classification batches.
  * Override with LLM_DAILY_TOKEN_BUDGET / LLM_REQUESTS_PER_DAY in .env.local.
  */
 function dailyTokenBudget(): number {
@@ -12,7 +31,7 @@ function dailyTokenBudget(): number {
     const parsed = Number(raw);
     if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed);
   }
-  return 1_000_000;
+  return providerDefaults().tokensPerDay;
 }
 
 function dailyRequestBudget(): number {
@@ -22,19 +41,22 @@ function dailyRequestBudget(): number {
     const parsed = Number(raw);
     if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed);
   }
-  return 2_400;
+  return providerDefaults().requestsPerDay;
 }
 
 export const LLM_RATE_LIMITS = {
   get model() {
     return LLM_MODEL;
   },
-  /** Cerebras personal org: 5 RPM (may enforce ~1 req / 12s). */
-  requestsPerMinute: 5,
+  get requestsPerMinute() {
+    return providerDefaults().requestsPerMinute;
+  },
   get requestsPerDay() {
     return dailyRequestBudget();
   },
-  tokensPerMinute: 30_000,
+  get tokensPerMinute() {
+    return providerDefaults().tokensPerMinute;
+  },
   get tokensPerDay() {
     return dailyTokenBudget();
   },
@@ -47,7 +69,7 @@ const SYSTEM_PROMPT_TOKEN_OVERHEAD = 1_800;
 const TOKENS_PER_REVIEW_ESTIMATE = 400;
 
 /** Output: full classification JSON per review (incl. 7 classification_reasons). */
-const TOKENS_PER_REVIEW_OUTPUT_ESTIMATE = 850;
+const TOKENS_PER_REVIEW_OUTPUT_ESTIMATE = 1_050;
 
 /** JSON wrapper overhead in classify responses. */
 const OUTPUT_BATCH_OVERHEAD = 1_000;
@@ -63,8 +85,8 @@ export function maxClassifyBatchSizeForOutput(): number {
 
 export const MAX_CLASSIFY_BATCH_SIZE = 10;
 
-/** Default batch size — reliable JSON on Cerebras 5 RPM / 30K TPM. */
-export const DEFAULT_CLASSIFY_BATCH_SIZE = 5;
+/** Default batch size — small batches avoid truncated classify JSON. */
+export const DEFAULT_CLASSIFY_BATCH_SIZE = 2;
 
 export function getClassifyBatchSize(): number {
   const safeMax = maxClassifyBatchSizeForOutput();
@@ -102,7 +124,7 @@ export function estimateTokensPerReview(
   return Math.round(estimateTotalTokensPerBatch(batchSize) / batchSize);
 }
 
-/** Cerebras gpt-oss-120b: 65,536 context — generous output cap for classify JSON. */
+/** Groq llama-4-scout / Cerebras gpt-oss: large context — generous output cap for classify JSON. */
 export function getLlmMaxOutputTokens(): number {
   const raw = process.env.LLM_MAX_OUTPUT_TOKENS;
   if (raw) {
@@ -120,7 +142,7 @@ export function estimateMaxOutputTokens(batchSize: number): number {
   return Math.min(cap, Math.max(2_048, withBuffer));
 }
 
-/** Minimum delay between consecutive Cerebras API calls (5 RPM ≈ 12s). */
+/** Minimum delay between consecutive API calls (respects provider RPM). */
 export function getLlmRequestCooldownMs(): number {
   const rpmDelayMs = Math.ceil(60_000 / LLM_RATE_LIMITS.requestsPerMinute);
   const envOverride =
@@ -131,11 +153,11 @@ export function getLlmRequestCooldownMs(): number {
       return Math.max(parsed, rpmDelayMs);
     }
   }
-  // +1s buffer — Cerebras may enforce strict per-second pacing.
-  return rpmDelayMs + 1_000;
+  const bufferMs = getLlmProvider() === "cerebras" ? 1_000 : 500;
+  return rpmDelayMs + bufferMs;
 }
 
-/** Delay between classify batches to respect RPM (5/min) and TPM (30K/min). */
+/** Delay between classify batches to respect RPM and TPM. */
 export function getClassifyBatchDelayMs(batchSize = getClassifyBatchSize()): number {
   const tokensPerBatch = estimateTotalTokensPerBatch(batchSize);
   const tpmDelayMs = Math.ceil(

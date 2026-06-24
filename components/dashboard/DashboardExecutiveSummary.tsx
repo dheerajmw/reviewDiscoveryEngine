@@ -46,24 +46,26 @@ function SummaryStatCard({
       type="button"
       onClick={onClick}
       aria-label={`${actionLabel} (${value} ${label.toLowerCase()})`}
-      className="group stitch-dash-card flex w-full flex-col gap-3 p-4 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.99]"
+      className="group stitch-dash-card flex w-full flex-col p-4 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.99]"
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-outline transition-colors group-hover:text-primary">
+      <div className="flex items-start justify-between gap-4">
+        <p className="min-h-[2rem] pt-0.5 text-[10px] font-semibold uppercase leading-snug tracking-widest text-outline transition-colors group-hover:text-primary">
           {label}
         </p>
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${iconContainerClassName} group-hover:bg-primary group-hover:text-on-primary`}
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors ${iconContainerClassName} group-hover:bg-primary group-hover:text-on-primary`}
         >
-          <Icon name={icon} filled={icon === "category"} />
+          <Icon name={icon} filled={icon === "category"} className="text-[22px]" />
         </div>
       </div>
 
-      <p className={`text-[28px] font-bold leading-none ${valueClassName}`}>
+      <p
+        className={`mt-1.5 text-[28px] font-bold leading-none tabular-nums ${valueClassName}`}
+      >
         {value}
       </p>
 
-      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+      <span className="mt-auto inline-flex items-center gap-1 pt-2.5 text-xs font-semibold text-primary">
         {actionLabel}
         <Icon
           name="arrow_forward"
@@ -107,8 +109,8 @@ export default function DashboardExecutiveSummary({
     (executive?.positive_discovery_signals?.length ?? 0);
 
   return (
-    <section className="grid grid-cols-1 gap-gutter lg:grid-cols-3">
-      <div className="stitch-dash-card group relative flex flex-col justify-between overflow-hidden p-6 lg:col-span-2">
+    <section className="grid grid-cols-1 gap-gutter lg:grid-cols-3 lg:items-start">
+      <div className="stitch-dash-card group relative flex flex-col overflow-hidden p-6 lg:col-span-2">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-12 h-64 w-64 rounded-full bg-primary/5 blur-3xl transition-colors group-hover:bg-primary/10"
@@ -123,11 +125,8 @@ export default function DashboardExecutiveSummary({
           <h3 className="max-w-2xl text-2xl font-semibold leading-tight tracking-tight text-on-surface md:text-[28px]">
             {headline}
           </h3>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-on-surface-variant">
-            {executive?.executive_summary ?? report.why_discovery_fails.summary}
-          </p>
         </div>
-        <div className="relative mt-8 flex flex-wrap items-center gap-6">
+        <div className="relative mt-6 flex flex-wrap items-center gap-6">
           <div className="flex flex-col">
             <span className="text-2xl font-bold text-on-surface">
               {discoveryRelevantCount.toLocaleString()}
@@ -161,7 +160,7 @@ export default function DashboardExecutiveSummary({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-gutter sm:grid-cols-2 lg:grid-cols-1">
+      <div className="flex flex-col gap-3">
         <SummaryStatCard
           label="Active themes"
           value={activeThemes}
@@ -175,6 +174,7 @@ export default function DashboardExecutiveSummary({
           label="Discovery barriers"
           value={activeBarriers}
           actionLabel="View barrier analysis"
+          valueClassName="text-primary"
           icon="block"
           iconContainerClassName="bg-secondary-container text-on-secondary-container"
           onClick={() => scrollToSection(DASHBOARD_BARRIERS_SECTION_ID)}

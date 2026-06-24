@@ -8,6 +8,8 @@ import {
 import {
   isPositiveTheme,
   POSITIVE_THEME_SET,
+  resolveResearchRootCause,
+  resolveResearchSegment,
   THEME_FALLBACK,
 } from "./taxonomy";
 import { normalizeTaxonomyFields } from "./taxonomy";
@@ -250,6 +252,27 @@ export function mergeClassificationItem(
   );
   fields.theme = polarity.theme;
   fields.emotion = polarity.emotion;
+  fields.segment = resolveResearchSegment(
+    fields.segment,
+    `${review.text} ${review.cleaned_text ?? ""}`,
+  );
+
+  const reviewText = `${review.text} ${review.cleaned_text ?? ""}`;
+  const reviewConfidence = normalizeConfidence(item.confidence);
+  const rootResolved = resolveResearchRootCause(
+    fields.root_cause,
+    reviewText,
+    fields.theme,
+    fields.barrier,
+    reviewConfidence,
+  );
+  fields.root_cause = rootResolved.root_cause;
+  if (rootResolved.low_confidence) {
+    const existing = classification_reasons.root_cause?.trim();
+    classification_reasons.root_cause = existing?.startsWith("[low confidence]")
+      ? existing
+      : `[low confidence] ${existing ?? rootResolved.rationale ?? "Closest mechanism assigned from review signals."}`;
+  }
 
   const evidence: ClassificationEvidence = {
     discovery:

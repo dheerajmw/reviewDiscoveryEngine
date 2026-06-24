@@ -17,6 +17,12 @@ import {
   DEFAULT_REDDIT_SUBREDDIT_LABELS,
 } from "@/lib/fetch/config";
 import type { RawReview } from "@/lib/types";
+import {
+  CURATION_FILTER_DESCRIPTION,
+  FETCH_DISCOVERY_FILTER_DESCRIPTION,
+  FETCH_DISCOVERY_FILTER_EXAMPLES,
+  PIPELINE_FILTER_SUMMARY,
+} from "@/lib/filter-stages";
 import Icon from "@/components/ui/Icon";
 import {
   FetchFiltersSection,
@@ -175,6 +181,8 @@ export default function LiveFetchPanel({
           <p className="mt-0.5 text-xs text-on-surface-variant">
             Fetches <span className="font-medium text-on-surface">Spotify reviews only</span>{" "}
             from Play Store, App Store, Reddit, Spotify Community, and social sources.
+            {" "}
+            {PIPELINE_FILTER_SUMMARY}
           </p>
         </div>
       </div>
@@ -230,8 +238,22 @@ export default function LiveFetchPanel({
           step={10}
           disabled={disabled || loading}
           onChange={setLimitPerSource}
-          hint="Each selected source returns up to this many reviews before deduplication."
+          hint="Raw scrape per source — discovery keyword filter keeps only matching reviews (often ~5–15% on app stores). App Store uses page SSR across multiple countries when global."
         />
+
+        <div
+          role="note"
+          className="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-xs leading-relaxed text-on-surface-variant"
+        >
+          <p className="font-medium text-on-surface">Discovery keyword filter (at fetch)</p>
+          <p className="mt-1">{FETCH_DISCOVERY_FILTER_DESCRIPTION}</p>
+          <p className="mt-1.5 text-[11px]">
+            Example signals:{" "}
+            <span className="font-mono text-on-surface">
+              {FETCH_DISCOVERY_FILTER_EXAMPLES}
+            </span>
+          </p>
+        </div>
 
         {(showCountry || showStoreFilters || showRedditQuery) && (
           <FetchFiltersSection title="Fetch Filters">

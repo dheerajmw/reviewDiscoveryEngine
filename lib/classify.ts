@@ -9,7 +9,11 @@ import {
   generateJsonCompletion,
   LlmOutputTruncatedError,
 } from "./llm-client";
-import { estimateMaxOutputTokens, getLlmRequestCooldownMs } from "./llm-limits";
+import {
+  estimateMaxOutputTokens,
+  getLlmMaxOutputTokens,
+  getLlmRequestCooldownMs,
+} from "./llm-limits";
 import { buildTaxonomyReport } from "./taxonomy";
 import type { ClassifiedReview, RawReview, TaxonomyReport } from "./types";
 
@@ -22,6 +26,10 @@ interface ClassificationResponse {
 export interface ClassifyResult {
   classified: ClassifiedReview[];
   taxonomyReport: TaxonomyReport;
+}
+
+interface RequestOptions {
+  maxOutputTokens?: number;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -53,7 +61,7 @@ function extractJson(content: string): ClassificationResponse {
   return JSON.parse(jsonText) as ClassificationResponse;
 }
 
-function isRecoverableParseError(error: unknown): boolean {
+export function isRecoverableParseError(error: unknown): boolean {
   return (
     error instanceof SyntaxError ||
     error instanceof LlmOutputTruncatedError ||
@@ -86,8 +94,11 @@ async function splitAndClassify(
 async function requestClassifications(
   apiKey: string,
   reviews: RawReview[],
+  options: RequestOptions = {},
 ): Promise<ClassifyResult> {
   const client = createLlmClient(apiKey);
+  const maxOutputTokens =
+    options.maxOutputTokens ?? estimateMaxOutputTokens(reviews.length);
   let content: string;
 
   try {
@@ -96,9 +107,18 @@ async function requestClassifications(
       CLASSIFY_SYSTEM_PROMPT,
       buildClassifyUserPrompt(reviews),
       0.2,
-      estimateMaxOutputTokens(reviews.length),
+      maxOutputTokens,
     );
   } catch (error) {
+    if (
+      reviews.length === 1 &&
+      isRecoverableParseError(error) &&
+      maxOutputTokens < getLlmMaxOutputTokens()
+    ) {
+      return requestClassifications(apiKey, reviews, {
+        maxOutputTokens: getLlmMaxOutputTokens(),
+      });
+    }
     if (reviews.length > 1 && isRecoverableParseError(error)) {
       return splitAndClassify(apiKey, reviews);
     }
@@ -109,6 +129,15 @@ async function requestClassifications(
   try {
     parsed = extractJson(content);
   } catch (error) {
+    if (
+      reviews.length === 1 &&
+      isRecoverableParseError(error) &&
+      maxOutputTokens < getLlmMaxOutputTokens()
+    ) {
+      return requestClassifications(apiKey, reviews, {
+        maxOutputTokens: getLlmMaxOutputTokens(),
+      });
+    }
     if (reviews.length > 1 && isRecoverableParseError(error)) {
       return splitAndClassify(apiKey, reviews);
     }
@@ -142,6 +171,13 @@ async function requestClassifications(
   };
 }
 
+function formatTruncationError(): string {
+  return (
+    "Classification JSON was truncated or invalid. Retry Analyze — cached reviews are skipped. " +
+    "If this persists, set LLM_CLASSIFY_BATCH_SIZE=1 in .env.local."
+  );
+}
+
 export async function classifyReviews(
   reviews: RawReview[],
   apiKey: string,
@@ -149,10 +185,12 @@ export async function classifyReviews(
   try {
     return await withRetry(() => requestClassifications(apiKey, reviews));
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error(
-        "Classification JSON was truncated or invalid. Retry Analyze — cached reviews are skipped. Try LLM_CLASSIFY_BATCH_SIZE=5 if this persists.",
-      );
+    if (
+      error instanceof SyntaxError ||
+      error instanceof LlmOutputTruncatedError ||
+      isRecoverableParseError(error)
+    ) {
+      throw new Error(formatTruncationError());
     }
     throw new Error(formatLlmError(error));
   }

@@ -84,8 +84,12 @@ function inferSegment(text: string): string {
     return "Discovery-Focused Listener";
   }
   if (lower.includes("explor") || lower.includes("try new genre")) return "Music Explorer";
-  if (lower.includes("playlist") || lower.includes("daily mix")) return "Playlist Listener";
-  if (lower.includes("just started") || lower.includes("new to spotify")) return "New User";
+  if (lower.includes("playlist") && (lower.includes("curat") || lower.includes("manual"))) {
+    return "Playlist-Centric Listener";
+  }
+  if (lower.includes("just started") || lower.includes("new to spotify")) {
+    return "Casual Listener";
+  }
   return "Casual Listener";
 }
 

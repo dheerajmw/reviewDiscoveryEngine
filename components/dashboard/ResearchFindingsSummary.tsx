@@ -55,6 +55,18 @@ function FindingBlock({
         <Icon name="open_in_new" className="shrink-0 text-primary" />
       </button>
       <p className="mb-3 text-sm text-on-surface-variant">{finding.summary}</p>
+      {finding.mechanism && (
+        <p className="mb-2 text-sm text-on-surface-variant">
+          <span className="font-medium text-on-surface">Mechanism: </span>
+          {finding.mechanism}
+        </p>
+      )}
+      {finding.product_implication && (
+        <p className="mb-3 text-sm text-on-surface-variant">
+          <span className="font-medium text-on-surface">Product implication: </span>
+          {finding.product_implication}
+        </p>
+      )}
       <FindingQuoteList
         quotes={finding.quotes}
         limit={quoteLimit}

@@ -78,6 +78,7 @@ export function assignResearchDomain(review: ClassifiedReview): ResearchDomain {
 
   if (
     theme === "Poor Recommendation Quality" ||
+    theme === "Mood-Context Mismatch" ||
     review.barrier === "Poor Personalization Context" ||
     review.barrier === "Low Novelty"
   ) {
@@ -104,6 +105,7 @@ export function assignResearchDomain(review: ClassifiedReview): ResearchDomain {
 
   if (
     theme === "Weak Discovery Surfaces" ||
+    theme === "Trust Erosion" ||
     review.barrier === "Ineffective Discovery Surfaces" ||
     review.root_cause === "Discovery Surface Design Issues"
   ) {
@@ -112,7 +114,9 @@ export function assignResearchDomain(review: ClassifiedReview): ResearchDomain {
 
   if (
     theme === "Algorithm Distrust" ||
+    theme === "Algorithm Anxiety" ||
     theme === "Cross-Content Recommendation Noise" ||
+    review.root_cause === "No Exploration Sandbox" ||
     review.root_cause === "Cross-Content Recommendation Bias" ||
     review.root_cause === "Engagement Optimization Bias"
   ) {
@@ -155,7 +159,65 @@ function positiveSymptom(theme: string | null): string {
   if (theme === "Discovery Delight") {
     return "Users express delight when discovery surfaces surprise them with compelling music.";
   }
+  if (theme === "Positive Discovery Experience") {
+    return "Users consistently praise Spotify's ability to introduce new artists and expand taste.";
+  }
   return "Users consistently praise Spotify's ability to introduce new artists and expand taste.";
+}
+
+const POSITIVE_MECHANISM_BY_THEME: Record<string, MechanismBundle> = {
+  "Strong Discovery Playlists": {
+    symptom: positiveSymptom("Strong Discovery Playlists"),
+    mechanism:
+      "Personalized playlist generation combines taste signals with controlled novelty injection so flagship surfaces feel fresh week to week.",
+    product_implication:
+      "When playlist surfaces deliver consistent novelty, users treat Discover Weekly and DJ as primary discovery channels.",
+    opportunity:
+      "Scale what works — preserve exploration weighting on Discover Weekly, DJ, and Release Radar while protecting freshness guarantees.",
+  },
+  "Successful Artist Discovery": {
+    symptom: positiveSymptom("Successful Artist Discovery"),
+    mechanism:
+      "Artist-level ranking surfaces adjacent long-tail artists that match taste without repeating established favorites.",
+    product_implication:
+      "New artist introductions drive catalog depth engagement and expand listening libraries beyond comfort artists.",
+    opportunity:
+      "Increase artist-level diversity targets in flagship surfaces and measure adoption of newly surfaced artists.",
+  },
+  "Recommendation Success": {
+    symptom: positiveSymptom("Recommendation Success"),
+    mechanism:
+      "Context-aware ranking aligns session intent with recommendation candidates, reducing obvious mismatches.",
+    product_implication:
+      "High-quality matches build recommendation trust and keep users on algorithmic surfaces instead of manual search.",
+    opportunity:
+      "Instrument recommendation satisfaction by surface and optimize for taste-alignment metrics alongside engagement.",
+  },
+  "Discovery Delight": {
+    symptom: positiveSymptom("Discovery Delight"),
+    mechanism:
+      "Serendipity-oriented ranking occasionally breaks familiar patterns with unexpectedly strong matches.",
+    product_implication:
+      "Delightful surprises reinforce discovery behavior and positive word-of-mouth for algorithmic features.",
+    opportunity:
+      "Add controlled serendipity modes that preserve relevance while increasing pleasant surprise rate.",
+  },
+  "Positive Discovery Experience": {
+    symptom: positiveSymptom("Positive Discovery Experience"),
+    mechanism:
+      "Discovery surfaces combine relevance signals with enough novelty to surface unfamiliar artists users still accept.",
+    product_implication:
+      "When novelty and relevance align, flagship playlists become trusted discovery channels that deepen catalog engagement.",
+    opportunity:
+      "Protect cross-surface discovery quality by tracking new-artist introduction rate separately from engagement.",
+  },
+};
+
+function positiveMechanismBundle(theme: string | null): MechanismBundle {
+  if (theme && POSITIVE_MECHANISM_BY_THEME[theme]) {
+    return POSITIVE_MECHANISM_BY_THEME[theme]!;
+  }
+  return POSITIVE_MECHANISM_BY_THEME["Positive Discovery Experience"]!;
 }
 
 export function extractMechanism(
@@ -168,15 +230,7 @@ export function extractMechanism(
   const need = dominantLabel(reviews, "unmet_need");
 
   if (domain === "positive_discovery") {
-    return {
-      symptom: positiveSymptom(theme),
-      mechanism:
-        "Discovery surfaces combine relevance signals with enough novelty to surface unfamiliar artists users still accept.",
-      product_implication:
-        "When novelty and relevance align, flagship playlists become trusted discovery channels that deepen catalog engagement.",
-      opportunity:
-        "Scale what works — preserve exploration weighting on Discover Weekly, DJ, and Release Radar while protecting freshness guarantees.",
-    };
+    return positiveMechanismBundle(theme);
   }
 
   const rootFragment =
@@ -289,11 +343,7 @@ export function selectDiverseInsights(
       continue;
     }
     const domain = insight.research_domain as ResearchDomain | undefined;
-    if (
-      domain &&
-      usedDomains.has(domain) &&
-      selected.length >= MIN_EXECUTIVE_FINDINGS
-    ) {
+    if (domain && usedDomains.has(domain)) {
       continue;
     }
     if (insightFallbackPenalty(insight) >= 0.7) continue;
@@ -305,14 +355,41 @@ export function selectDiverseInsights(
   if (selected.length < MIN_EXECUTIVE_FINDINGS) {
     for (const insight of ranked) {
       if (selected.some((s) => s.id === insight.id)) continue;
+      const domain = insight.research_domain as ResearchDomain | undefined;
+      if (domain && usedDomains.has(domain)) continue;
       if (insight.supporting_reviews < 5) continue;
       if (insightFallbackPenalty(insight) >= 0.85) continue;
       selected.push(insight);
+      if (domain) usedDomains.add(domain);
       if (selected.length >= MIN_EXECUTIVE_FINDINGS) break;
     }
   }
 
-  return selected.slice(0, MAX_EXECUTIVE_FINDINGS);
+  return dedupeSimilarInsights(selected).slice(0, MAX_EXECUTIVE_FINDINGS);
+}
+
+export function dedupeSimilarInsights(
+  insights: ProductInsight[],
+): ProductInsight[] {
+  const seen = new Set<string>();
+  const ranked = [...insights].sort((a, b) => scoreInsight(b) - scoreInsight(a));
+  const result: ProductInsight[] = [];
+
+  for (const insight of ranked) {
+    const key = [
+      insight.symptom,
+      insight.mechanism,
+      insight.product_implication,
+      insight.opportunity,
+    ]
+      .map((s) => s?.trim().toLowerCase() ?? "")
+      .join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(insight);
+  }
+
+  return result;
 }
 
 export function countMechanismFindings(insights: ProductInsight[]): number {

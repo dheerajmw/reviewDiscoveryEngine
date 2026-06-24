@@ -1,4 +1,5 @@
 import type { ClusterEvidence } from "@/lib/types";
+import { averageQuoteConfidence } from "@/lib/finding-evidence";
 import Card from "@/components/ui/Card";
 import Icon from "@/components/ui/Icon";
 import EvidenceMeta from "./EvidenceMeta";
@@ -35,9 +36,7 @@ export default function ClusterEvidencePanel({
     <Card title={title} subtitle={subtitle}>
       <div className="space-y-6">
         {visible.map((cluster) => {
-          const confidence =
-            cluster.quotes.reduce((sum, q) => sum + q.confidence, 0) /
-            (cluster.quotes.length || 1);
+          const confidence = averageQuoteConfidence(cluster.quotes);
           const sourceDistribution = cluster.quotes.reduce<
             Record<string, number>
           >((acc, q) => {

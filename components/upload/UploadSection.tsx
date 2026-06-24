@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fetchAggregation } from "@/lib/aggregate-client";
 import { curateAllReviews } from "@/lib/curate-client";
 import {
   classifyAllReviews,
   estimateLlmClassification,
 } from "@/lib/classify-client";
+import {
+  fetchClassificationCacheStatus,
+  MIN_PARTIAL_ANALYSIS_REVIEWS,
+} from "@/lib/classify-cache-client";
 import { fetchFindings } from "@/lib/findings-client";
 import { computeExecutiveInsights } from "@/lib/insights-client";
 import { persistAnalysisRun } from "@/lib/runs-client";
@@ -26,6 +30,7 @@ import LiveFetchPanel from "./LiveFetchPanel";
 import UploadPreview from "./UploadPreview";
 import CurationEmptyState from "./CurationEmptyState";
 import CurationSummary from "./CurationSummary";
+import CleanupActionsPanel from "./CleanupActionsPanel";
 import QuotaSplitPanel from "./QuotaSplitPanel";
 import LlmEstimatePanel, {
   type LlmProviderLimits,
@@ -39,6 +44,7 @@ function delay(ms: number) {
 
 export default function UploadSection() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [reviews, setReviews] = useState<RawReview[] | null>(null);
   const [curatedReviews, setCuratedReviews] = useState<RawReview[] | null>(
     null,
@@ -59,6 +65,24 @@ export default function UploadSection() {
   } | null>(null);
   const [curationStats, setCurationStats] = useState<CurationStats | null>(null);
   const [curationNote, setCurationNote] = useState<string | null>(null);
+  const [cachedCount, setCachedCount] = useState<number | null>(null);
+  const [analysisInterrupted, setAnalysisInterrupted] = useState(false);
+
+  const refreshCacheStatus = useCallback(
+    async (reviews: RawReview[]) => {
+      if (mockClassifierEnabled) {
+        setCachedCount(null);
+        return;
+      }
+      try {
+        const status = await fetchClassificationCacheStatus(reviews);
+        setCachedCount(status.cachedCount);
+      } catch {
+        setCachedCount(null);
+      }
+    },
+    [mockClassifierEnabled],
+  );
 
   useEffect(() => {
     fetch("/api/classify/config")
@@ -105,6 +129,11 @@ export default function UploadSection() {
       ? estimateLlmClassification(curatedReviews.length)
       : null;
 
+  useEffect(() => {
+    if (!curatedReviews?.length || pipelineStep !== "uploaded") return;
+    void refreshCacheStatus(curatedReviews);
+  }, [curatedReviews, pipelineStep, refreshCacheStatus]);
+
   const resetAll = useCallback((options?: { message?: string }) => {
     setReviews(null);
     setCuratedReviews(null);
@@ -115,7 +144,15 @@ export default function UploadSection() {
     setLoadedFileName(null);
     setCurationStats(null);
     setCurationNote(null);
+    setCachedCount(null);
+    setAnalysisInterrupted(false);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    resetAll();
+    router.replace("/");
+  }, [searchParams, resetAll, router]);
 
   const returnAfterEmptyCuration = useCallback(() => {
     resetAll({
@@ -136,7 +173,7 @@ export default function UploadSection() {
     setNotice(fetchNotice ?? null);
     setCurationStats(null);
     setPipelineStep("curating");
-    setCurationNote("Removing duplicates and off-topic reviews…");
+    setCurationNote("PM cleanup: filtering discovery-relevant reviews…");
 
     const startedAt = Date.now();
 
@@ -197,6 +234,7 @@ export default function UploadSection() {
 
     setPipelineStep("classifying");
     setError(null);
+    setAnalysisInterrupted(false);
     setClassifyProgress({ completed: 0, total: toClassify.length });
 
     try {
@@ -225,6 +263,56 @@ export default function UploadSection() {
       router.push(`/runs/${runId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed.");
+      setPipelineStep("uploaded");
+      setAnalysisInterrupted(true);
+      void refreshCacheStatus(toClassify);
+    }
+  };
+
+  const handleProceedWithPartial = async () => {
+    const toClassify = curatedReviews;
+    const stats = curationStats;
+    if (!toClassify || !stats || isAnalyzing || isCurating) return;
+
+    setPipelineStep("aggregating");
+    setError(null);
+
+    try {
+      const cache = await fetchClassificationCacheStatus(toClassify);
+      if (cache.cachedCount < MIN_PARTIAL_ANALYSIS_REVIEWS) {
+        throw new Error(
+          `Need at least ${MIN_PARTIAL_ANALYSIS_REVIEWS} cached classifications for a partial dashboard.`,
+        );
+      }
+
+      const results = cache.classified;
+      setNotice(
+        `Partial analysis: ${cache.cachedCount.toLocaleString()} of ${cache.total.toLocaleString()} reviews (${Math.round((cache.cachedCount / cache.total) * 100)}% of corpus).`,
+      );
+
+      const aggregation = await fetchAggregation(results);
+      const findings = await fetchFindings(aggregation);
+      const executive = computeExecutiveInsights({
+        classified: results,
+        aggregation,
+      });
+
+      setPipelineStep("saving");
+      const baseName =
+        loadedFileName ?? `Analysis ${new Date().toLocaleDateString()}`;
+      const runId = await persistAnalysisRun({
+        datasetName: `${baseName} (partial ${cache.cachedCount}/${cache.total})`,
+        classified: results,
+        analysis: { aggregation, findings, executive, curation: stats },
+        usedMockClassifier: false,
+        curation: stats,
+      });
+
+      router.push(`/runs/${runId}`);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Partial analysis failed.",
+      );
       setPipelineStep("uploaded");
     }
   };
@@ -339,8 +427,8 @@ export default function UploadSection() {
                   Review cleanup complete
                 </h1>
                 <p className="mt-2 text-sm text-on-surface-variant">
-                  Off-topic and duplicate Spotify reviews were removed. Ready
-                  for LLM analysis.
+                  PM cleanup removed duplicates and off-topic reviews (billing,
+                  ads, crashes, generic praise). Ready for LLM classification.
                 </p>
               </div>
             )}
@@ -407,7 +495,7 @@ export default function UploadSection() {
                     </button>
                   </div>
 
-                  <CurationSummary stats={curationStats} />
+                  <CurationSummary stats={curationStats} fetchFilterNote={notice ?? undefined} />
 
                   <div>
                     <p className="mb-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
@@ -434,6 +522,17 @@ export default function UploadSection() {
                       onError={setError}
                     />
                   ) : null}
+
+                  <CleanupActionsPanel
+                    reviews={curatedReviews}
+                    curationStats={curationStats}
+                    loadedFileName={loadedFileName}
+                    cachedCount={cachedCount}
+                    analysisInterrupted={analysisInterrupted}
+                    busy={isAnalyzing}
+                    onProceedPartial={() => void handleProceedWithPartial()}
+                    onError={setError}
+                  />
 
                   <button
                     type="button"

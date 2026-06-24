@@ -6,6 +6,9 @@ import {
 } from "./executive-quality";
 import { computeEvidenceStrength } from "../quality/evidence-strength";
 import {
+  averageQuoteConfidence,
+} from "../finding-evidence";
+import {
   composeFindingDescription,
   composeMechanismTitle,
   displaySegment,
@@ -25,7 +28,10 @@ function inferBusinessImpact(insight: ProductInsight): BusinessImpactArea[] {
   if (
     theme === "Repetition Fatigue" ||
     theme === "Poor Recommendation Quality" ||
-    theme === "Algorithm Distrust"
+    theme === "Algorithm Distrust" ||
+    theme === "Algorithm Anxiety" ||
+    theme === "Mood-Context Mismatch" ||
+    theme === "Trust Erosion"
   ) {
     impacts.add("Engagement");
     impacts.add("Retention");
@@ -67,6 +73,11 @@ export function insightToExecutiveFinding(insight: ProductInsight): ExecutiveFin
     insight.supporting_reviews,
     insight.supporting_sources,
   );
+  const alignedQuotes = topQuotes(insight.representative_quotes, insight, 3);
+  const confidenceScore =
+    insight.confidence > 0
+      ? insight.confidence
+      : averageQuoteConfidence(alignedQuotes);
 
   return {
     id: `finding-${insight.id}`,
@@ -74,8 +85,9 @@ export function insightToExecutiveFinding(insight: ProductInsight): ExecutiveFin
     description,
     evidence_count: insight.supporting_reviews,
     affected_segments: insight.supporting_segments.map(displaySegment),
-    representative_quotes: topQuotes(insight.representative_quotes, insight, 3),
-    confidence: confidenceToLevel(insight.confidence),
+    representative_quotes: alignedQuotes,
+    confidence: confidenceToLevel(confidenceScore),
+    confidence_score: confidenceScore,
     evidence_strength: evidence.strength,
     source_count: evidence.sourceCount,
     business_impact: inferBusinessImpact(insight),

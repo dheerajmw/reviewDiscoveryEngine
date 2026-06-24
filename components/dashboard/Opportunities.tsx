@@ -1,4 +1,11 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import type { OpportunityWithEvidence, QuoteEvidence } from "@/lib/types";
+import {
+  sortOpportunities,
+  type OpportunitySortMode,
+} from "@/lib/opportunity-evidence";
 import Icon from "@/components/ui/Icon";
 import type { DrawerSelection } from "./evidence/FindingDetailDrawer";
 import EvidenceMeta from "./evidence/EvidenceMeta";
@@ -33,6 +40,23 @@ const IMPACT_CONFIG = [
   },
 ] as const;
 
+const SORT_OPTIONS: { value: OpportunitySortMode; label: string }[] = [
+  { value: "frequency", label: "Review frequency" },
+  { value: "business_impact", label: "Business impact" },
+];
+
+const RETENTION_SIGNAL_STYLES: Record<
+  OpportunityWithEvidence["retention_signal"],
+  string
+> = {
+  "High churn risk if unaddressed":
+    "bg-error-container text-on-error-container",
+  "Engagement growth opportunity":
+    "bg-tertiary-container/20 text-tertiary-container",
+  "Cross-segment retention impact":
+    "bg-secondary-container text-on-secondary-container",
+};
+
 function impactConfig(index: number) {
   return IMPACT_CONFIG[Math.min(index, IMPACT_CONFIG.length - 1)];
 }
@@ -42,18 +66,49 @@ export default function Opportunities({
   onOpenDetail,
   onQuoteClick,
 }: OpportunitiesProps) {
+  const [sortMode, setSortMode] = useState<OpportunitySortMode>("frequency");
+
+  const sortedOpportunities = useMemo(
+    () => sortOpportunities(opportunities, sortMode),
+    [opportunities, sortMode],
+  );
+
   return (
     <section className="space-y-4">
-      <div className="px-1">
-        <h3 className="text-base font-semibold text-on-surface">
-          Product opportunities
-        </h3>
-        <p className="mt-1 text-xs text-on-surface-variant">
-          Derived from top unmet needs — each links to supporting review quotes.
-        </p>
+      <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-on-surface">
+            Product opportunities
+          </h3>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Derived from top unmet needs — each links to supporting review
+            quotes.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-on-surface-variant">
+            Sort by
+          </span>
+          <div className="flex rounded-lg border border-outline-variant p-0.5">
+            {SORT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setSortMode(option.value)}
+                className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                  sortMode === option.value
+                    ? "bg-primary text-on-primary"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-gutter md:grid-cols-3">
-        {opportunities.map((opportunity, index) => {
+        {sortedOpportunities.map((opportunity, index) => {
           const config = impactConfig(index);
           return (
             <article
@@ -102,6 +157,24 @@ export default function Opportunities({
                       </li>
                     ))}
                   </ul>
+                </div>
+                <div>
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-on-surface-variant">
+                    Affected segment
+                  </p>
+                  <p className="text-sm text-on-surface">
+                    {opportunity.affected_segments.join(", ")}
+                  </p>
+                </div>
+                <div>
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-on-surface-variant">
+                    Retention signal
+                  </p>
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${RETENTION_SIGNAL_STYLES[opportunity.retention_signal]}`}
+                  >
+                    {opportunity.retention_signal}
+                  </span>
                 </div>
                 <EvidenceMeta
                   evidenceCount={opportunity.evidence_count}

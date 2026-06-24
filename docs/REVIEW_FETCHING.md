@@ -135,13 +135,14 @@ The route has `maxDuration = 300` (5 minutes) because multi-source fetches can b
 
 ### App Store (`appstore`)
 
-- **Package:** `app-store-scraper`
-- **App ID:** `324684580` (Spotify on iOS)
-- **Pagination:** Page-based (up to 12 pages, 600ms delay between pages)
-- **Sort:** `mostRecent` or `mostHelpful`
-- **Region:** Same global/multi-country behavior as Play Store
-- **Filters:** Min 15 characters, dedupe, optional `minRating`
-- **Note:** App Store pages can return fewer reviews than requested; partial results are normal
+- **Method:** `apps.apple.com` page SSR (since June 2026 the iTunes RSS feed returns 0 reviews)
+- **Implementation:** `lib/fetch/app-store-page.ts` — parses `<script id="serialized-server-data">` for `{"$kind":"Review"}` objects
+- **App ID / slug:** `324684580` / `spotify-music-and-podcasts`
+- **Pagination:** Not chronological pages — aggregates up to 20 storefronts (`us`, `gb`, `de`, …) until `limitPerSource` is met (~10 unique reviews per country)
+- **Sort UI:** `recent` / `helpful` is accepted but Apple’s page shows a curated mix (not full RSS-style pagination)
+- **Region:** `global` walks all storefronts; single-country requests use one storefront only (~10–50 reviews max)
+- **Filters:** Min 15 characters, dedupe by review ID, optional `minRating`
+- **Note:** Yields fewer reviews than the old RSS scraper; use bundled `appstore.csv` or add storefronts for larger corpora
 
 ### Reddit (`reddit`)
 

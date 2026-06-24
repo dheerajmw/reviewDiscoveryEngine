@@ -5,6 +5,7 @@ import {
   getClassifyBatchSize,
   getLlmRequestCooldownMs,
 } from "./llm-limits";
+import { isRecoverableParseError } from "./classify";
 import { isTransientRateLimit } from "./llm-errors";
 import type { ClassifiedReview, RawReview } from "./types";
 
@@ -76,6 +77,34 @@ async function classifyBatch(
   throw new Error(lastError);
 }
 
+async function classifyBatchResilient(
+  batch: RawReview[],
+): Promise<{ classified: ClassifiedReview[]; mock: boolean; warning?: string }> {
+  try {
+    return await classifyBatch(batch);
+  } catch (error) {
+    if (batch.length === 1 || !isRecoverableParseError(error)) {
+      throw error;
+    }
+
+    const classified: ClassifiedReview[] = [];
+    let mock = false;
+    let warning: string | undefined;
+
+    for (let index = 0; index < batch.length; index++) {
+      if (index > 0) {
+        await sleep(getLlmRequestCooldownMs());
+      }
+      const result = await classifyBatch([batch[index]!]);
+      classified.push(...result.classified);
+      mock = mock || result.mock;
+      warning = warning ?? result.warning;
+    }
+
+    return { classified, mock, warning };
+  }
+}
+
 export async function classifyAllReviews(
   reviews: RawReview[],
   onProgress?: (completed: number, total: number) => void,
@@ -94,7 +123,7 @@ export async function classifyAllReviews(
 
     const batch = reviews.slice(i, i + batchSize);
     try {
-      const result = await classifyBatch(batch);
+      const result = await classifyBatchResilient(batch);
 
       classified.push(...result.classified);
       mock = mock || result.mock;

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
+import { NEW_ANALYSIS_HREF } from "./NewAnalysisLink";
 
 const NAV_ITEMS = [
-  { href: "/", label: "New Analysis", icon: "upload_file" },
+  { href: NEW_ANALYSIS_HREF, label: "New Analysis", icon: "upload_file" },
   { href: "/history", label: "Research Repository", icon: "history" },
   { href: "/runs/compare", label: "Compare Runs", icon: "compare" },
 ] as const;
@@ -16,7 +17,7 @@ export default function AppNav({ active, variant = "default" }: AppNavProps) {
   if (variant === "inline") {
     return (
       <nav className="flex items-center gap-4">
-        {NAV_ITEMS.filter((item) => item.href !== "/").map((item) => {
+        {NAV_ITEMS.filter((item) => item.href !== NEW_ANALYSIS_HREF).map((item) => {
           const isActive = active === item.href;
           return (
             <Link

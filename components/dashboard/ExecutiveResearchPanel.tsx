@@ -6,7 +6,13 @@ import type {
   SlideFinding,
   StrategicOpportunity,
 } from "@/lib/types";
+import { averageQuoteConfidence } from "@/lib/finding-evidence";
 import { SectionHeader } from "./SectionHeader";
+
+function findingConfidenceScore(finding: ExecutiveFinding): number {
+  if (finding.confidence_score > 0) return finding.confidence_score;
+  return averageQuoteConfidence(finding.representative_quotes);
+}
 
 function FindingCard({ finding, index }: { finding: ExecutiveFinding; index: number }) {
   return (
@@ -22,6 +28,9 @@ function FindingCard({ finding, index }: { finding: ExecutiveFinding; index: num
         ) : null}
         <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-xs text-on-surface-variant">
           {finding.evidence_strength} evidence · {finding.source_count} sources
+        </span>
+        <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-xs text-on-surface-variant">
+          {Math.round(findingConfidenceScore(finding) * 100)}% confidence
         </span>
       </div>
       <h3 className="mb-2 text-base font-semibold leading-snug text-on-surface">

@@ -1,6 +1,7 @@
 import { PLATFORM_NAME } from "@/lib/brand";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
+import NewAnalysisLink from "./NewAnalysisLink";
 import SidebarDemoFooter from "./SidebarDemoFooter";
 
 export type SidebarSection = "dashboard" | "repository" | "compare" | "quotes";
@@ -90,13 +91,10 @@ export default function AppSidebar({
       </nav>
       <div className="mt-auto space-y-3 border-t border-outline-variant pt-4">
         <SidebarDemoFooter runDemoMode={runDemoMode} />
-        <Link
-          href="/"
+        <NewAnalysisLink
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-on-primary transition-opacity hover:opacity-90"
-        >
-          <Icon name="add" className="text-base" />
-          New analysis
-        </Link>
+          icon="add"
+        />
       </div>
     </aside>
   );

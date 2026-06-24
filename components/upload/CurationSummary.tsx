@@ -1,4 +1,5 @@
 import type { CurationStats } from "@/lib/types";
+import { CURATION_FILTER_DESCRIPTION } from "@/lib/filter-stages";
 
 const REASON_LABELS: Record<string, string> = {
   duplicate: "Duplicates",
@@ -18,11 +19,13 @@ const REASON_LABELS: Record<string, string> = {
 interface CurationSummaryProps {
   stats: CurationStats;
   compact?: boolean;
+  fetchFilterNote?: string;
 }
 
 export default function CurationSummary({
   stats,
   compact = false,
+  fetchFilterNote,
 }: CurationSummaryProps) {
   const topReasons = Object.entries(stats.by_reason)
     .sort((a, b) => b[1] - a[1])
@@ -54,6 +57,15 @@ export default function CurationSummary({
     >
       <p className="font-medium text-on-surface">Review curation</p>
       <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+        {CURATION_FILTER_DESCRIPTION}
+      </p>
+      {fetchFilterNote && (
+        <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">
+          <span className="font-medium text-on-surface">Fetch filter:</span>{" "}
+          {fetchFilterNote}
+        </p>
+      )}
+      <p className="mt-2 text-xs leading-relaxed text-on-surface-variant">
         {stats.total_loaded.toLocaleString()} loaded
         {stats.duplicates_removed > 0 && (
           <> · {stats.duplicates_removed.toLocaleString()} duplicates removed</>

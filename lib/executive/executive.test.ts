@@ -8,6 +8,8 @@ import {
   MIN_SUPPORTING_REVIEWS,
 } from "../executive/executive-quality";
 import { synthesizeInsights } from "../executive/insight-synthesis";
+import { dedupeSimilarInsights } from "../executive/mechanism-extraction";
+import { POSITIVE_DISCOVERY_CORPUS } from "../quality/positive-discovery-corpus";
 import type { RawReview } from "../types";
 
 function review(text: string, source: string): RawReview {
@@ -82,5 +84,26 @@ describe("executive insight synthesis", () => {
     for (let i = 1; i < ranked.length; i++) {
       assert.ok(ranked[i - 1]!.opportunity_score >= ranked[i]!.opportunity_score);
     }
+  });
+
+  it("does not emit duplicate positive discovery findings", () => {
+    const classified = classifyReviewsMock(
+      POSITIVE_DISCOVERY_CORPUS.map((r) => ({
+        source: r.source,
+        text: r.text,
+      })),
+    );
+    const aggregation = aggregateReviews(classified);
+    const report = buildExecutiveResearchReport({
+      classified,
+      aggregation,
+    });
+
+    const titles = report.positive_discovery_signals.map((f) => f.title);
+    assert.equal(new Set(titles).size, titles.length);
+
+    const insights = synthesizeInsights(classified).filter((i) => i.is_positive);
+    const deduped = dedupeSimilarInsights(insights);
+    assert.ok(deduped.length <= insights.length);
   });
 });

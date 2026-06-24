@@ -79,7 +79,7 @@ export default function RunDashboardLoader({ runId }: RunDashboardLoaderProps) {
       classified={stored.classified}
       analysis={stored.analysis}
       usedMockClassifier={stored.run.used_mock_classifier}
-      onReupload={() => router.push("/")}
+      onReupload={() => router.push("/?new=1")}
     />
   );
 }

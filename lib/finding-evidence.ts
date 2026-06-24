@@ -1,3 +1,4 @@
+import { enrichRootCauseFinding } from "./root-cause-narratives";
 import type {
   ClassifiedReview,
   ClusterEvidence,
@@ -63,10 +64,38 @@ export function buildTopSegments(
     }));
 }
 
+function normalizeConfidenceScore(value: number | undefined | null): number {
+  if (value == null || Number.isNaN(value)) return 0.7;
+  if (value > 1 && value <= 100) return value / 100;
+  return value;
+}
+
 export function averageConfidence(reviews: ClassifiedReview[]): number {
   if (reviews.length === 0) return 0;
-  const sum = reviews.reduce((acc, r) => acc + (r.confidence ?? 0.7), 0);
+  const sum = reviews.reduce(
+    (acc, r) => acc + normalizeConfidenceScore(r.confidence),
+    0,
+  );
   return Math.round((sum / reviews.length) * 100) / 100;
+}
+
+export function averageQuoteConfidence(quotes: QuoteEvidence[]): number {
+  if (quotes.length === 0) return 0;
+  const sum = quotes.reduce(
+    (acc, q) => acc + normalizeConfidenceScore(q.confidence),
+    0,
+  );
+  return Math.round((sum / quotes.length) * 100) / 100;
+}
+
+/** Average classification confidence for all reviews tagged to a finding. */
+export function resolveFindingConfidence(
+  taggedReviews: ClassifiedReview[],
+  quotes: QuoteEvidence[],
+): number {
+  const fromReviews = averageConfidence(taggedReviews);
+  if (fromReviews > 0) return fromReviews;
+  return averageQuoteConfidence(quotes);
 }
 
 export function clusterToFinding(
@@ -76,18 +105,20 @@ export function clusterToFinding(
   summary?: string,
 ): EvidenceBackedFinding {
   const matching = reviewsMatchingLabel(reviews, field, cluster.label);
-  return {
+  const finding: EvidenceBackedFinding = {
     id: slugify(cluster.label),
     title: cluster.label,
     summary: summary ?? `${cluster.label} appears in ${cluster.pct}% of discovery-related reviews (${cluster.count} reviews).`,
     pct: cluster.pct,
     evidence_count: cluster.count,
-    confidence: averageConfidence(matching),
+    confidence: resolveFindingConfidence(matching, cluster.quotes),
     quotes: cluster.quotes,
     source_distribution: buildSourceDistribution(matching),
     top_segments: buildTopSegments(matching),
     related_review_ids: cluster.quotes.map((q) => q.review_id),
   };
+
+  return field === "root_cause" ? enrichRootCauseFinding(finding) : finding;
 }
 
 export function buildSegmentChallengeFindings(
@@ -132,7 +163,7 @@ export function buildSegmentChallengeFindings(
         challenge: col,
         pct: cell.pct,
         evidence_count: cell.count,
-        confidence: averageConfidence(matching),
+        confidence: resolveFindingConfidence(matching, quotes),
         quotes,
         source_distribution: buildSourceDistribution(matching),
         related_review_ids: quotes.map((q) => q.review_id),

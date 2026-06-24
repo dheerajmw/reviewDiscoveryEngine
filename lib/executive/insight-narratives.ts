@@ -6,7 +6,6 @@ export const SEGMENT_DISPLAY_NAMES: Record<string, string> = {
   "Casual Listener": "Casual Listener",
   "Playlist-Centric Listener": "Playlist Curator",
   "Discovery-Focused Listener": "Discovery Seeker",
-  "New User": "New User",
   "Unspecified Segment": "General Listener",
 };
 
@@ -21,6 +20,12 @@ export const THEME_INSIGHT_FRAGMENTS: Record<string, string> = {
     "recommendation surfaces remain trapped in narrow genre bubbles despite varied listening history",
   "Algorithm Distrust":
     "users question whether recommendations genuinely reflect their preferences or opaque optimization",
+  "Algorithm Anxiety":
+    "users avoid skips and exploration because they fear corrupting future recommendations",
+  "Mood-Context Mismatch":
+    "recommendations ignore emotional state and situational listening context",
+  "Trust Erosion":
+    "once-trusted discovery surfaces declined in quality and users stopped relying on them",
   "Weak Discovery Surfaces":
     "built-in discovery features fail to surface compelling new music at the moment users seek it",
   "Discovery Fatigue":
@@ -75,6 +80,8 @@ export const ROOT_CAUSE_INSIGHT_FRAGMENTS: Record<string, string> = {
     "autoplay and radio modes recycle library content instead of branching outward",
   "Discovery Surface Design Issues":
     "discovery surface design prioritizes engagement metrics over genuine artist introduction",
+  "No Exploration Sandbox":
+    "exploration actions bleed into the main recommendation profile with no safe sandbox to try new music",
   "Cross-Content Recommendation Bias":
     "cross-content signals (podcasts, audiobooks) bleed into music recommendations",
   "Unclear Repetition Cause":
@@ -148,6 +155,12 @@ export const BUSINESS_IMPLICATIONS: Record<string, string> = {
     "Power users churn to manual curation or competing platforms with better discovery tools.",
   "Genre Lock-In": "Cross-genre listeners feel underserved, limiting catalog depth perception.",
   "Algorithm Distrust": "Users disengage from recommendations and rely on external discovery.",
+  "Algorithm Anxiety":
+    "Fear of corrupting the algorithm suppresses exploration and keeps users in safe listening patterns.",
+  "Mood-Context Mismatch":
+    "Context-blind recommendations feel irrelevant when mood or situation shifts.",
+  "Trust Erosion":
+    "Declining discovery surface quality erodes long-term trust in flagship playlists.",
   "Weak Discovery Surfaces": "Flagship discovery features underdeliver on Spotify's core value proposition.",
   "Similar Artist Loop": "Artist exploration stagnates, reducing long-tail catalog engagement.",
   "Listening History Loop":
@@ -211,6 +224,15 @@ export function composeMechanismTitle(insight: {
     if (theme === "Successful Artist Discovery") {
       return "Spotify successfully introduces unfamiliar artists that users adopt into regular listening.";
     }
+    if (theme === "Recommendation Success") {
+      return "Users report recommendation quality that aligns with taste and discovery intent.";
+    }
+    if (theme === "Discovery Delight") {
+      return "Discovery surfaces surprise users with compelling music that exceeds expectations.";
+    }
+    if (theme === "Positive Discovery Experience") {
+      return "Spotify's discovery surfaces consistently introduce new artists that expand user taste.";
+    }
     return "Users consistently praise Spotify's ability to introduce new artists through discovery surfaces.";
   }
 
@@ -229,6 +251,15 @@ export function composeMechanismTitle(insight: {
     }
     if (insight.themes?.includes("Algorithm Distrust")) {
       return "Opaque recommendations erode user trust in Spotify's discovery engine.";
+    }
+    if (insight.themes?.includes("Algorithm Anxiety")) {
+      return "Users avoid exploration and skips because they fear corrupting future recommendations.";
+    }
+    if (insight.themes?.includes("Mood-Context Mismatch")) {
+      return "Recommendations fail to match the user's mood and situational listening context.";
+    }
+    if (insight.themes?.includes("Trust Erosion")) {
+      return "Users lost trust in once-reliable discovery surfaces after quality declined over time.";
     }
     return `${insight.symptom.replace(/\.$/, "")} — ${insight.mechanism.replace(/\.$/, "")}.`;
   }
@@ -291,6 +322,15 @@ export function composeFindingTitle(parts: {
   }
   if (parts.theme === "Algorithm Distrust") {
     return "Opaque recommendations erode user trust in Spotify's discovery engine.";
+  }
+  if (parts.theme === "Algorithm Anxiety") {
+    return "Users avoid exploration because they fear skipping or novelty will corrupt future recommendations.";
+  }
+  if (parts.theme === "Mood-Context Mismatch") {
+    return "Recommendations ignore mood and context, delivering the wrong energy for the moment.";
+  }
+  if (parts.theme === "Trust Erosion") {
+    return "Users abandoned once-trusted discovery surfaces after sustained quality decline.";
   }
   if (parts.barrier === "Similar Artist Loop") {
     return "Users repeatedly encounter familiar artists instead of meaningful new introductions.";

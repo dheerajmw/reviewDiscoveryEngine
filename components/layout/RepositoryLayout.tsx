@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import AppSidebar, { type SidebarSection } from "./AppSidebar";
-import Icon from "@/components/ui/Icon";
+import NewAnalysisLink from "./NewAnalysisLink";
 
 interface RepositoryLayoutProps {
   children: ReactNode;
@@ -32,13 +31,10 @@ export default function RepositoryLayout({
               </p>
             )}
           </div>
-          <Link
-            href="/"
+          <NewAnalysisLink
             className="flex shrink-0 items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-on-primary transition-all hover:opacity-90 active:scale-95"
-          >
-            <Icon name="upload_file" className="text-base" />
-            New analysis
-          </Link>
+            icon="upload_file"
+          />
         </header>
 
         <main className="custom-scrollbar flex-1 overflow-y-auto p-gutter">

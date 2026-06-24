@@ -1,3 +1,4 @@
+import { PIPELINE_FILTER_SUMMARY } from "@/lib/filter-stages";
 import { PLATFORM_NAME } from "@/lib/brand";
 import Icon from "@/components/ui/Icon";
 import ReviewVolumeGuidance from "./ReviewVolumeGuidance";
@@ -34,7 +35,7 @@ export default function FetchHeroIntro() {
         <p className="animate-fade-in-up mx-auto mb-10 max-w-md text-base leading-relaxed text-on-surface-variant stagger-3 md:mx-0">
           Live fetch and analysis for the Spotify app — Google Play, App Store,
           Reddit, and Spotify Community — focused on music discovery and
-          recommendations.
+          recommendations. {PIPELINE_FILTER_SUMMARY}
         </p>
 
         <ul className="animate-fade-in-up space-y-4 stagger-4">

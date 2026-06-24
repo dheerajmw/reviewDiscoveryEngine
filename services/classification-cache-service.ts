@@ -155,3 +155,26 @@ export function mergeCachedClassifications(
     return fresh;
   });
 }
+
+export async function loadCachedClassificationsOnly(
+  reviews: RawReview[],
+  model = LLM_MODEL,
+): Promise<{
+  classified: ClassifiedReview[];
+  cachedCount: number;
+  total: number;
+}> {
+  const lookup = await lookupClassificationCache(reviews, model);
+  const classified: ClassifiedReview[] = [];
+
+  for (let index = 0; index < reviews.length; index++) {
+    const hit = lookup.hits.get(index);
+    if (hit) classified.push(hit);
+  }
+
+  return {
+    classified,
+    cachedCount: lookup.hits.size,
+    total: reviews.length,
+  };
+}

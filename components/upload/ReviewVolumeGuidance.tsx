@@ -7,6 +7,7 @@ import {
   RECOMMENDED_MAX_AFTER_CLEANUP,
   RECOMMENDED_MIN_REVIEWS_FETCHED,
 } from "@/lib/review-volume-guidance";
+import { PIPELINE_FILTER_SUMMARY } from "@/lib/filter-stages";
 import Icon from "@/components/ui/Icon";
 
 interface ReviewVolumeGuidanceProps {
@@ -47,8 +48,9 @@ export default function ReviewVolumeGuidance({
               <span className="font-medium text-on-surface">
                 {formatAfterCleanupRange()} discovery-related
               </span>{" "}
-              reviews — too few may leave nothing to analyze; too many can use a
-              large LLM token budget after cleanup (~400 tokens per kept review).
+              reviews — {PIPELINE_FILTER_SUMMARY} Too few may leave nothing to
+              analyze; too many can use a large LLM token budget after cleanup
+              (~400 tokens per kept review).
             </p>
           </div>
         </div>

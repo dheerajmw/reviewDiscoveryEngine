@@ -192,7 +192,7 @@ export default function QuotaSplitPanel({
           <p className="mt-2 text-[11px] leading-relaxed opacity-90">
             Alternatively: enable{" "}
             <code className="font-mono">USE_MOCK_CLASSIFIER=true</code> for demo
-            mode without Cerebras API credits.
+            mode without Groq API credits.
           </p>
         </div>
       </div>

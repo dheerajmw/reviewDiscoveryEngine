@@ -11,6 +11,8 @@ export const USER_AGENT =
 
 export const SPOTIFY_PLAY_ID = "com.spotify.music";
 export const SPOTIFY_APP_STORE_ID = 324684580;
+/** Required for apps.apple.com page fetch (RSS feed no longer works). */
+export const SPOTIFY_APP_STORE_SLUG = "spotify-music-and-podcasts";
 
 /** Subreddits scraped automatically when Reddit is selected (no input needed). */
 export const DEFAULT_REDDIT_SUBREDDITS = [

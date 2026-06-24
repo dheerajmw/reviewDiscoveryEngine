@@ -25,7 +25,7 @@ export default function LlmEstimatePanel({
   estimate,
   model,
   limits,
-  provider = "Cerebras Cloud",
+  provider = "Groq",
 }: LlmEstimatePanelProps) {
   const exceeds =
     estimate.exceedsDailyTokenQuota || estimate.exceedsDailyRequestQuota;

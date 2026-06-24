@@ -5,6 +5,7 @@ import Link from "next/link";
 import { fetchAnalysisRuns } from "@/lib/runs-client";
 import type { AnalysisRunSummary } from "@/lib/types";
 import RepositoryLayout from "@/components/layout/RepositoryLayout";
+import NewAnalysisLink from "@/components/layout/NewAnalysisLink";
 import Icon from "@/components/ui/Icon";
 
 function formatRunDate(iso: string): string {
@@ -75,13 +76,10 @@ export default function AnalysisHistory() {
             <p className="mt-4 text-sm text-on-surface-variant">
               No analysis runs yet. Upload a CSV to start your research repository.
             </p>
-            <Link
-              href="/"
+            <NewAnalysisLink
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary"
-            >
-              <Icon name="upload_file" />
-              New analysis
-            </Link>
+              icon="upload_file"
+            />
           </div>
         )}
 

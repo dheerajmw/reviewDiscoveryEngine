@@ -8,6 +8,10 @@ import type {
   QuoteEvidence,
   SegmentChallengeFinding,
 } from "@/lib/types";
+import {
+  averageQuoteConfidence,
+  resolveFindingConfidence,
+} from "@/lib/finding-evidence";
 import Icon from "@/components/ui/Icon";
 import SourceBadge from "@/components/ui/SourceBadge";
 import EvidenceMeta from "./EvidenceMeta";
@@ -90,6 +94,24 @@ export default function FindingDetailDrawer({
     topSegments = f.top_segments;
     quotes = f.quotes;
     relatedIds = f.related_review_ids;
+    if (f.mechanism && f.product_implication) {
+      extra = (
+        <div className="space-y-4">
+          <div>
+            <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
+              Mechanism
+            </h4>
+            <p className="text-sm text-on-surface">{f.mechanism}</p>
+          </div>
+          <div>
+            <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
+              Product implication
+            </h4>
+            <p className="text-sm text-on-surface">{f.product_implication}</p>
+          </div>
+        </div>
+      );
+    }
   } else if (selection.type === "segment") {
     const f = selection.finding;
     title = `${f.segment} — ${f.challenge}`;
@@ -110,20 +132,36 @@ export default function FindingDetailDrawer({
     quotes = f.quotes;
     relatedIds = f.related_review_ids;
     extra = (
-      <div>
-        <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
-          Driven by unmet needs
-        </h4>
-        <ul className="flex flex-wrap gap-2">
-          {f.supporting_unmet_needs.map((need) => (
-            <li
-              key={need}
-              className="rounded-full bg-secondary-container px-2 py-0.5 text-xs text-on-secondary-container"
-            >
-              {need}
-            </li>
-          ))}
-        </ul>
+      <div className="space-y-4">
+        <div>
+          <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
+            Driven by unmet needs
+          </h4>
+          <ul className="flex flex-wrap gap-2">
+            {f.supporting_unmet_needs.map((need) => (
+              <li
+                key={need}
+                className="rounded-full bg-secondary-container px-2 py-0.5 text-xs text-on-secondary-container"
+              >
+                {need}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
+            Affected segment
+          </h4>
+          <p className="text-sm text-on-surface">
+            {f.affected_segments.join(", ")}
+          </p>
+        </div>
+        <div>
+          <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-on-surface-variant">
+            Retention signal
+          </h4>
+          <p className="text-sm text-on-surface">{f.retention_signal}</p>
+        </div>
       </div>
     );
   } else {
@@ -150,6 +188,19 @@ export default function FindingDetailDrawer({
     relatedReviews = relatedIds
       .map((id) => reviewMap.get(id))
       .filter(Boolean) as ClassifiedReview[];
+  }
+
+  if (
+    selection.type === "finding" ||
+    selection.type === "segment" ||
+    selection.type === "opportunity"
+  ) {
+    confidence = resolveFindingConfidence(relatedReviews, quotes);
+    if (confidence <= 0) {
+      confidence = selection.finding.confidence;
+    }
+  } else if (selection.type === "cluster") {
+    confidence = averageQuoteConfidence(quotes);
   }
 
   const drawerLabel = isCorpus ? "Matched evidence" : "Finding evidence";
