@@ -9,9 +9,14 @@ interface FindingQuoteListProps {
   onQuoteClick?: (quote: QuoteEvidence) => void;
 }
 
-function truncate(text: string, max = 220): string {
-  if (text.length <= max) return text;
-  return `${text.slice(0, max)}…`;
+function truncate(
+  text: string,
+  source?: string | null,
+  max = 220,
+): string {
+  const limit = source === "spotify-community" ? 600 : max;
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit)}…`;
 }
 
 function quoteListKey(quote: QuoteEvidence, index: number): string {
@@ -49,7 +54,7 @@ export default function FindingQuoteList({
             />
             <div className="min-w-0 flex-1">
               <p className="text-sm leading-relaxed text-on-surface-variant group-hover:text-on-surface">
-                &ldquo;{truncate(formatReviewQuoteText(quote.source, quote.text))}&rdquo;
+                &ldquo;{truncate(formatReviewQuoteText(quote.source, quote.text), quote.source)}&rdquo;
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <SourceBadge source={quote.source} />

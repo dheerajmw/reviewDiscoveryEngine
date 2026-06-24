@@ -86,8 +86,9 @@ function FindingCard({ finding, index }: { finding: ExecutiveFinding; index: num
       </div>
       {leadQuoteDisplay && leadQuote ? (
         <blockquote className="border-l-2 border-primary/40 pl-3 text-sm italic text-on-surface-variant">
-          &ldquo;{leadQuoteDisplay.slice(0, 200)}
-          {leadQuoteDisplay.length > 200 ? "…" : ""}&rdquo;
+          <p className="max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+            &ldquo;{leadQuoteDisplay}&rdquo;
+          </p>
           <footer className="mt-1 text-xs not-italic text-on-surface-variant/80">
             — {leadQuote.source}
           </footer>

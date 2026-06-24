@@ -10,9 +10,14 @@ interface ClusterQuotesProps {
   maxClusters?: number;
 }
 
-function truncate(text: string, max = 220): string {
-  if (text.length <= max) return text;
-  return `${text.slice(0, max)}…`;
+function truncate(
+  text: string,
+  source?: string | null,
+  max = 220,
+): string {
+  const limit = source === "spotify-community" ? 600 : max;
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit)}…`;
 }
 
 export default function ClusterQuotes({
@@ -52,7 +57,7 @@ export default function ClusterQuotes({
                 >
                   <Icon name="format_quote" className="shrink-0 text-primary/60" />
                   <div>
-                    <p className="leading-relaxed">&ldquo;{truncate(formatReviewQuoteText(quote.source, quote.text))}&rdquo;</p>
+                    <p className="leading-relaxed">&ldquo;{truncate(formatReviewQuoteText(quote.source, quote.text), quote.source)}&rdquo;</p>
                     <p className="mt-1 text-xs capitalize text-outline">
                       {quote.source} · {quote.segment}
                     </p>
