@@ -16,12 +16,6 @@ export interface FetchLiveReviewsOptions {
   ) => void;
 }
 
-const CHUNKED_SOURCES = new Set<FetchSourceId>([
-  "reddit",
-  "spotify-community",
-  "social-media",
-]);
-
 function dedupeRawReviews(reviews: RawReview[]): RawReview[] {
   const seen = new Set<string>();
   return reviews.filter((review) => {
@@ -69,7 +63,7 @@ async function fetchLiveReviewsForSourceChunked(
   source: FetchSourceId,
 ): Promise<FetchReviewsResult> {
   const chunkSize = SERVERLESS_CHUNKED_SOURCE_LIMIT;
-  if (!CHUNKED_SOURCES.has(source) || request.limitPerSource <= chunkSize) {
+  if (request.limitPerSource <= chunkSize) {
     return fetchLiveReviewsForSource(request, source);
   }
 

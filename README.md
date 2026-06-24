@@ -203,7 +203,7 @@ See [`.env.local.example`](.env.local.example). Key variables:
 | `GROQ_MODEL` | Model slug (default `meta-llama/llama-4-scout-17b-16e-instruct`) |
 | `LLM_DAILY_TOKEN_BUDGET` | Optional cap for quota-split UI (default `500000` TPD on Groq) |
 | `LLM_REQUESTS_PER_DAY` | Daily request budget for split UI (default `1000` on Groq) |
-| `LLM_CLASSIFY_BATCH_SIZE` | Reviews per LLM call (default `2`, auto-capped for output tokens) |
+| `LLM_CLASSIFY_BATCH_SIZE` | Reviews per LLM call (default `10`, auto-capped for output tokens) |
 | `LLM_BATCH_DELAY_MS` | Delay floor between batches (auto from RPM + TPM) |
 | `USE_MOCK_CLASSIFIER` | `true` = rule-based demo mode |
 | `TURSO_DATABASE_URL` | Research repository (local file or remote) |

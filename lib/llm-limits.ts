@@ -85,8 +85,8 @@ export function maxClassifyBatchSizeForOutput(): number {
 
 export const MAX_CLASSIFY_BATCH_SIZE = 10;
 
-/** Default batch size — small batches avoid truncated classify JSON. */
-export const DEFAULT_CLASSIFY_BATCH_SIZE = 2;
+/** Default batch size when LLM_CLASSIFY_BATCH_SIZE is unset. */
+export const DEFAULT_CLASSIFY_BATCH_SIZE = 10;
 
 export function getClassifyBatchSize(): number {
   const safeMax = maxClassifyBatchSizeForOutput();

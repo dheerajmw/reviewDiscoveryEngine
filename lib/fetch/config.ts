@@ -176,7 +176,7 @@ export const FETCH_SOURCES: FetchSourceConfig[] = [
     supportsSort: true,
     supportsMinRating: true,
     supportsCountry: true,
-    defaultLimit: 100,
+    defaultLimit: 50,
     maxLimit: DEFAULT_MAX_LIMIT_PER_SOURCE,
   },
   {
@@ -186,7 +186,7 @@ export const FETCH_SOURCES: FetchSourceConfig[] = [
     supportsSort: true,
     supportsMinRating: true,
     supportsCountry: true,
-    defaultLimit: 100,
+    defaultLimit: 50,
     maxLimit: DEFAULT_MAX_LIMIT_PER_SOURCE,
   },
   {

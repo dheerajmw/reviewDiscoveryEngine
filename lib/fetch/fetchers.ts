@@ -5,6 +5,7 @@ import {
 import {
   getPullpushRequestTimeoutMs,
   getSourceFetchBudgetMs,
+  isTightFetchBudget,
 } from "./budget";
 import {
   communityFetchPlan,
@@ -22,6 +23,7 @@ import type {
   FetchedReviewRow,
   PlayStoreSort,
 } from "./types";
+import gplay from "google-play-scraper";
 import {
   dedupeByText,
   fetchWithRetry,
@@ -29,15 +31,15 @@ import {
   sleep,
 } from "./utils";
 
+const playScraper = (gplay as { default?: typeof gplay }).default ?? gplay;
+
 async function fetchPlayStoreReviewsForRegion(options: {
   limit: number;
   sort: PlayStoreSort;
   country: string;
   minRating?: number;
+  deadline?: number;
 }): Promise<FetchedReviewRow[]> {
-  const gplay = await import("google-play-scraper");
-  const scraper = gplay.default ?? gplay;
-
   const sortMap: Record<PlayStoreSort, number> = {
     newest: 2,
     rating: 3,
@@ -47,9 +49,14 @@ async function fetchPlayStoreReviewsForRegion(options: {
   const rows: FetchedReviewRow[] = [];
   const seen = new Set<string>();
   let token: string | undefined;
+  let pages = 0;
+  const maxPages = isTightFetchBudget() ? 2 : 12;
 
   while (rows.length < options.limit) {
-    const result = await scraper.reviews({
+    if (options.deadline && Date.now() > options.deadline) break;
+    if (pages >= maxPages) break;
+
+    const result = await playScraper.reviews({
       appId: SPOTIFY_PLAY_ID,
       lang: "en",
       country: options.country,
@@ -58,6 +65,7 @@ async function fetchPlayStoreReviewsForRegion(options: {
       nextPaginationToken: token,
     });
 
+    pages += 1;
     const data = result.data ?? [];
     if (!data.length) break;
 
@@ -94,13 +102,15 @@ export async function fetchPlayStoreReviews(options: {
   const deadline = Date.now() + getSourceFetchBudgetMs();
 
   if (options.region === GLOBAL_REGION_ID) {
+    const countries = isTightFetchBudget() ? ["us"] : STORE_REGION_CODES;
     const combined: FetchedReviewRow[] = [];
-    for (const country of STORE_REGION_CODES) {
+    for (const country of countries) {
       if (combined.length >= options.limit || Date.now() > deadline) break;
       const batch = await fetchPlayStoreReviewsForRegion({
         ...options,
         country,
         limit: options.limit - combined.length,
+        deadline,
       });
       combined.push(...batch);
     }
@@ -110,6 +120,7 @@ export async function fetchPlayStoreReviews(options: {
   return fetchPlayStoreReviewsForRegion({
     ...options,
     country: options.region,
+    deadline,
   });
 }
 

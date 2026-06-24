@@ -14,6 +14,56 @@ export { estimateLlmClassification };
 
 const MAX_BATCH_RETRIES = 4;
 
+export interface ClassifyRuntimeConfig {
+  mockEnabled: boolean;
+  batchSize: number;
+  batchDelayMs: number;
+  provider?: string;
+  model?: string;
+}
+
+let classifyConfigPromise: Promise<ClassifyRuntimeConfig> | null = null;
+
+/** Server-authoritative batch settings (env vars are not available in the browser). */
+export async function loadClassifyRuntimeConfig(): Promise<ClassifyRuntimeConfig> {
+  if (!classifyConfigPromise) {
+    classifyConfigPromise = fetch("/api/classify/config")
+      .then(async (response) => {
+        const data = (await response.json()) as ClassifyRuntimeConfig & {
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(data.error ?? "Failed to load classify config.");
+        }
+        const batchSize =
+          Number.isFinite(Number(data.batchSize)) && Number(data.batchSize) >= 1
+            ? Math.floor(Number(data.batchSize))
+            : getClassifyBatchSize();
+        return {
+          mockEnabled: Boolean(data.mockEnabled),
+          batchSize,
+          batchDelayMs:
+            Number.isFinite(Number(data.batchDelayMs)) &&
+            Number(data.batchDelayMs) >= 0
+              ? Math.floor(Number(data.batchDelayMs))
+              : getClassifyBatchDelayMs(batchSize),
+          provider: data.provider,
+          model: data.model,
+        };
+      })
+      .catch(() => ({
+        mockEnabled: true,
+        batchSize: DEFAULT_CLASSIFY_BATCH_SIZE,
+        batchDelayMs: getClassifyBatchDelayMs(DEFAULT_CLASSIFY_BATCH_SIZE),
+      }));
+  }
+  return classifyConfigPromise;
+}
+
+export function resetClassifyRuntimeConfigCache(): void {
+  classifyConfigPromise = null;
+}
+
 export interface ClassifyAllResult {
   classified: ClassifiedReview[];
   mock: boolean;
@@ -109,8 +159,7 @@ export async function classifyAllReviews(
   reviews: RawReview[],
   onProgress?: (completed: number, total: number) => void,
 ): Promise<ClassifyAllResult> {
-  const batchSize = getClassifyBatchSize();
-  const batchDelayMs = getClassifyBatchDelayMs(batchSize);
+  const { batchSize, batchDelayMs } = await loadClassifyRuntimeConfig();
 
   const classified: ClassifiedReview[] = [];
   let mock = false;

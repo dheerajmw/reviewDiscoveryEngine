@@ -8,16 +8,25 @@ export function getSourceFetchBudgetMs(): number {
     }
   }
   // Vercel Hobby hard-caps at 10s; leave headroom for cold start + JSON serialization.
-  return process.env.VERCEL ? 8_500 : 50_000;
+  return process.env.VERCEL ? 6_500 : 50_000;
+}
+
+/** Hard ceiling before the platform returns an HTML 504 page. */
+export function getPlatformFetchDeadlineMs(): number {
+  return process.env.VERCEL ? 9_000 : 120_000;
 }
 
 export function getPullpushRequestTimeoutMs(): number {
-  return getSourceFetchBudgetMs() <= 12_000 ? 5_000 : 12_000;
+  return getSourceFetchBudgetMs() <= 12_000 ? 4_000 : 12_000;
+}
+
+export function getAppStoreRequestTimeoutMs(): number {
+  return getSourceFetchBudgetMs() <= 12_000 ? 3_500 : 8_000;
 }
 
 export function isTightFetchBudget(budgetMs = getSourceFetchBudgetMs()): boolean {
   return budgetMs <= 12_000;
 }
 
-/** Client-side chunk size for sources that fan out on the server. */
-export const SERVERLESS_CHUNKED_SOURCE_LIMIT = 30;
+/** Client-side chunk size — each /api/fetch-reviews call must finish within ~10s on Vercel Hobby. */
+export const SERVERLESS_CHUNKED_SOURCE_LIMIT = 20;

@@ -1,7 +1,11 @@
 import { SPOTIFY_APP_STORE_ID, SPOTIFY_APP_STORE_SLUG, USER_AGENT } from "./config";
 import type { FetchedReviewRow } from "./types";
 import { fetchWithRetry } from "./utils";
-import { getSourceFetchBudgetMs } from "./budget";
+import {
+  getAppStoreRequestTimeoutMs,
+  getSourceFetchBudgetMs,
+  isTightFetchBudget,
+} from "./budget";
 
 /**
  * Apple shut down the public iTunes RSS customer-reviews feed in 2026.
@@ -119,7 +123,7 @@ async function fetchCountryPage(
       Accept: "text/html,application/xhtml+xml",
       "Accept-Language": "en-US,en;q=0.9",
     },
-    timeoutMs: 8_000,
+    timeoutMs: getAppStoreRequestTimeoutMs(),
     retries: 0,
   });
   if (!response.ok) {
@@ -156,34 +160,45 @@ export async function fetchAppStoreReviewsFromPages(options: {
   const rows: FetchedReviewRow[] = [];
   const seenIds = new Set<string>();
 
-  const batches = await Promise.all(
-    countryList.map(async (country) => {
-      if (Date.now() > deadline) return [] as { id?: string; row: FetchedReviewRow }[];
-      try {
-        const pageReviews = await fetchCountryPage(appId, slug, country);
-        const batch: { id?: string; row: FetchedReviewRow }[] = [];
-        for (const review of pageReviews) {
-          const row = toFetchedRow(review, country, appId);
-          if (!row) continue;
-          if (
-            minRating > 0 &&
-            typeof row.rating === "number" &&
-            row.rating < minRating
-          ) {
-            continue;
-          }
-          batch.push({ id: review.id?.trim(), row });
+  const fetchCountryBatch = async (
+    country: string,
+  ): Promise<{ id?: string; row: FetchedReviewRow }[]> => {
+    if (Date.now() > deadline) return [];
+    try {
+      const pageReviews = await fetchCountryPage(appId, slug, country);
+      const batch: { id?: string; row: FetchedReviewRow }[] = [];
+      for (const review of pageReviews) {
+        const row = toFetchedRow(review, country, appId);
+        if (!row) continue;
+        if (
+          minRating > 0 &&
+          typeof row.rating === "number" &&
+          row.rating < minRating
+        ) {
+          continue;
         }
-        return batch;
-      } catch (error) {
-        console.warn(
-          `[fetch] appstore ${country}:`,
-          error instanceof Error ? error.message : error,
-        );
-        return [] as { id?: string; row: FetchedReviewRow }[];
+        batch.push({ id: review.id?.trim(), row });
       }
-    }),
-  );
+      return batch;
+    } catch (error) {
+      console.warn(
+        `[fetch] appstore ${country}:`,
+        error instanceof Error ? error.message : error,
+      );
+      return [];
+    }
+  };
+
+  const batches = isTightFetchBudget()
+    ? await (async () => {
+        const out: { id?: string; row: FetchedReviewRow }[][] = [];
+        for (const country of countryList) {
+          if (rows.length >= options.limit || Date.now() > deadline) break;
+          out.push(await fetchCountryBatch(country));
+        }
+        return out;
+      })()
+    : await Promise.all(countryList.map((country) => fetchCountryBatch(country)));
 
   for (const batch of batches) {
     for (const item of batch) {

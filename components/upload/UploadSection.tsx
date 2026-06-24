@@ -62,6 +62,7 @@ export default function UploadSection() {
     model: string;
     limits: LlmProviderLimits;
     provider?: string;
+    batchSize: number;
   } | null>(null);
   const [curationStats, setCurationStats] = useState<CurationStats | null>(null);
   const [curationNote, setCurationNote] = useState<string | null>(null);
@@ -93,6 +94,7 @@ export default function UploadSection() {
           provider?: string;
           model?: string;
           limits?: LlmProviderLimits;
+          batchSize?: number;
         }) => {
           setMockClassifierEnabled(Boolean(data.mockEnabled));
           if (data.model && data.limits) {
@@ -100,6 +102,10 @@ export default function UploadSection() {
               model: data.model,
               limits: data.limits,
               provider: data.provider,
+              batchSize:
+                typeof data.batchSize === "number" && data.batchSize >= 1
+                  ? data.batchSize
+                  : 10,
             });
           }
         },
@@ -126,7 +132,10 @@ export default function UploadSection() {
 
   const llmEstimate =
     curatedReviews && !mockClassifierEnabled
-      ? estimateLlmClassification(curatedReviews.length)
+      ? estimateLlmClassification(
+          curatedReviews.length,
+          llmConfig?.batchSize ?? 10,
+        )
       : null;
 
   useEffect(() => {
