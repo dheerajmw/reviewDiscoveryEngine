@@ -221,7 +221,20 @@ export async function completeQueuedRun(input: {
   usedMockClassifier: boolean;
   curation?: AnalysisBundle["curation"];
 }): Promise<string> {
-  const classified = await resolveClassifiedForPersist(input);
+  const reviews =
+    input.reviews?.length
+      ? input.reviews
+      : input.classified?.length
+        ? input.classified.map((review) => ({
+            source: review.source,
+            text: review.text,
+          }))
+        : await getRawReviewsForRun(input.runId);
+
+  const classified = await resolveClassifiedForPersist({
+    reviews,
+    classified: input.classified,
+  });
   const { analysis, curation, runId } = input;
   const agg = analysis.aggregation;
 

@@ -67,7 +67,7 @@ export async function persistQueuedBatches(input: {
 
 export async function completeQueuedAnalysisRun(input: {
   runId: string;
-  reviews: RawReview[];
+  reviews?: RawReview[];
   classified?: ClassifiedReview[];
   analysis: AnalysisBundle;
   usedMockClassifier: boolean;
@@ -77,7 +77,6 @@ export async function completeQueuedAnalysisRun(input: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      reviews: input.reviews,
       classified: input.classified,
       analysis: input.analysis,
       usedMockClassifier: input.usedMockClassifier,

@@ -31,7 +31,7 @@ export async function POST(
 
   if (!reviews?.length && !classified?.length) {
     return NextResponse.json(
-      { error: "reviews or classified are required." },
+      { error: "classified reviews or a completed analysis payload is required." },
       { status: 400 },
     );
   }

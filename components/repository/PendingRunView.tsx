@@ -59,8 +59,7 @@ export default function PendingRunView({
       setPhaseNote("Writing results to the research repository…");
       await completeQueuedAnalysisRun({
         runId,
-        reviews,
-        classified: usedMockClassifier ? classified : undefined,
+        classified,
         analysis: { aggregation, findings, executive },
         usedMockClassifier,
         curation: {
@@ -73,8 +72,8 @@ export default function PendingRunView({
         },
       });
 
-      router.refresh();
-      router.push(`/runs/${runId}`);
+      // Full navigation — router.push to the same runId does not remount RunDashboardLoader.
+      window.location.assign(`/runs/${runId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed.");
       setAnalyzing(false);
