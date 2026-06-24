@@ -4,6 +4,7 @@ import {
 } from "./classify-research-mock";
 import { mergeClassificationItem } from "./classify-normalize";
 import {
+  BARRIER_FALLBACK,
   BARRIERS,
   BEHAVIORS,
   EMOTIONS,
@@ -542,7 +543,7 @@ function mockClassifyReview(review: RawReview, index: number): {
         ? "Strong Discovery Playlists"
         : "Positive Discovery Experience"
       : themeMatch.label;
-  const barrierMatch = matchFromRules(text, BARRIER_RULES, "Unclear Discovery Struggle");
+  const barrierMatch = matchFromRules(text, BARRIER_RULES, BARRIER_FALLBACK);
   const behaviorMatch = matchFromRules(
     text,
     BEHAVIOR_RULES,

@@ -6,6 +6,7 @@ import type {
   ResearchFindingsReport,
 } from "@/lib/types";
 import Icon from "@/components/ui/Icon";
+import { isBarrierFallbackLabel } from "@/lib/taxonomy";
 import { DASHBOARD_BARRIERS_SECTION_ID } from "./BarrierAnalysis";
 import { DASHBOARD_THEMES_SECTION_ID } from "./ThemeChart";
 
@@ -102,7 +103,9 @@ export default function DashboardExecutiveSummary({
     (k) => (aggregation.themeFrequency[k]?.count ?? 0) > 0,
   ).length;
   const activeBarriers = Object.keys(aggregation.barrierAnalysis).filter(
-    (k) => (aggregation.barrierAnalysis[k]?.count ?? 0) > 0,
+    (k) =>
+      (aggregation.barrierAnalysis[k]?.count ?? 0) > 0 &&
+      !isBarrierFallbackLabel(k),
   ).length;
   const findingCount =
     (executive?.top_discovery_problems?.length ?? 0) +

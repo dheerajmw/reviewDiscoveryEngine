@@ -3,7 +3,7 @@ import {
   formatResearchQuestionsForPrompt,
   NON_RESEARCH_FALLBACK,
 } from "./classify-research";
-import { formatTaxonomyForPrompt } from "./taxonomy";
+import { BARRIER_FALLBACK, formatTaxonomyForPrompt } from "./taxonomy";
 
 export const CLASSIFY_SYSTEM_PROMPT = `You are a senior PM research analyst studying Spotify music discovery and recommendations.
 
@@ -56,6 +56,16 @@ THEME guidance:
 - Distinguish "Algorithm Anxiety" (fear of corrupting future recs through skips/exploration) from "Algorithm Distrust" (belief current recommendations are opaque, manipulated, or untrustworthy now).
 - Distinguish "Trust Erosion" (declining quality over time on once-trusted surfaces) from "Weak Discovery Surfaces" (surfaces currently fail without a past-trust narrative).
 - Distinguish "Mood-Context Mismatch" (wrong energy/context for the moment) from "Poor Recommendation Quality" (general misalignment with taste).
+
+BARRIER guidance (choose ONE specific barrier; avoid "${BARRIER_FALLBACK}" unless no mechanism is inferable — target <10%):
+- Low Novelty: recommendations feel samey or lack variety.
+- Similar Artist Loop: the same artists keep resurfacing.
+- Genre Saturation: stuck in one genre bubble.
+- Lack of Exploration Controls: user cannot steer toward new music.
+- Poor Personalization Context: ignores mood, session, or taste context.
+- Ineffective Discovery Surfaces: Discover Weekly, DJ, Release Radar, or mixes fail to introduce fresh artists.
+- Cold Start Discovery: new or returning users get generic, non-personalized picks.
+- ${BARRIER_FALLBACK}: frustration is evident but text does not support any specific barrier above.
 
 SEGMENT guidance (choose ONE; default to Casual Listener if ambiguous — NOT Unspecified Segment):
 - "Music Explorer": actively seeks new artists/genres, skips familiar content, uses Spotify primarily to discover.

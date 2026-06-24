@@ -1,4 +1,4 @@
-import { FALLBACK_LABELS, OTHER_UNKNOWN_LABELS } from "../taxonomy";
+import { BARRIER_FALLBACK, FALLBACK_LABELS } from "../taxonomy";
 import type { ClassifiedReview } from "../types";
 
 export const FALLBACK_THRESHOLDS = {
@@ -104,7 +104,7 @@ export function buildFallbackHealthReport(
   }
   if (metrics.unclearDiscoveryStrugglePct > FALLBACK_THRESHOLDS.unclearDiscoveryStrugglePct) {
     exceeded.push({
-      metric: "Unclear Discovery Struggle",
+      metric: BARRIER_FALLBACK,
       actualPct: metrics.unclearDiscoveryStrugglePct,
       thresholdPct: FALLBACK_THRESHOLDS.unclearDiscoveryStrugglePct,
     });
@@ -128,7 +128,7 @@ export function buildFallbackHealthReport(
       ...pickSamples(sample, "unmet_need", FALLBACK_LABELS.unmet_need),
     );
   }
-  if (exceeded.some((e) => e.metric === "Unclear Discovery Struggle")) {
+  if (exceeded.some((e) => e.metric === BARRIER_FALLBACK)) {
     sampleReviews.push(
       ...pickSamples(sample, "barrier", FALLBACK_LABELS.barrier),
     );

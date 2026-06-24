@@ -1,4 +1,5 @@
 import type { ClassifiedReview } from "@/lib/types";
+import { getTaxonomyDisplayLabel } from "@/lib/taxonomy";
 
 const PREVIEW_LIMIT = 5;
 const TEXT_TRUNCATE = 100;
@@ -61,7 +62,7 @@ export default function ClassifiedPreview({ reviews }: ClassifiedPreviewProps) {
                   {review.segment}
                 </td>
                 <td className="px-4 py-3 align-top text-zinc-700">
-                  {review.barrier}
+                  {getTaxonomyDisplayLabel("barrier", review.barrier)}
                 </td>
                 <td className="px-4 py-3 text-zinc-600">
                   {truncateText(review.text)}

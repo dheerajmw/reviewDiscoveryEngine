@@ -1,5 +1,7 @@
 /** Executive narrative fragments — synthesize labels into product language, never report raw %. */
 
+import { BARRIER_FALLBACK } from "../taxonomy";
+
 export const SEGMENT_DISPLAY_NAMES: Record<string, string> = {
   "Long-Term Power Listener": "Power Listener",
   "Music Explorer": "Music Explorer",
@@ -61,8 +63,12 @@ export const BARRIER_INSIGHT_FRAGMENTS: Record<string, string> = {
     "Discover Weekly, Release Radar, and DJ fail to deliver fresh artists at meaningful cadence",
   "Cold Start Discovery":
     "new or returning users cannot break out of generic recommendations quickly enough",
+  "Unspecified discovery barrier":
+    "classifier could not map the review to a specific barrier — inspect underlying quotes",
+  [BARRIER_FALLBACK]:
+    "classifier could not map the review to a specific barrier — inspect underlying quotes",
   "Unclear Discovery Struggle":
-    "users articulate discovery frustration without naming a specific product failure mode",
+    "classifier could not map the review to a specific barrier — inspect underlying quotes",
 };
 
 export const ROOT_CAUSE_INSIGHT_FRAGMENTS: Record<string, string> = {

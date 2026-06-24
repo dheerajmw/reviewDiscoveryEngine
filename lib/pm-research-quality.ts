@@ -21,6 +21,7 @@ import { computeEvidenceStrength } from "./quality/evidence-strength";
 import { executiveCompletenessRate } from "./quality/executive-component-validation";
 import { preprocessReview } from "./review-preprocessing/preprocess-review";
 import {
+  BARRIER_FALLBACK,
   FALLBACK_LABELS,
   OTHER_UNKNOWN_LABELS,
 } from "./taxonomy";
@@ -417,7 +418,7 @@ export function buildBeforeAfter(
     },
     {
       key: "unclearDiscoveryStrugglePct",
-      label: "Unclear Discovery Struggle",
+      label: BARRIER_FALLBACK,
       target: "<25%",
     },
     {
@@ -872,7 +873,7 @@ export function formatPmResearchQualityMarkdown(
   }
   lines.push(`- Other Discovery Frustration: **${report.fallback.otherDiscoveryFrustrationPct}%**`);
   lines.push(`- General Discovery Improvement: **${report.fallback.generalDiscoveryImprovementPct}%**`);
-  lines.push(`- Unclear Discovery Struggle: **${report.fallback.unclearDiscoveryStrugglePct}%**`);
+  lines.push(`- ${BARRIER_FALLBACK}: **${report.fallback.unclearDiscoveryStrugglePct}%**`);
   lines.push(`- Unclear Repetition Cause: **${report.fallback.unclearRepetitionCausePct}%**`);
   lines.push(`- Any fallback label: **${report.fallback.anyFallbackLabelPct}%**`);
   lines.push("");
