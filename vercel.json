@@ -3,6 +3,9 @@
   "functions": {
     "app/api/fetch-reviews/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/classify/route.ts": {
+      "maxDuration": 60
     }
   }
 }

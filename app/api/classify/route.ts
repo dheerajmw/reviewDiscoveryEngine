@@ -22,6 +22,8 @@ import {
   saveClassificationCache,
 } from "@/services/classification-cache-service";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   let body: { reviews?: RawReview[]; audit?: boolean };
   try {

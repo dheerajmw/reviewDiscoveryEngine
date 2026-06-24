@@ -56,6 +56,17 @@ function outputTokenLimit(capped: number): Record<string, number> {
   return { max_tokens: capped };
 }
 
+function cerebrasRequestExtras(): Record<string, string> {
+  if (LLM_PROVIDER !== "cerebras" && !LLM_BASE_URL.includes("cerebras.ai")) {
+    return {};
+  }
+  // gpt-oss models emit reasoning tokens by default; "low" keeps JSON output reliable.
+  if (LLM_MODEL.includes("gpt-oss")) {
+    return { reasoning_effort: "low" };
+  }
+  return {};
+}
+
 async function chatCompletion(
   client: LlmClient,
   messages: ChatMessage[],
@@ -80,6 +91,7 @@ async function chatCompletion(
       temperature,
       ...(capped ? outputTokenLimit(capped) : {}),
       ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+      ...cerebrasRequestExtras(),
     }),
   });
 
