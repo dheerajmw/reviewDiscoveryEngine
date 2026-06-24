@@ -33,7 +33,7 @@ export function cleanSpotifyCommunityReviewText(text: string): string {
   }
 
   s = s.replace(
-    /\s+(?:Visitor|Roadie|Newbie|Casual Listener|Music Fan|Regular|Moderator|Spotify Staff|explicit content).*/is,
+    /\s+(?:Visitor|Roadie|Newbie|Casual Listener|Music Fan|Regular|Moderator|Spotify Staff|explicit content)[\s\S]*$/i,
     "",
   );
   s = s.replace(/\s+\d{4}-\d{2}-\d{2}[\s\d:APM]*.*$/i, "");
@@ -48,7 +48,10 @@ export function cleanSpotifyCommunityReviewText(text: string): string {
   return s.length >= 15 ? s : text.trim();
 }
 
-export function formatReviewQuoteText(source: string, text: string): string {
+export function formatReviewQuoteText(
+  source: string | null | undefined,
+  text: string,
+): string {
   if (source === "spotify-community") {
     return cleanSpotifyCommunityReviewText(text);
   }
