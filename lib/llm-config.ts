@@ -1,10 +1,13 @@
-/** OpenAI-compatible LLM configuration (Groq default, Cerebras optional). */
+/** OpenAI-compatible LLM configuration (Cerebras default, Groq optional). */
 
 export type LlmProviderId = "groq" | "cerebras";
 
 /** Best Groq balance for ReviewLens taxonomy classification (Developer plan). */
 export const GROQ_DEFAULT_MODEL =
   "meta-llama/llama-4-scout-17b-16e-instruct";
+
+/** Default Cerebras model for classification and chat. */
+export const CEREBRAS_DEFAULT_MODEL = "gpt-oss-120b";
 
 const PROVIDER_META: Record<
   LlmProviderId,
@@ -27,7 +30,7 @@ const PROVIDER_META: Record<
 export function getLlmProvider(): LlmProviderId {
   const explicit = process.env.LLM_PROVIDER?.trim().toLowerCase();
   if (explicit === "groq" || explicit === "cerebras") return explicit;
-  return "groq";
+  return "cerebras";
 }
 
 export const LLM_PROVIDER = getLlmProvider();
@@ -46,8 +49,7 @@ export const LLM_MODEL = (() => {
   }
   return (
     process.env.CEREBRAS_MODEL?.trim() ||
-    process.env.GROQ_MODEL?.trim() ||
-    "gpt-oss-120b"
+    CEREBRAS_DEFAULT_MODEL
   );
 })();
 

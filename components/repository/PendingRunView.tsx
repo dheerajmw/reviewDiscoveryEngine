@@ -108,7 +108,7 @@ export default function PendingRunView({
               </h2>
               <p className="mt-1 text-sm text-on-surface-variant">
                 This batch was saved from a split dataset and is waiting in the
-                repository. Run analysis when you have Groq quota available
+                repository. Run analysis when you have Cerebras quota available
                 (typically one part per day on the Developer plan).
               </p>
             </div>

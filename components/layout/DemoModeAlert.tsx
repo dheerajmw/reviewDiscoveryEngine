@@ -1,3 +1,4 @@
+import { LLM_API_KEY_ENV } from "@/lib/llm-config";
 import Icon from "@/components/ui/Icon";
 
 interface DemoModeAlertProps {
@@ -18,8 +19,8 @@ export default function DemoModeAlert({ compact = false }: DemoModeAlertProps) {
       />
       <p>
         Demo mode — some results use rule-based generation. Set{" "}
-        <code className="font-mono">USE_MOCK_CLASSIFIER=false</code> and add a
-        Groq API key (<code className="font-mono">GROQ_API_KEY</code>) for full AI
+        <code className="font-mono">USE_MOCK_CLASSIFIER=false</code> and add your
+        LLM API key (<code className="font-mono">{LLM_API_KEY_ENV}</code>) for full AI
         classification.
       </p>
     </div>

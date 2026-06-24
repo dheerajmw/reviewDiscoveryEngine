@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -13,6 +14,11 @@ import {
 import { CHART_COLORS, frequencyToChartData } from "@/lib/chart-data";
 import type { FrequencyEntry } from "@/lib/types";
 import Card from "@/components/ui/Card";
+import Icon from "@/components/ui/Icon";
+
+const PREVIEW_LIMIT = 5;
+const ROW_HEIGHT_PX = 46;
+const CHART_PADDING_PX = 36;
 
 interface FrequencyChartProps {
   title: string;
@@ -20,12 +26,32 @@ interface FrequencyChartProps {
   frequency: Record<string, FrequencyEntry>;
 }
 
+function axisLabelWidth(labels: string[]): number {
+  const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
+  return Math.min(240, Math.max(148, Math.ceil(longest * 6.2)));
+}
+
+function formatAxisLabel(label: string, maxLength = 28): string {
+  if (label.length <= maxLength) return label;
+  const breakAt = label.lastIndexOf(" ", maxLength);
+  const cut = breakAt > 12 ? breakAt : maxLength;
+  return `${label.slice(0, cut)}…`;
+}
+
 export default function FrequencyChart({
   title,
   subtitle,
   frequency,
 }: FrequencyChartProps) {
-  const data = frequencyToChartData(frequency);
+  const [expanded, setExpanded] = useState(false);
+  const data = useMemo(
+    () => frequencyToChartData(frequency).filter((item) => item.count > 0),
+    [frequency],
+  );
+  const hasMore = data.length > PREVIEW_LIMIT;
+  const visible = expanded ? data : data.slice(0, PREVIEW_LIMIT);
+  const chartHeight = Math.max(200, visible.length * ROW_HEIGHT_PX + CHART_PADDING_PX);
+  const yAxisWidth = axisLabelWidth(visible.map((item) => item.name));
 
   if (data.length === 0) {
     return (
@@ -37,9 +63,14 @@ export default function FrequencyChart({
 
   return (
     <Card title={title} subtitle={subtitle}>
-      <div className="h-64 w-full">
+      <div className="w-full" style={{ height: chartHeight }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ left: 8, right: 8 }}>
+          <BarChart
+            data={visible}
+            layout="vertical"
+            margin={{ left: 4, right: 12, top: 4, bottom: 4 }}
+            barCategoryGap="28%"
+          >
             <CartesianGrid
               strokeDasharray="3 3"
               horizontal={false}
@@ -49,26 +80,42 @@ export default function FrequencyChart({
               type="number"
               domain={[0, 100]}
               unit="%"
-              tick={{ fill: "#464554", fontSize: 12 }}
+              tick={{ fill: "#464554", fontSize: 11 }}
             />
             <YAxis
               type="category"
               dataKey="name"
-              width={120}
-              tick={{ fontSize: 12, fill: "#1b1b23" }}
+              width={yAxisWidth}
+              interval={0}
+              tick={({ x, y, payload }) => (
+                <text
+                  x={x}
+                  y={y}
+                  dy={3}
+                  textAnchor="end"
+                  fill="#1b1b23"
+                  fontSize={11}
+                  fontWeight={500}
+                >
+                  {formatAxisLabel(String(payload?.value ?? ""))}
+                </text>
+              )}
             />
             <Tooltip
-              formatter={(value, _name, item) => {
-                const count = typeof value === "number" ? value : 0;
-                const payload = item?.payload as { pct?: number; name?: string };
+              formatter={(_value, _name, item) => {
+                const payload = item?.payload as {
+                  pct?: number;
+                  name?: string;
+                  count?: number;
+                };
                 return [
-                  `${payload?.pct ?? 0}% (${count} reviews)`,
+                  `${payload?.pct ?? 0}% (${payload?.count ?? 0} reviews)`,
                   payload?.name ?? "Share",
                 ];
               }}
             />
-            <Bar dataKey="pct" radius={[0, 4, 4, 0]}>
-              {data.map((_, index) => (
+            <Bar dataKey="pct" radius={[0, 4, 4, 0]} maxBarSize={22}>
+              {visible.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={CHART_COLORS[index % CHART_COLORS.length]}
@@ -78,6 +125,24 @@ export default function FrequencyChart({
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {hasMore ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="mt-4 flex w-full items-center justify-between rounded-lg border border-outline-variant bg-surface-container-low px-4 py-2.5 text-xs font-medium text-primary transition-colors hover:bg-surface-container"
+        >
+          <span>
+            {expanded
+              ? `Showing all ${data.length} categories`
+              : `Show ${data.length - PREVIEW_LIMIT} more categories`}
+          </span>
+          <Icon
+            name={expanded ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+            className="text-lg"
+          />
+        </button>
+      ) : null}
     </Card>
   );
 }

@@ -6,7 +6,7 @@ import {
   isQuestionAnswerableFromContext,
   noRelevantDataResponse,
 } from "@/lib/chat-guard";
-import { getLlmApiKey } from "@/lib/llm-config";
+import { getLlmApiKey, LLM_API_KEY_ENV } from "@/lib/llm-config";
 import {
   llmFallbackWarning,
   shouldFallbackToMockOnLlmError,
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "CEREBRAS_API_KEY is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.",
+          `${LLM_API_KEY_ENV} is not configured. Add it to .env.local, or set USE_MOCK_CLASSIFIER=true for demo mode.`,
       },
       { status: 500 },
     );
