@@ -59,7 +59,8 @@ export default function PendingRunView({
       setPhaseNote("Writing results to the research repository…");
       await completeQueuedAnalysisRun({
         runId,
-        classified,
+        reviews,
+        classified: usedMockClassifier ? classified : undefined,
         analysis: { aggregation, findings, executive },
         usedMockClassifier,
         curation: {

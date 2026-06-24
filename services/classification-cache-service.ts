@@ -6,6 +6,7 @@ import {
   ensureTursoSchema,
   parseJsonColumn,
   toJson,
+  type TursoClient,
 } from "@/lib/turso";
 import type { ClassifiedReview, RawReview } from "@/lib/types";
 
@@ -14,6 +15,9 @@ export interface CacheLookupResult {
   missIndices: number[];
   missReviews: RawReview[];
 }
+
+const CACHE_HASH_CHUNK = 80;
+const CACHE_WRITE_CHUNK = 40;
 
 function rowToClassified(
   row: Record<string, unknown>,
@@ -47,31 +51,58 @@ function rowToClassified(
   };
 }
 
+async function fetchCacheHitsByHash(
+  db: TursoClient,
+  reviews: RawReview[],
+  model: string,
+): Promise<Map<number, ClassifiedReview>> {
+  const hits = new Map<number, ClassifiedReview>();
+  const hashToIndices = new Map<string, number[]>();
+
+  for (let index = 0; index < reviews.length; index++) {
+    const hash = hashReviewContent(reviews[index]!);
+    const bucket = hashToIndices.get(hash) ?? [];
+    bucket.push(index);
+    hashToIndices.set(hash, bucket);
+  }
+
+  const hashes = [...hashToIndices.keys()];
+  for (let offset = 0; offset < hashes.length; offset += CACHE_HASH_CHUNK) {
+    const chunk = hashes.slice(offset, offset + CACHE_HASH_CHUNK);
+    if (chunk.length === 0) continue;
+
+    const placeholders = chunk.map(() => "?").join(", ");
+    const result = await db.execute({
+      sql: `SELECT * FROM classification_cache WHERE model = ? AND content_hash IN (${placeholders})`,
+      args: [model, ...chunk],
+    });
+
+    for (const row of result.rows) {
+      const record = row as Record<string, unknown>;
+      const hash = String(record.content_hash);
+      const indices = hashToIndices.get(hash) ?? [];
+      for (const index of indices) {
+        hits.set(index, rowToClassified(record, reviews[index]!));
+      }
+    }
+  }
+
+  return hits;
+}
+
 export async function lookupClassificationCache(
   reviews: RawReview[],
   model = LLM_MODEL,
 ): Promise<CacheLookupResult> {
   const db = await ensureTursoSchema();
-  const hits = new Map<number, ClassifiedReview>();
+  const hits = await fetchCacheHitsByHash(db, reviews, model);
   const missIndices: number[] = [];
   const missReviews: RawReview[] = [];
 
   for (let i = 0; i < reviews.length; i++) {
-    const review = reviews[i];
-    const contentHash = hashReviewContent(review);
-
-    const result = await db.execute({
-      sql: `SELECT * FROM classification_cache WHERE content_hash = ? AND model = ? LIMIT 1`,
-      args: [contentHash, model],
-    });
-
-    const row = result.rows[0];
-    if (row) {
-      hits.set(i, rowToClassified(row as Record<string, unknown>, review));
-    } else {
-      missIndices.push(i);
-      missReviews.push(review);
-    }
+    if (hits.has(i)) continue;
+    missIndices.push(i);
+    missReviews.push(reviews[i]!);
   }
 
   return { hits, missIndices, missReviews };
@@ -132,7 +163,24 @@ export async function saveClassificationCache(
     };
   });
 
-  await db.batch(statements, "write");
+  for (let i = 0; i < statements.length; i += CACHE_WRITE_CHUNK) {
+    await db.batch(statements.slice(i, i + CACHE_WRITE_CHUNK), "write");
+  }
+}
+
+/** Load full classifications from Turso cache (after live LLM classify). */
+export async function loadClassificationsForPersist(
+  reviews: RawReview[],
+  model = LLM_MODEL,
+): Promise<ClassifiedReview[]> {
+  const lookup = await lookupClassificationCache(reviews, model);
+  if (lookup.missIndices.length > 0) {
+    throw new Error(
+      `${lookup.missIndices.length} review(s) are not in the classification cache. Re-run Analyze before saving.`,
+    );
+  }
+
+  return reviews.map((_, index) => lookup.hits.get(index)!);
 }
 
 export function mergeCachedClassifications(

@@ -263,7 +263,8 @@ export default function UploadSection() {
       setPipelineStep("saving");
       const runId = await persistAnalysisRun({
         datasetName: loadedFileName ?? `Analysis ${new Date().toLocaleDateString()}`,
-        classified: results,
+        reviews: toClassify,
+        classified: usedMockClassifier ? results : undefined,
         analysis: { aggregation, findings, executive, curation: stats },
         usedMockClassifier,
         curation: stats,
@@ -311,7 +312,7 @@ export default function UploadSection() {
         loadedFileName ?? `Analysis ${new Date().toLocaleDateString()}`;
       const runId = await persistAnalysisRun({
         datasetName: `${baseName} (partial ${cache.cachedCount}/${cache.total})`,
-        classified: results,
+        reviews: toClassify,
         analysis: { aggregation, findings, executive, curation: stats },
         usedMockClassifier: false,
         curation: stats,

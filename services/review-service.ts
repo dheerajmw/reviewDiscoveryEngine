@@ -15,7 +15,8 @@ import type {
 } from "@/lib/types";
 import type { AggregationResult } from "@/lib/types";
 
-const BATCH_SIZE = 100;
+const REVIEW_BATCH_SIZE = 50;
+const TURSO_STATEMENT_CHUNK = 200;
 
 async function getDb(): Promise<TursoClient> {
   return ensureTursoSchema();
@@ -27,8 +28,8 @@ export async function saveRawReviewsForRun(
 ): Promise<void> {
   const db = await getDb();
 
-  for (let i = 0; i < reviews.length; i += BATCH_SIZE) {
-    const batch = reviews.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < reviews.length; i += REVIEW_BATCH_SIZE) {
+    const batch = reviews.slice(i, i + REVIEW_BATCH_SIZE);
     await db.batch(
       batch.map((review) => ({
         sql: `INSERT INTO reviews (id, run_id, source, review_text, discovery_relevant, discovery_reason, confidence)
@@ -76,8 +77,8 @@ export async function saveReviewsWithClassifications(
 ): Promise<void> {
   const db = await getDb();
 
-  for (let i = 0; i < classified.length; i += BATCH_SIZE) {
-    const batch = classified.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < classified.length; i += REVIEW_BATCH_SIZE) {
+    const batch = classified.slice(i, i + REVIEW_BATCH_SIZE);
     const statements = batch.flatMap((r) => {
       const reviewId = newId();
       const classId = newId();
@@ -115,7 +116,12 @@ export async function saveReviewsWithClassifications(
       ];
     });
 
-    await db.batch(statements, "write");
+    for (let offset = 0; offset < statements.length; offset += TURSO_STATEMENT_CHUNK) {
+      await db.batch(
+        statements.slice(offset, offset + TURSO_STATEMENT_CHUNK),
+        "write",
+      );
+    }
   }
 }
 
@@ -173,11 +179,21 @@ export async function saveRepresentativeQuotes(
   aggregation: AggregationResult,
 ): Promise<void> {
   const db = await getDb();
+  const classifiedByText = new Map<string, ClassifiedReview>();
+  const classifiedByPrefix = new Map<string, ClassifiedReview>();
+  for (const review of classified) {
+    const key = review.text.trim().toLowerCase();
+    if (!classifiedByText.has(key)) classifiedByText.set(key, review);
+    const prefix = key.slice(0, 40);
+    if (!classifiedByPrefix.has(prefix)) classifiedByPrefix.set(prefix, review);
+  }
+
   const rows = aggregation.themeEvidence.flatMap((cluster) =>
     cluster.quotes.map((quote) => {
+      const quoteKey = quote.text.trim().toLowerCase();
       const match =
-        classified.find((r) => r.text === quote.text) ??
-        classified.find((r) => r.text.includes(quote.text.slice(0, 40)));
+        classifiedByText.get(quoteKey) ??
+        classifiedByPrefix.get(quoteKey.slice(0, 40));
 
       return {
         id: newId(),
@@ -190,35 +206,35 @@ export async function saveRepresentativeQuotes(
         barrier: match?.barrier ?? null,
         root_cause: match?.root_cause ?? null,
         unmet_need: match?.unmet_need ?? null,
-        classification_reasons: match?.classification_reasons ?? match?.evidence?.classification_reasons ?? null,
+        classification_reasons:
+          match?.classification_reasons ?? match?.evidence?.classification_reasons ?? null,
       };
     }),
   );
 
   if (rows.length === 0) return;
 
-  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const chunk = rows.slice(i, i + BATCH_SIZE);
+  const statements = rows.map((row) => ({
+    sql: `INSERT INTO representative_quotes (id, run_id, theme, quote_text, source, segment, confidence, barrier, root_cause, unmet_need, classification_reasons)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      row.id,
+      row.run_id,
+      row.theme,
+      row.quote_text,
+      row.source,
+      row.segment,
+      row.confidence,
+      row.barrier,
+      row.root_cause,
+      row.unmet_need,
+      row.classification_reasons ? toJson(row.classification_reasons) : null,
+    ],
+  }));
+
+  for (let offset = 0; offset < statements.length; offset += TURSO_STATEMENT_CHUNK) {
     await db.batch(
-      chunk.map((row) => ({
-        sql: `INSERT INTO representative_quotes (id, run_id, theme, quote_text, source, segment, confidence, barrier, root_cause, unmet_need, classification_reasons)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          row.id,
-          row.run_id,
-          row.theme,
-          row.quote_text,
-          row.source,
-          row.segment,
-          row.confidence,
-          row.barrier,
-          row.root_cause,
-          row.unmet_need,
-          row.classification_reasons
-            ? toJson(row.classification_reasons)
-            : null,
-        ],
-      })),
+      statements.slice(offset, offset + TURSO_STATEMENT_CHUNK),
       "write",
     );
   }

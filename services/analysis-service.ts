@@ -26,6 +26,7 @@ import {
   saveRepresentativeQuotes,
   saveReviewsWithClassifications,
 } from "./review-service";
+import { loadClassificationsForPersist } from "./classification-cache-service";
 
 async function getDb() {
   return ensureTursoSchema();
@@ -158,14 +159,29 @@ export async function queueReviewBatch(input: {
   return runId;
 }
 
+async function resolveClassifiedForPersist(input: {
+  reviews?: RawReview[];
+  classified?: ClassifiedReview[];
+}): Promise<ClassifiedReview[]> {
+  if (input.classified?.length) {
+    return input.classified;
+  }
+  if (!input.reviews?.length) {
+    throw new Error("reviews or classified are required to save a run.");
+  }
+  return loadClassificationsForPersist(input.reviews);
+}
+
 export async function persistAnalysisRun(input: {
   datasetName: string;
-  classified: ClassifiedReview[];
+  reviews?: RawReview[];
+  classified?: ClassifiedReview[];
   analysis: AnalysisBundle;
   usedMockClassifier: boolean;
   curation?: AnalysisBundle["curation"];
 }): Promise<string> {
-  const { analysis, classified, curation } = input;
+  const classified = await resolveClassifiedForPersist(input);
+  const { analysis, curation } = input;
   const agg = analysis.aggregation;
 
   const runId = await createAnalysisRun({
@@ -179,10 +195,7 @@ export async function persistAnalysisRun(input: {
 
   try {
     await saveReviewsWithClassifications(runId, classified);
-    await updateRunStatus(runId, "aggregating");
-
     await upsertFinding(runId, analysis);
-
     await saveRepresentativeQuotes(runId, classified, analysis.aggregation);
 
     const db = await getDb();
@@ -202,12 +215,14 @@ export async function persistAnalysisRun(input: {
 
 export async function completeQueuedRun(input: {
   runId: string;
-  classified: ClassifiedReview[];
+  reviews?: RawReview[];
+  classified?: ClassifiedReview[];
   analysis: AnalysisBundle;
   usedMockClassifier: boolean;
   curation?: AnalysisBundle["curation"];
 }): Promise<string> {
-  const { analysis, classified, curation, runId } = input;
+  const classified = await resolveClassifiedForPersist(input);
+  const { analysis, curation, runId } = input;
   const agg = analysis.aggregation;
 
   await updateRunStatus(runId, "classifying");
@@ -217,8 +232,6 @@ export async function completeQueuedRun(input: {
     await deleteFindingsForRun(runId);
     await deleteQuotesForRun(runId);
     await saveReviewsWithClassifications(runId, classified);
-    await updateRunStatus(runId, "aggregating");
-
     await upsertFinding(runId, analysis);
     await saveRepresentativeQuotes(runId, classified, analysis.aggregation);
 

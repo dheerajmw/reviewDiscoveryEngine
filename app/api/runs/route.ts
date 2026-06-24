@@ -3,7 +3,9 @@ import {
   listAnalysisRuns,
   persistAnalysisRun,
 } from "@/services/analysis-service";
-import type { AnalysisBundle, ClassifiedReview } from "@/lib/types";
+import type { AnalysisBundle, ClassifiedReview, RawReview } from "@/lib/types";
+
+export const maxDuration = 60;
 
 export async function GET() {
   try {
@@ -18,6 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   let body: {
     datasetName?: string;
+    reviews?: RawReview[];
     classified?: ClassifiedReview[];
     analysis?: AnalysisBundle;
     usedMockClassifier?: boolean;
@@ -30,10 +33,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { datasetName, classified, analysis } = body;
-  if (!datasetName?.trim() || !classified?.length || !analysis) {
+  const { datasetName, reviews, classified, analysis } = body;
+  if (!datasetName?.trim() || !analysis) {
     return NextResponse.json(
-      { error: "datasetName, classified, and analysis are required." },
+      { error: "datasetName and analysis are required." },
+      { status: 400 },
+    );
+  }
+
+  if (!reviews?.length && !classified?.length) {
+    return NextResponse.json(
+      { error: "reviews or classified are required." },
       { status: 400 },
     );
   }
@@ -41,6 +51,7 @@ export async function POST(request: Request) {
   try {
     const runId = await persistAnalysisRun({
       datasetName: datasetName.trim(),
+      reviews,
       classified,
       analysis,
       usedMockClassifier: Boolean(body.usedMockClassifier),

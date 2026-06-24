@@ -22,7 +22,8 @@ export async function fetchAnalysisRuns(): Promise<AnalysisRunSummary[]> {
 
 export async function persistAnalysisRun(input: {
   datasetName: string;
-  classified: ClassifiedReview[];
+  reviews: RawReview[];
+  classified?: ClassifiedReview[];
   analysis: AnalysisBundle;
   usedMockClassifier: boolean;
   curation?: CurationStats;
@@ -30,9 +31,16 @@ export async function persistAnalysisRun(input: {
   const response = await fetch("/api/runs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      datasetName: input.datasetName,
+      reviews: input.reviews,
+      classified: input.classified,
+      analysis: input.analysis,
+      usedMockClassifier: input.usedMockClassifier,
+      curation: input.curation,
+    }),
   });
-  const data = await response.json();
+  const data = await parseApiJson<{ runId?: string; error?: string }>(response);
   if (!response.ok) {
     throw new Error(data.error ?? "Failed to persist analysis run.");
   }
@@ -59,7 +67,8 @@ export async function persistQueuedBatches(input: {
 
 export async function completeQueuedAnalysisRun(input: {
   runId: string;
-  classified: ClassifiedReview[];
+  reviews: RawReview[];
+  classified?: ClassifiedReview[];
   analysis: AnalysisBundle;
   usedMockClassifier: boolean;
   curation?: CurationStats;
@@ -67,7 +76,13 @@ export async function completeQueuedAnalysisRun(input: {
   const response = await fetch(`/api/runs/${input.runId}/complete`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      reviews: input.reviews,
+      classified: input.classified,
+      analysis: input.analysis,
+      usedMockClassifier: input.usedMockClassifier,
+      curation: input.curation,
+    }),
   });
   const data = await parseApiJson<{ runId?: string; error?: string }>(response);
   if (!response.ok) {

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { completeQueuedRun } from "@/services/analysis-service";
-import type { AnalysisBundle, ClassifiedReview } from "@/lib/types";
+import type { AnalysisBundle, ClassifiedReview, RawReview } from "@/lib/types";
+
+export const maxDuration = 60;
 
 export async function POST(
   request: Request,
@@ -9,6 +11,7 @@ export async function POST(
   const { id: runId } = await context.params;
 
   let body: {
+    reviews?: RawReview[];
     classified?: ClassifiedReview[];
     analysis?: AnalysisBundle;
     usedMockClassifier?: boolean;
@@ -21,10 +24,14 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { classified, analysis } = body;
-  if (!classified?.length || !analysis) {
+  const { reviews, classified, analysis } = body;
+  if (!analysis) {
+    return NextResponse.json({ error: "analysis is required." }, { status: 400 });
+  }
+
+  if (!reviews?.length && !classified?.length) {
     return NextResponse.json(
-      { error: "classified and analysis are required." },
+      { error: "reviews or classified are required." },
       { status: 400 },
     );
   }
@@ -32,6 +39,7 @@ export async function POST(
   try {
     await completeQueuedRun({
       runId,
+      reviews,
       classified,
       analysis,
       usedMockClassifier: Boolean(body.usedMockClassifier),
