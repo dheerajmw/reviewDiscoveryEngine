@@ -1,4 +1,3 @@
-import { BARRIER_FALLBACK } from "@/lib/taxonomy";
 import {
   boolFromDb,
   boolToDb,
@@ -153,7 +152,7 @@ export async function getClassifiedReviewsForRun(
       row.confidence ?? row.classification_confidence ?? 0.7,
     ),
     theme: String(row.theme ?? "Other Discovery Frustration"),
-    barrier: String(row.barrier ?? BARRIER_FALLBACK),
+    barrier: String(row.barrier ?? "Unclear Discovery Struggle"),
     behavior: String(row.behavior ?? "Evaluate Recommendations"),
     emotion: String(row.emotion ?? "Neutral"),
     segment: String(row.segment ?? "Unspecified Segment"),

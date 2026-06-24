@@ -1,5 +1,4 @@
 import type { ClassifiedReview } from "@/lib/types";
-import { getTaxonomyDisplayLabel } from "@/lib/taxonomy";
 import SourceBadge from "@/components/ui/SourceBadge";
 
 interface RawReviewPanelProps {
@@ -26,9 +25,7 @@ export default function RawReviewPanel({ review }: RawReviewPanelProps) {
         </div>
         <div>
           <dt className="text-outline">Barrier</dt>
-          <dd className="text-on-surface-variant">
-            {getTaxonomyDisplayLabel("barrier", review.barrier)}
-          </dd>
+          <dd className="text-on-surface-variant">{review.barrier}</dd>
         </div>
         <div>
           <dt className="text-outline">Root cause</dt>

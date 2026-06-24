@@ -66,12 +66,6 @@ export function isNegativeTheme(theme: string): boolean {
   return NEGATIVE_THEME_SET.has(theme) || theme === THEME_FALLBACK;
 }
 
-/** Last-resort barrier when no specific mechanism fits — not a user-stated label. */
-export const BARRIER_FALLBACK = "Unspecified discovery barrier" as const;
-
-/** @deprecated Stored on older runs; maps to {@link BARRIER_FALLBACK} for display and normalize. */
-export const LEGACY_BARRIER_FALLBACK = "Unclear Discovery Struggle" as const;
-
 /** Q1 — barriers to discovering new music */
 export const BARRIERS = [
   "Low Novelty",
@@ -81,7 +75,7 @@ export const BARRIERS = [
   "Poor Personalization Context",
   "Ineffective Discovery Surfaces",
   "Cold Start Discovery",
-  BARRIER_FALLBACK,
+  "Unclear Discovery Struggle",
 ] as const;
 
 /** Q3 — listening goals users describe */
@@ -460,15 +454,14 @@ export const FALLBACK_LABELS: Record<TaxonomyField, string> = {
   behavior: "Evaluate Recommendations",
   emotion: "Neutral",
   segment: "Casual Listener",
-  barrier: BARRIER_FALLBACK,
+  barrier: "Unclear Discovery Struggle",
   root_cause: "Unclear Repetition Cause",
   unmet_need: "General Discovery Improvement",
 };
 
 export const OTHER_UNKNOWN_LABELS = new Set([
   "Other Discovery Frustration",
-  BARRIER_FALLBACK,
-  LEGACY_BARRIER_FALLBACK,
+  "Unclear Discovery Struggle",
   "Unspecified Segment",
   "Unclear Repetition Cause",
   "General Discovery Improvement",
@@ -584,12 +577,10 @@ const ALIASES: Record<TaxonomyField, Record<string, string>> = {
     "discovery surface ineffectiveness": "Ineffective Discovery Surfaces",
     "ineffective discovery surfaces": "Ineffective Discovery Surfaces",
     "cold start discovery": "Cold Start Discovery",
-    other: BARRIER_FALLBACK,
-    unknown: BARRIER_FALLBACK,
-    "unknown barrier": BARRIER_FALLBACK,
-    "unclear discovery struggle": BARRIER_FALLBACK,
-    [LEGACY_BARRIER_FALLBACK.toLowerCase()]: BARRIER_FALLBACK,
-    "unspecified discovery barrier": BARRIER_FALLBACK,
+    other: "Unclear Discovery Struggle",
+    unknown: "Unclear Discovery Struggle",
+    "unknown barrier": "Unclear Discovery Struggle",
+    "unclear discovery struggle": "Unclear Discovery Struggle",
     "content overload": "Ineffective Discovery Surfaces",
   },
   root_cause: {
@@ -878,25 +869,7 @@ export function isTaxonomyFallbackLabel(
   field: TaxonomyField,
   value: string,
 ): boolean {
-  if (field === "barrier" && value === LEGACY_BARRIER_FALLBACK) return true;
   return FALLBACK_LABELS[field] === value || OTHER_UNKNOWN_LABELS.has(value);
-}
-
-/** User-facing label for dashboard, exports, and quote explorer. */
-export function getTaxonomyDisplayLabel(
-  field: TaxonomyField,
-  value: string,
-): string {
-  if (field === "barrier") {
-    if (value === LEGACY_BARRIER_FALLBACK || value === BARRIER_FALLBACK) {
-      return BARRIER_FALLBACK;
-    }
-  }
-  return value;
-}
-
-export function isBarrierFallbackLabel(value: string): boolean {
-  return isTaxonomyFallbackLabel("barrier", value);
 }
 
 export function formatTaxonomyForPrompt(): string {
@@ -908,7 +881,6 @@ Choose EXACTLY ONE value per field from the allowed lists below.
 If none fit perfectly, choose the CLOSEST valid value. Never invent labels.
 
 BARRIER — ${RESEARCH_QUESTIONS.barrier}
-Prefer a specific barrier. Use "${BARRIER_FALLBACK}" only when frustration is clear but no mechanism fits (<10% of research reviews).
 ${BARRIERS.join(" | ")}
 
 POSITIVE THEMES — satisfied discovery (use when user praises discovery):

@@ -1,6 +1,5 @@
 import { LLM_MODEL } from "@/lib/llm-config";
 import { hashReviewContent } from "@/lib/review-content-hash";
-import { BARRIER_FALLBACK } from "@/lib/taxonomy";
 import {
   boolFromDb,
   boolToDb,
@@ -39,7 +38,7 @@ function rowToClassified(
     behavior: String(row.behavior ?? "Evaluate Recommendations"),
     emotion: String(row.emotion ?? "Neutral"),
     segment: String(row.segment ?? "Unspecified Segment"),
-    barrier: String(row.barrier ?? BARRIER_FALLBACK),
+    barrier: String(row.barrier ?? "Unclear Discovery Struggle"),
     root_cause: String(row.root_cause ?? "Unclear Repetition Cause"),
     unmet_need: String(row.unmet_need ?? "General Discovery Improvement"),
     confidence: Number(row.confidence ?? 0.7),

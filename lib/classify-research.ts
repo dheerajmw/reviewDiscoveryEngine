@@ -1,5 +1,3 @@
-import { BARRIER_FALLBACK } from "./taxonomy";
-
 /** Research question IDs aligned with PM assignment and findings API. */
 export type ResearchQuestionId =
   | "why_discovery_fails"
@@ -83,7 +81,7 @@ export function normalizeClassificationUserGoal(
 /** Fallback taxonomy when review lacks PM research value. */
 export const NON_RESEARCH_FALLBACK = {
   theme: "Other Discovery Frustration",
-  barrier: BARRIER_FALLBACK,
+  barrier: "Unclear Discovery Struggle",
   behavior: "Evaluate Recommendations",
   emotion: "Neutral",
   segment: "Unspecified Segment",
