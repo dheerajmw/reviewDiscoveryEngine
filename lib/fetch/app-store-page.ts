@@ -1,6 +1,7 @@
 import { SPOTIFY_APP_STORE_ID, SPOTIFY_APP_STORE_SLUG, USER_AGENT } from "./config";
 import type { FetchedReviewRow } from "./types";
-import { sleep } from "./utils";
+import { fetchWithRetry } from "./utils";
+import { getSourceFetchBudgetMs } from "./budget";
 
 /**
  * Apple shut down the public iTunes RSS customer-reviews feed in 2026.
@@ -112,18 +113,31 @@ async function fetchCountryPage(
   country: string,
 ): Promise<AppStoreSsrReview[]> {
   const url = `https://apps.apple.com/${country}/app/${slug}/id${appId}?see-all=reviews`;
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     headers: {
       "User-Agent": USER_AGENT,
       Accept: "text/html,application/xhtml+xml",
       "Accept-Language": "en-US,en;q=0.9",
     },
+    timeoutMs: 8_000,
+    retries: 0,
   });
   if (!response.ok) {
     throw new Error(`App Store page returned ${response.status} for ${country}.`);
   }
   const html = await response.text();
   return extractAppStoreReviewsFromHtml(html);
+}
+
+function countriesForLimit(
+  limit: number,
+  countries: readonly string[],
+): string[] {
+  const needed = Math.min(
+    countries.length,
+    Math.max(2, Math.ceil(limit / 8)),
+  );
+  return countries.slice(0, needed);
 }
 
 export async function fetchAppStoreReviewsFromPages(options: {
@@ -136,40 +150,50 @@ export async function fetchAppStoreReviewsFromPages(options: {
   const appId = options.appId ?? SPOTIFY_APP_STORE_ID;
   const slug = options.slug ?? SPOTIFY_APP_STORE_SLUG;
   const minRating = options.minRating ?? 0;
+  const deadline = Date.now() + getSourceFetchBudgetMs();
+  const countryList = countriesForLimit(options.limit, options.countries);
 
   const rows: FetchedReviewRow[] = [];
   const seenIds = new Set<string>();
 
-  for (const country of options.countries) {
-    if (rows.length >= options.limit) break;
-
-    try {
-      const pageReviews = await fetchCountryPage(appId, slug, country);
-      for (const review of pageReviews) {
-        const id = review.id?.trim();
-        if (id && seenIds.has(id)) continue;
-        if (id) seenIds.add(id);
-
-        const row = toFetchedRow(review, country, appId);
-        if (!row) continue;
-        if (
-          minRating > 0 &&
-          typeof row.rating === "number" &&
-          row.rating < minRating
-        ) {
-          continue;
+  const batches = await Promise.all(
+    countryList.map(async (country) => {
+      if (Date.now() > deadline) return [] as { id?: string; row: FetchedReviewRow }[];
+      try {
+        const pageReviews = await fetchCountryPage(appId, slug, country);
+        const batch: { id?: string; row: FetchedReviewRow }[] = [];
+        for (const review of pageReviews) {
+          const row = toFetchedRow(review, country, appId);
+          if (!row) continue;
+          if (
+            minRating > 0 &&
+            typeof row.rating === "number" &&
+            row.rating < minRating
+          ) {
+            continue;
+          }
+          batch.push({ id: review.id?.trim(), row });
         }
-        rows.push(row);
-        if (rows.length >= options.limit) break;
+        return batch;
+      } catch (error) {
+        console.warn(
+          `[fetch] appstore ${country}:`,
+          error instanceof Error ? error.message : error,
+        );
+        return [] as { id?: string; row: FetchedReviewRow }[];
       }
-    } catch (error) {
-      console.warn(
-        `[fetch] appstore ${country}:`,
-        error instanceof Error ? error.message : error,
-      );
-    }
+    }),
+  );
 
-    await sleep(250);
+  for (const batch of batches) {
+    for (const item of batch) {
+      const id = item.id;
+      if (id && seenIds.has(id)) continue;
+      if (id) seenIds.add(id);
+      rows.push(item.row);
+      if (rows.length >= options.limit) break;
+    }
+    if (rows.length >= options.limit) break;
   }
 
   return rows.slice(0, options.limit);

@@ -3,12 +3,15 @@ import {
   fetchAppStoreReviewsFromPages,
 } from "./app-store-page";
 import {
+  getPullpushRequestTimeoutMs,
+  getSourceFetchBudgetMs,
+} from "./budget";
+import {
+  communityFetchPlan,
   DEFAULT_REDDIT_SUBREDDITS,
   GLOBAL_REGION_ID,
   parseRedditQueryInput,
   PULLPUSH_MAX_PAGES,
-  PULLPUSH_REQUEST_TIMEOUT_MS,
-  REDDIT_FETCH_BUDGET_MS,
   redditFetchPlan,
   SPOTIFY_PLAY_ID,
   STORE_REGION_CODES,
@@ -88,10 +91,12 @@ export async function fetchPlayStoreReviews(options: {
   region: string;
   minRating?: number;
 }): Promise<FetchedReviewRow[]> {
+  const deadline = Date.now() + getSourceFetchBudgetMs();
+
   if (options.region === GLOBAL_REGION_ID) {
     const combined: FetchedReviewRow[] = [];
     for (const country of STORE_REGION_CODES) {
-      if (combined.length >= options.limit) break;
+      if (combined.length >= options.limit || Date.now() > deadline) break;
       const batch = await fetchPlayStoreReviewsForRegion({
         ...options,
         country,
@@ -189,6 +194,12 @@ async function pullpushFetch<T>(
     if (budget && Date.now() > budget.deadline) break;
     if (budget && !budget.reserveRequest()) break;
 
+    const requestTimeoutMs = Math.min(
+      getPullpushRequestTimeoutMs(),
+      budget ? Math.max(1_000, budget.deadline - Date.now()) : getPullpushRequestTimeoutMs(),
+    );
+    if (budget && requestTimeoutMs < 1_000) break;
+
     const url = new URL(`https://api.pullpush.io/reddit/search/${type}/`);
     for (const [key, value] of Object.entries(params)) {
       if (value != null && value !== "") url.searchParams.set(key, String(value));
@@ -200,8 +211,8 @@ async function pullpushFetch<T>(
     try {
       response = await fetchWithRetry(url.toString(), {
         headers: { "User-Agent": USER_AGENT },
-        timeoutMs: PULLPUSH_REQUEST_TIMEOUT_MS,
-        retries: 1,
+        timeoutMs: requestTimeoutMs,
+        retries: 0,
       });
     } catch {
       break;
@@ -267,8 +278,9 @@ export async function fetchRedditReviews(options: {
 
   const subreddits = [...DEFAULT_REDDIT_SUBREDDITS];
   const queries = parseRedditQueryInput(options.query);
-  const plan = redditFetchPlan(options.limit, queries.length);
-  const deadline = Date.now() + REDDIT_FETCH_BUDGET_MS;
+  const budgetMs = getSourceFetchBudgetMs();
+  const plan = redditFetchPlan(options.limit, queries.length, budgetMs);
+  const deadline = Date.now() + budgetMs;
   let apiRequests = 0;
   const budget: PullpushBudget = {
     deadline,
@@ -284,7 +296,7 @@ export async function fetchRedditReviews(options: {
 
   await runWithConcurrency(
     queries.slice(0, plan.maxQueries),
-    3,
+    budgetMs <= 12_000 ? 2 : 3,
     async (query) => {
       const batch = await pullpushFetch(
         "comment",
@@ -362,8 +374,10 @@ async function fetchJinaMarkdown(targetUrl: string): Promise<string> {
   }
 
   const readerUrl = `https://r.jina.ai/${targetUrl}`;
-  const response = await fetch(readerUrl, {
+  const response = await fetchWithRetry(readerUrl, {
     headers: { "User-Agent": USER_AGENT },
+    timeoutMs: Math.min(8_000, getPullpushRequestTimeoutMs() + 2_000),
+    retries: 0,
   });
   if (!response.ok) {
     throw new Error(`Community reader returned ${response.status}.`);
@@ -408,6 +422,9 @@ export async function fetchSpotifyCommunityReviews(options: {
   limit: number;
 }): Promise<FetchedReviewRow[]> {
   const rows: FetchedReviewRow[] = [];
+  const budgetMs = getSourceFetchBudgetMs();
+  const deadline = Date.now() + budgetMs;
+  const plan = communityFetchPlan(options.limit, budgetMs);
   const boards = [
     "https://community.spotify.com/t5/Content-Questions/bd-p/content",
     "https://community.spotify.com/t5/Your-Library/bd-p/yourlibrary",
@@ -417,11 +434,16 @@ export async function fetchSpotifyCommunityReviews(options: {
     "https://community.spotify.com/t5/Music-Discussion/bd-p/music_discussion",
     "https://community.spotify.com/t5/Discovery-Promo/bd-p/discovery_and_promo",
     "https://community.spotify.com/t5/Accounts/bd-p/spotifyaccountrelated",
-  ];
+  ].slice(0, plan.maxBoards);
 
   for (const board of boards) {
-    if (rows.length >= options.limit) break;
-    for (let page = 1; page <= 6 && rows.length < options.limit; page++) {
+    if (rows.length >= options.limit || Date.now() > deadline) break;
+    for (
+      let page = 1;
+      page <= plan.maxPagesPerBoard && rows.length < options.limit;
+      page++
+    ) {
+      if (Date.now() > deadline) break;
       const url =
         page === 1 ? board : `${board}/page/${page}?sort_by=-topicPostDate`;
       try {
@@ -441,7 +463,9 @@ export async function fetchSpotifyCommunityReviews(options: {
       } catch {
         break;
       }
-      await sleep(1200);
+      if (page < plan.maxPagesPerBoard) {
+        await sleep(plan.sleepMs);
+      }
     }
   }
 
@@ -452,6 +476,8 @@ export async function fetchSocialMediaReviews(options: {
   limit: number;
 }): Promise<FetchedReviewRow[]> {
   const rows: FetchedReviewRow[] = [];
+  const deadline = Date.now() + getSourceFetchBudgetMs();
+  const tight = getSourceFetchBudgetMs() <= 12_000;
   const blueskyQueries = [
     "spotify recommendations",
     "spotify discover weekly",
@@ -461,10 +487,10 @@ export async function fetchSocialMediaReviews(options: {
     "spotify radio",
     "spotify wrapped",
     "spotify daily mix",
-  ];
+  ].slice(0, tight ? 3 : 8);
 
   for (const query of blueskyQueries) {
-    if (rows.length >= options.limit) break;
+    if (rows.length >= options.limit || Date.now() > deadline) break;
     try {
       const url = `https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=25`;
       const response = await fetch(url, {
@@ -506,9 +532,9 @@ export async function fetchSocialMediaReviews(options: {
     "spotify%20discovery",
     "spotify%20algorithm",
     "discover%20weekly%20spotify",
-  ];
+  ].slice(0, tight ? 2 : 4);
   for (const query of hnQueries) {
-    if (rows.length >= options.limit) break;
+    if (rows.length >= options.limit || Date.now() > deadline) break;
     try {
       const url = `https://hn.algolia.com/api/v1/search?query=${query}&tags=comment&hitsPerPage=50`;
       const response = await fetch(url, {
@@ -547,11 +573,14 @@ export async function fetchSocialMediaReviews(options: {
     "https://mastodon.social",
     "https://mas.to",
     "https://mstdn.social",
-  ];
-  const mastodonQueries = ["spotify recommendations", "spotify discovery"];
+  ].slice(0, tight ? 1 : 3);
+  const mastodonQueries = ["spotify recommendations", "spotify discovery"].slice(
+    0,
+    tight ? 1 : 2,
+  );
   for (const instance of instances) {
     for (const query of mastodonQueries) {
-      if (rows.length >= options.limit) break;
+      if (rows.length >= options.limit || Date.now() > deadline) break;
       try {
         const url = `${instance}/api/v2/search?q=${encodeURIComponent(query)}&type=statuses&limit=30`;
         const response = await fetch(url, {

@@ -60,7 +60,7 @@ export function parseRedditQueryInput(query?: string): string[] {
     .filter(Boolean);
 }
 
-/** Wall-clock budget for one Reddit source fetch (serverless-safe). */
+/** @deprecated Use getSourceFetchBudgetMs() from ./budget. */
 export const REDDIT_FETCH_BUDGET_MS = 50_000;
 export const PULLPUSH_REQUEST_TIMEOUT_MS = 12_000;
 export const PULLPUSH_MAX_PAGES = 2;
@@ -79,7 +79,23 @@ export interface RedditFetchPlan {
 export function redditFetchPlan(
   limit: number,
   availableQueries: number,
+  budgetMs?: number,
 ): RedditFetchPlan {
+  const tight = budgetMs != null && budgetMs <= 12_000;
+
+  if (tight) {
+    const maxQueries = Math.min(availableQueries, limit >= 50 ? 2 : 2);
+    return {
+      maxQueries,
+      subredditCommentCount: limit >= 30 ? 1 : 0,
+      subredditSubmissionCount: 0,
+      perQueryBatch: Math.min(20, limit),
+      perSubCommentBatch: Math.min(15, limit),
+      perSubSubmissionBatch: 0,
+      maxApiRequests: limit >= 50 ? 3 : 2,
+    };
+  }
+
   const maxQueries =
     limit >= 400
       ? Math.min(availableQueries, 10)
@@ -111,6 +127,25 @@ export function redditFetchPlan(
       ),
     ),
     maxApiRequests,
+  };
+}
+
+export function communityFetchPlan(
+  limit: number,
+  budgetMs?: number,
+): { maxBoards: number; maxPagesPerBoard: number; sleepMs: number } {
+  const tight = budgetMs != null && budgetMs <= 12_000;
+  if (tight) {
+    return {
+      maxBoards: limit >= 40 ? 2 : 1,
+      maxPagesPerBoard: 2,
+      sleepMs: 150,
+    };
+  }
+  return {
+    maxBoards: limit >= 100 ? 6 : limit >= 60 ? 4 : 3,
+    maxPagesPerBoard: limit >= 100 ? 4 : 3,
+    sleepMs: 600,
   };
 }
 
@@ -161,7 +196,7 @@ export const FETCH_SOURCES: FetchSourceConfig[] = [
     supportsSort: false,
     supportsMinRating: false,
     supportsCountry: false,
-    defaultLimit: 80,
+    defaultLimit: 40,
     maxLimit: DEFAULT_MAX_LIMIT_PER_SOURCE,
   },
   {
@@ -171,7 +206,7 @@ export const FETCH_SOURCES: FetchSourceConfig[] = [
     supportsSort: false,
     supportsMinRating: false,
     supportsCountry: false,
-    defaultLimit: 60,
+    defaultLimit: 30,
     maxLimit: DEFAULT_MAX_LIMIT_PER_SOURCE,
   },
   {
@@ -181,7 +216,7 @@ export const FETCH_SOURCES: FetchSourceConfig[] = [
     supportsSort: false,
     supportsMinRating: false,
     supportsCountry: false,
-    defaultLimit: 60,
+    defaultLimit: 30,
     maxLimit: DEFAULT_MAX_LIMIT_PER_SOURCE,
   },
 ];

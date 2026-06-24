@@ -4,6 +4,7 @@ import type {
   FetchReviewsResult,
   FetchSourceId,
 } from "@/lib/fetch/types";
+import { SERVERLESS_CHUNKED_SOURCE_LIMIT } from "@/lib/fetch/budget";
 import type { RawReview } from "@/lib/types";
 import { parseApiJson } from "@/lib/parse-api-response";
 
@@ -14,6 +15,12 @@ export interface FetchLiveReviewsOptions {
     total: number,
   ) => void;
 }
+
+const CHUNKED_SOURCES = new Set<FetchSourceId>([
+  "reddit",
+  "spotify-community",
+  "social-media",
+]);
 
 function dedupeRawReviews(reviews: RawReview[]): RawReview[] {
   const seen = new Set<string>();
@@ -57,6 +64,45 @@ async function fetchLiveReviewsForSource(
   return data;
 }
 
+async function fetchLiveReviewsForSourceChunked(
+  request: FetchReviewsRequest,
+  source: FetchSourceId,
+): Promise<FetchReviewsResult> {
+  const chunkSize = SERVERLESS_CHUNKED_SOURCE_LIMIT;
+  if (!CHUNKED_SOURCES.has(source) || request.limitPerSource <= chunkSize) {
+    return fetchLiveReviewsForSource(request, source);
+  }
+
+  const combined: RawReview[] = [];
+  let remaining = request.limitPerSource;
+  let lastResult: FetchReviewsResult | null = null;
+
+  while (remaining > 0) {
+    const chunkLimit = Math.min(chunkSize, remaining);
+    const result = await fetchLiveReviewsForSource(
+      { ...request, limitPerSource: chunkLimit },
+      source,
+    );
+    lastResult = result;
+    combined.push(...result.reviews);
+    remaining -= chunkLimit;
+    if (result.count === 0) break;
+  }
+
+  const reviews = dedupeRawReviews(combined).slice(0, request.limitPerSource);
+  return {
+    reviews,
+    count: reviews.length,
+    bySource: { [source]: reviews.length },
+    fetchedAt: lastResult?.fetchedAt ?? new Date().toISOString(),
+    label: `live-${source}-${request.limitPerSource}`,
+    warning:
+      reviews.length < request.limitPerSource
+        ? `Loaded ${reviews.length} of ${request.limitPerSource} requested ${source} reviews (serverless time budget).`
+        : lastResult?.warning,
+  };
+}
+
 export async function loadFetchConfig(): Promise<FetchConfigResponse> {
   const response = await fetch("/api/fetch-reviews");
   const data = await parseApiJson<FetchConfigResponse & { error?: string }>(
@@ -86,7 +132,7 @@ export async function fetchLiveReviews(
     options?.onSourceProgress?.(source, index + 1, sources.length);
 
     try {
-      const result = await fetchLiveReviewsForSource(request, source);
+      const result = await fetchLiveReviewsForSourceChunked(request, source);
       bySource[source] = result.count;
       combined.push(...result.reviews);
     } catch (error) {

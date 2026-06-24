@@ -20,7 +20,7 @@ export async function parseApiJson<T>(response: Response): Promise<T> {
   if (trimmed.startsWith("<")) {
     throw new Error(
       timeoutMessage(response.status) ??
-        "Server returned an unexpected HTML error page. Try fewer sources or a lower fetch count.",
+        "Server returned an unexpected HTML error page. The fetch likely exceeded the hosting time limit — try fewer sources, a lower fetch count, or fetch Reddit/Community in smaller batches.",
     );
   }
 
